@@ -36,9 +36,10 @@
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(814, 489);
             Font = new Font("Microsoft JhengHei UI", 11.25F, FontStyle.Regular, GraphicsUnit.Point, 136);
-            Margin = new Padding(4, 4, 4, 4);
+            Margin = new Padding(4);
             Name = "frmMain";
             Text = "Form1";
+            Load += frmMain_Load;
             ResumeLayout(false);
         }
 
