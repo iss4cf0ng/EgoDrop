@@ -82,7 +82,7 @@
             // 
             splitContainer1.Panel2.Controls.Add(tabControl1);
             splitContainer1.Size = new Size(941, 491);
-            splitContainer1.SplitterDistance = 354;
+            splitContainer1.SplitterDistance = 315;
             splitContainer1.TabIndex = 2;
             // 
             // splitContainer2
@@ -99,7 +99,7 @@
             // splitContainer2.Panel2
             // 
             splitContainer2.Panel2.Controls.Add(listView1);
-            splitContainer2.Size = new Size(941, 354);
+            splitContainer2.Size = new Size(941, 315);
             splitContainer2.SplitterDistance = 313;
             splitContainer2.TabIndex = 0;
             // 
@@ -108,7 +108,7 @@
             treeView1.Dock = DockStyle.Fill;
             treeView1.Location = new Point(0, 0);
             treeView1.Name = "treeView1";
-            treeView1.Size = new Size(313, 354);
+            treeView1.Size = new Size(313, 315);
             treeView1.TabIndex = 0;
             // 
             // listView1
@@ -116,7 +116,7 @@
             listView1.Dock = DockStyle.Fill;
             listView1.Location = new Point(0, 0);
             listView1.Name = "listView1";
-            listView1.Size = new Size(624, 354);
+            listView1.Size = new Size(624, 315);
             listView1.TabIndex = 0;
             listView1.UseCompatibleStateImageBehavior = false;
             // 
@@ -129,7 +129,7 @@
             tabControl1.Location = new Point(0, 0);
             tabControl1.Name = "tabControl1";
             tabControl1.SelectedIndex = 0;
-            tabControl1.Size = new Size(941, 133);
+            tabControl1.Size = new Size(941, 172);
             tabControl1.SizeMode = TabSizeMode.Fixed;
             tabControl1.TabIndex = 0;
             // 
@@ -139,7 +139,7 @@
             tabPage1.Location = new Point(4, 4);
             tabPage1.Name = "tabPage1";
             tabPage1.Padding = new Padding(3);
-            tabPage1.Size = new Size(933, 101);
+            tabPage1.Size = new Size(933, 140);
             tabPage1.TabIndex = 0;
             tabPage1.Text = "tabPage1";
             tabPage1.UseVisualStyleBackColor = true;
@@ -159,7 +159,7 @@
             richTextBox1.Dock = DockStyle.Fill;
             richTextBox1.Location = new Point(3, 3);
             richTextBox1.Name = "richTextBox1";
-            richTextBox1.Size = new Size(927, 95);
+            richTextBox1.Size = new Size(927, 134);
             richTextBox1.TabIndex = 0;
             richTextBox1.Text = "";
             // 
