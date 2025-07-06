@@ -7,9 +7,14 @@ namespace EgoDrop
             InitializeComponent();
         }
 
-        private void frmMain_Load(object sender, EventArgs e)
+        private void fnSetup()
         {
 
+        }
+
+        private void frmMain_Load(object sender, EventArgs e)
+        {
+            fnSetup();
         }
     }
 }
