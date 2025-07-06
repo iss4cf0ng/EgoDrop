@@ -11,6 +11,7 @@ namespace EgoDrop
         protected string m_szName;
         protected int m_nPort;
         protected string m_szDescription;
+        protected ListenerType m_listenerType;
 
         public clsListener()
         {

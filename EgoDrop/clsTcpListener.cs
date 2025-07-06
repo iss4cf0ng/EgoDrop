@@ -12,7 +12,6 @@ namespace EgoDrop
     internal class clsTcpListener : clsListener
     {
         private Socket m_sktSrv;
-        private ListenerType lisType;
 
         public clsTcpListener(string szName, int nPort, string szDescription)
         {
@@ -21,7 +20,7 @@ namespace EgoDrop
             m_szDescription = szDescription;
 
             m_sktSrv = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-            lisType = ListenerType.TCP;
+            m_listenerType = ListenerType.TCP;
         }
 
         public override void fnStart()

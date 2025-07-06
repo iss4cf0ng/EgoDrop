@@ -73,6 +73,7 @@ namespace EgoDrop
         private void fnCreateTable(string szTableName)
         {
             string szQuery = string.Join(", ", m_dicDbStructure[szTableName].Select(x => $"{x} TEXT"));
+            szQuery = $"CREATE TABLE {szTableName} ({szQuery});";
             fnQuery(szQuery);
         }
 
@@ -85,7 +86,9 @@ namespace EgoDrop
                 {
                     DataSet ds = new DataSet();
                     adapter.Fill(ds);
-                    dt = ds.Tables[0];
+
+                    if (ds.Tables.Count > 0)
+                        dt = ds.Tables[0];
                 }
             }
             catch (Exception ex)

@@ -106,24 +106,28 @@
             toolStripMenuItem1.Name = "toolStripMenuItem1";
             toolStripMenuItem1.Size = new Size(76, 23);
             toolStripMenuItem1.Text = "Listener";
+            toolStripMenuItem1.Click += toolStripMenuItem1_Click;
             // 
             // toolStripMenuItem2
             // 
             toolStripMenuItem2.Name = "toolStripMenuItem2";
             toolStripMenuItem2.Size = new Size(71, 23);
             toolStripMenuItem2.Text = "Builder";
+            toolStripMenuItem2.Click += toolStripMenuItem2_Click;
             // 
             // toolStripMenuItem3
             // 
             toolStripMenuItem3.Name = "toolStripMenuItem3";
             toolStripMenuItem3.Size = new Size(71, 23);
             toolStripMenuItem3.Text = "Setting";
+            toolStripMenuItem3.Click += toolStripMenuItem3_Click;
             // 
             // toolStripMenuItem4
             // 
             toolStripMenuItem4.Name = "toolStripMenuItem4";
             toolStripMenuItem4.Size = new Size(63, 23);
             toolStripMenuItem4.Text = "About";
+            toolStripMenuItem4.Click += toolStripMenuItem4_Click;
             // 
             // splitContainer1
             // 
@@ -324,6 +328,7 @@
             MainMenuStrip = menuStrip1;
             Margin = new Padding(4);
             Name = "frmMain";
+            StartPosition = FormStartPosition.CenterScreen;
             Text = "Form1";
             Load += frmMain_Load;
             statusStrip1.ResumeLayout(false);

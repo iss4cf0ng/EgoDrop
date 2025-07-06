@@ -12,14 +12,23 @@ namespace EgoDrop
 {
     public partial class frmFileMgr : Form
     {
-        public frmFileMgr()
+        private clsVictim m_victim;
+
+        public frmFileMgr(clsVictim victim)
         {
             InitializeComponent();
+
+            m_victim = victim;
+        }
+
+        private void fnSetup()
+        {
+
         }
 
         private void frmFileMgr_Load(object sender, EventArgs e)
         {
-
+            fnSetup();
         }
     }
 }

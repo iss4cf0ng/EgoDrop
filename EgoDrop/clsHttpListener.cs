@@ -6,7 +6,14 @@ using System.Threading.Tasks;
 
 namespace EgoDrop
 {
-    internal class clsHttpListener
+    internal class clsHttpListener : clsListener
     {
+        public clsHttpListener(string szName, int nPort, string szDescription)
+        {
+            m_szName = szName;
+            m_nPort = nPort;
+            m_szDescription = szDescription;
+            m_listenerType = ListenerType.HTTP;
+        }
     }
 }

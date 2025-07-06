@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace EgoDrop
 {
-    internal class clsVictim
+    public class clsVictim
     {
         public Socket m_sktClnt;
         public byte[] m_abBuffer = new byte[65535];
