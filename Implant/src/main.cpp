@@ -30,8 +30,9 @@ Done:
 #include <arpa/inet.h>
 
 //Screenshot
-#include <X11/Xlib.h>
-#include <X11/Xutil.h>
+#include "clsScreenshot.h"
+
+#include "clsTools.h"
 
 ///---------------[ Library ]---------------\\\
 
@@ -39,28 +40,6 @@ Done:
 #define g_nPort 4444 //Server Port
 
 using namespace std;
-
-#pragma region Logs Tool
-
-void fnLogOK(const string& szMsg)
-{
-    cout << "[+] " << szMsg << endl;
-}
-void fnLogInfo(const string& szMsg)
-{
-    cout << "[*] " << szMsg << endl;
-}
-void fnLogError(const string& szMsg)
-{
-    cerr << "[-] " << szMsg << endl;
-}
-
-#pragma endregion
-#pragma region Debug Tool
-
-
-
-#pragma endregion
 
 
 int main()
@@ -89,19 +68,4 @@ int main()
     }
 
     return 0;
-}
-
-void fnScreenshot()
-{
-    Display *display = XOpenDisplay(NULL);
-    if (!display)
-    {
-        fnLogError("Failed to open display.");
-        return;
-    }
-
-    Window root = DefaultRootWindow(display);
-    XImage *img = XGetImage(display, root, 0, 0, 1920, 1080, AllPlanes, ZPixmap);
-
-    
 }

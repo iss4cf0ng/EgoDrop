@@ -21,5 +21,7 @@ namespace EgoDrop
 
         public static string fnStrE2B64(string szInput) => Convert.ToBase64String(Encoding.UTF8.GetBytes(szInput));
         public static string fnB64D2Str(string szInput) => Encoding.UTF8.GetString(Convert.FromBase64String(szInput));
+        public static List<string> fnLsE2B64(List<string> lsInput) => lsInput.Select(x => fnStrE2B64(x)).ToList();
+        public static List<string> fnLB64D2S(List<string> lsInput) => lsInput.Select(x => fnB64D2Str(x)).ToList();
     }
 }
