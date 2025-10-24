@@ -6,11 +6,15 @@ using System.Text;
 using System.Threading.Tasks;
 
 using System.Data.SQLite;
+using System.Data.Entity.Core.Metadata.Edm;
 
 namespace EgoDrop
 {
     internal class clsSqlite
     {
+        /// <summary>
+        /// Database structure.
+        /// </summary>
         private Dictionary<string, string[]> m_dicDbStructure = new Dictionary<string, string[]>()
         {
             {
@@ -52,6 +56,42 @@ namespace EgoDrop
         private string m_szConnString { get { return $"Data Source={m_szFileName};Compress=True;"; } }
         private SQLiteConnection m_sqlConn { get; set; }
 
+        private struct stListener
+        {
+            public string szName { get; set; }
+            public enListenerProtocol protoListener { get; set; }
+            public int nPort { get; set; }
+            public string szDescription { get; set; }
+            public DateTime dtCreationDate { get; set; }
+
+            public stListener(
+                string szName,
+                enListenerProtocol proto,
+                int nPort,
+                string szDescription,
+                DateTime dtDate
+            )
+            {
+                this.szName = szName;
+                protoListener = proto;
+                this.nPort = nPort;
+                this.szDescription = szDescription;
+                dtCreationDate = dtDate;
+            }
+
+        };
+        private enum enListenerProtocol
+        {
+            RAW_TCP,
+            TLS_TCP,
+            ENCRYPTED_TCP,
+
+            RAW_UDP,
+            DNS,
+
+            HTTP,
+        };
+
         public clsSqlite(string szFileName)
         {
             m_szFileName = szFileName;
@@ -77,6 +117,11 @@ namespace EgoDrop
             fnQuery(szQuery);
         }
 
+        /// <summary>
+        /// Execute SQL query and return result as DataTable.
+        /// </summary>
+        /// <param name="szQuery">SQL query string.</param>
+        /// <returns>The output will be stored in DataTable.</returns>
         private DataTable fnQuery(string szQuery)
         {
             DataTable dt = new DataTable();

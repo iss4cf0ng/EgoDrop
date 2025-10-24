@@ -3,11 +3,14 @@ namespace EgoDrop
     public partial class frmMain : Form
     {
         private clsSqlite m_sqlite;
+        private clsListener m_listener;
 
         public frmMain()
         {
             InitializeComponent();
         }
+
+        private clsVictim fnGetVictimFromTag(ListViewItem item) => (clsVictim)item.Tag;
 
         private void fnSetup()
         {
@@ -23,7 +26,9 @@ namespace EgoDrop
         //Listener
         private void toolStripMenuItem1_Click(object sender, EventArgs e)
         {
+            frmListener f = new frmListener();
 
+            f.ShowDialog();
         }
 
         //Builder
@@ -41,7 +46,25 @@ namespace EgoDrop
         //About
         private void toolStripMenuItem4_Click(object sender, EventArgs e)
         {
-
+            new frmAbout().Show();
+        }
+        //Info
+        private void toolStripMenuItem5_Click(object sender, EventArgs e)
+        {
+            foreach (ListViewItem item in listView1.SelectedItems)
+            {
+                frmInfoSpyder f = new frmInfoSpyder(fnGetVictimFromTag(item));
+                f.Show();
+            }
+        }
+        //File
+        private void toolStripMenuItem6_Click(object sender, EventArgs e)
+        {
+            foreach (ListViewItem item in listView1.SelectedItems)
+            {
+                frmFileMgr f = new frmFileMgr(fnGetVictimFromTag(item));
+                f.Show();
+            }
         }
     }
 }

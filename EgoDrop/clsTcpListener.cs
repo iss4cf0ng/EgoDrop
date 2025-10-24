@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace EgoDrop
 {
-    internal class clsTcpListener : clsListener
+    public class clsTcpListener : clsListener
     {
         private Socket m_sktSrv;
 

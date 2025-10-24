@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace EgoDrop
 {
-    internal class clsListener
+    public class clsListener
     {
         protected string m_szName;
         protected int m_nPort;

@@ -29,6 +29,10 @@ Done:
 //Socket
 #include <arpa/inet.h>
 
+//SSL
+#include <openssl/ssl.h>
+#include <openssl/err.h>
+
 //Screenshot
 #include "clsScreenshot.h"
 
@@ -41,7 +45,40 @@ Done:
 
 using namespace std;
 
+enum enMsgType
+{
+    Info,
+    OK,
+    Error,
+    Warning,
+};
 
+void fnPrintMsg( enMsgType msgType, string szMsg)
+{
+    
+}
+
+int main(int argc, char *argv[])
+{
+    //Initialization
+    SSL_library_init();
+    SSL_load_error_strings();
+
+    const SSL_METHOD *pMethod = TLS_client_method();
+    SSL_CTX *pCTX = SSL_CTX_new(pMethod);
+
+    if (!pCTX)
+    {
+        ERR_print_errors_fp(stderr);
+        exit(EXIT_FAILURE);
+    }
+
+    SSL_CTX_set_verify(pCTX, SSL_VERIFY_NONE, NULL);
+
+    
+}
+
+/*
 int main()
 {
     int sktSrv = socket(AF_INET, SOCK_STREAM, 0);
@@ -69,3 +106,4 @@ int main()
 
     return 0;
 }
+*/

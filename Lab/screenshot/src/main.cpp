@@ -26,9 +26,38 @@ void fnSaveImgToPng(XImage *image, const char *pFileName)
     png_infop pInfo = png_create_info_struct(pPng);
     if (!pInfo)
     {
-        
+        fprintf(stderr, "Error: Failed to create PNG info structure.\n");
+        png_destroy_write_struct(&pPng, NULL);
+        fclose(fp);
+
         return;
     }
+
+    if (setjmp(png_jmpbuf(pPng)))
+    {
+        fprintf(stderr, "Error: Failed to set PNG jump buffer.\n");
+        png_destroy_write_struct(&pPng, &pInfo);
+        fclose(fp);
+
+        return;
+    }
+
+    png_init_io(pPng, fp);
+    png_set_IHDR(pPng, pInfo, image->width, image->height, 8, PNG_COLOR_TYPE_RGBA, PNG_INTERLACE_NONE, PNG_COMPRESSION_TYPE_DEFAULT, PNG_FILTER_TYPE_DEFAULT);
+    
+    png_write_info(pPng, pInfo);
+
+    png_write_info(pPng, pInfo);
+    png_bytep *pRow = (png_bytep *)malloc(image->height * sizeof(png_bytep));
+    for (int y = 0; y < image->height; y++)
+        pRow[y] = (png_bytep)(image->data + y * image->bytes_per_line);
+
+    png_write_image(pPng, pRow);
+    png_write_end(pPng, NULL);
+
+    free(pRow);
+    png_destroy_write_struct(&pPng, &pInfo);
+    fclose(fp);
 }
 
 int main()
@@ -37,7 +66,7 @@ int main()
     if (!display)
     {
         printf("Failed to open display.\n");
-        return;
+        return 1;
     }
 
     Window root = DefaultRootWindow(display);
@@ -50,6 +79,13 @@ int main()
     {
         printf("Failed to get image from display.\n");
         XCloseDisplay(display);
-        return;
+        return 1;
     }
+
+    fnSaveImgToPng(image, "screenshot.png");
+
+    XDestroyImage(image);
+    XCloseDisplay(display);
+
+    return 0;
 }
