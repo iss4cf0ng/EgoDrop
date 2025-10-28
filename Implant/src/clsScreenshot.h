@@ -2,7 +2,7 @@
 
 class clsScreenshot
 {
-public:
-    explicit clsScreenshot();
-    void fnScreenshot();
+    public:
+        explicit clsScreenshot();
+        void fnScreenshot();
 };

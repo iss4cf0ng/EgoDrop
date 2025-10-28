@@ -49,10 +49,6 @@
             columnHeader8 = new ColumnHeader();
             columnHeader9 = new ColumnHeader();
             columnHeader10 = new ColumnHeader();
-            tabControl1 = new TabControl();
-            tabPage1 = new TabPage();
-            richTextBox1 = new RichTextBox();
-            tabPage2 = new TabPage();
             contextMenuStrip1 = new ContextMenuStrip(components);
             toolStripMenuItem5 = new ToolStripMenuItem();
             toolStripMenuItem6 = new ToolStripMenuItem();
@@ -60,6 +56,10 @@
             toolStripMenuItem8 = new ToolStripMenuItem();
             toolStripMenuItem9 = new ToolStripMenuItem();
             toolStripMenuItem10 = new ToolStripMenuItem();
+            tabControl1 = new TabControl();
+            tabPage1 = new TabPage();
+            richTextBox1 = new RichTextBox();
+            tabPage2 = new TabPage();
             statusStrip1.SuspendLayout();
             menuStrip1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)splitContainer1).BeginInit();
@@ -70,9 +70,9 @@
             splitContainer2.Panel1.SuspendLayout();
             splitContainer2.Panel2.SuspendLayout();
             splitContainer2.SuspendLayout();
+            contextMenuStrip1.SuspendLayout();
             tabControl1.SuspendLayout();
             tabPage1.SuspendLayout();
-            contextMenuStrip1.SuspendLayout();
             SuspendLayout();
             // 
             // statusStrip1
@@ -177,6 +177,7 @@
             // listView1
             // 
             listView1.Columns.AddRange(new ColumnHeader[] { columnHeader1, columnHeader2, columnHeader3, columnHeader4, columnHeader6, columnHeader7, columnHeader8, columnHeader9, columnHeader10 });
+            listView1.ContextMenuStrip = contextMenuStrip1;
             listView1.Dock = DockStyle.Fill;
             listView1.Location = new Point(0, 0);
             listView1.Name = "listView1";
@@ -230,49 +231,6 @@
             columnHeader10.Text = "Active Window";
             columnHeader10.Width = 200;
             // 
-            // tabControl1
-            // 
-            tabControl1.Alignment = TabAlignment.Bottom;
-            tabControl1.Controls.Add(tabPage1);
-            tabControl1.Controls.Add(tabPage2);
-            tabControl1.Dock = DockStyle.Fill;
-            tabControl1.Location = new Point(0, 0);
-            tabControl1.Name = "tabControl1";
-            tabControl1.SelectedIndex = 0;
-            tabControl1.Size = new Size(974, 172);
-            tabControl1.SizeMode = TabSizeMode.Fixed;
-            tabControl1.TabIndex = 0;
-            // 
-            // tabPage1
-            // 
-            tabPage1.Controls.Add(richTextBox1);
-            tabPage1.Location = new Point(4, 4);
-            tabPage1.Name = "tabPage1";
-            tabPage1.Padding = new Padding(3);
-            tabPage1.Size = new Size(966, 140);
-            tabPage1.TabIndex = 0;
-            tabPage1.Text = "tabPage1";
-            tabPage1.UseVisualStyleBackColor = true;
-            // 
-            // richTextBox1
-            // 
-            richTextBox1.Dock = DockStyle.Fill;
-            richTextBox1.Location = new Point(3, 3);
-            richTextBox1.Name = "richTextBox1";
-            richTextBox1.Size = new Size(960, 134);
-            richTextBox1.TabIndex = 0;
-            richTextBox1.Text = "";
-            // 
-            // tabPage2
-            // 
-            tabPage2.Location = new Point(4, 4);
-            tabPage2.Name = "tabPage2";
-            tabPage2.Padding = new Padding(3);
-            tabPage2.Size = new Size(966, 144);
-            tabPage2.TabIndex = 1;
-            tabPage2.Text = "tabPage2";
-            tabPage2.UseVisualStyleBackColor = true;
-            // 
             // contextMenuStrip1
             // 
             contextMenuStrip1.Font = new Font("Microsoft JhengHei UI", 11.25F, FontStyle.Regular, GraphicsUnit.Point, 136);
@@ -299,24 +257,71 @@
             toolStripMenuItem7.Name = "toolStripMenuItem7";
             toolStripMenuItem7.Size = new Size(134, 24);
             toolStripMenuItem7.Text = "Process";
+            toolStripMenuItem7.Click += toolStripMenuItem7_Click;
             // 
             // toolStripMenuItem8
             // 
             toolStripMenuItem8.Name = "toolStripMenuItem8";
             toolStripMenuItem8.Size = new Size(134, 24);
             toolStripMenuItem8.Text = "Service";
+            toolStripMenuItem8.Click += toolStripMenuItem8_Click;
             // 
             // toolStripMenuItem9
             // 
             toolStripMenuItem9.Name = "toolStripMenuItem9";
             toolStripMenuItem9.Size = new Size(134, 24);
             toolStripMenuItem9.Text = "Monitor";
+            toolStripMenuItem9.Click += toolStripMenuItem9_Click;
             // 
             // toolStripMenuItem10
             // 
             toolStripMenuItem10.Name = "toolStripMenuItem10";
             toolStripMenuItem10.Size = new Size(134, 24);
             toolStripMenuItem10.Text = "Camera";
+            toolStripMenuItem10.Click += toolStripMenuItem10_Click;
+            // 
+            // tabControl1
+            // 
+            tabControl1.Alignment = TabAlignment.Bottom;
+            tabControl1.Controls.Add(tabPage1);
+            tabControl1.Controls.Add(tabPage2);
+            tabControl1.Dock = DockStyle.Fill;
+            tabControl1.Location = new Point(0, 0);
+            tabControl1.Name = "tabControl1";
+            tabControl1.SelectedIndex = 0;
+            tabControl1.Size = new Size(974, 172);
+            tabControl1.SizeMode = TabSizeMode.Fixed;
+            tabControl1.TabIndex = 0;
+            // 
+            // tabPage1
+            // 
+            tabPage1.Controls.Add(richTextBox1);
+            tabPage1.Location = new Point(4, 4);
+            tabPage1.Name = "tabPage1";
+            tabPage1.Padding = new Padding(3);
+            tabPage1.Size = new Size(966, 140);
+            tabPage1.TabIndex = 0;
+            tabPage1.Text = "System Logs";
+            tabPage1.UseVisualStyleBackColor = true;
+            // 
+            // richTextBox1
+            // 
+            richTextBox1.Dock = DockStyle.Fill;
+            richTextBox1.Location = new Point(3, 3);
+            richTextBox1.Name = "richTextBox1";
+            richTextBox1.Size = new Size(960, 134);
+            richTextBox1.TabIndex = 0;
+            richTextBox1.Text = "";
+            // 
+            // tabPage2
+            // 
+            tabPage2.Location = new Point(4, 4);
+            tabPage2.Name = "tabPage2";
+            tabPage2.Padding = new Padding(3);
+            tabPage2.Size = new Size(966, 140);
+            tabPage2.TabIndex = 1;
+            tabPage2.Text = "tabPage2";
+            tabPage2.UseVisualStyleBackColor = true;
             // 
             // frmMain
             // 
@@ -345,9 +350,9 @@
             splitContainer2.Panel2.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)splitContainer2).EndInit();
             splitContainer2.ResumeLayout(false);
+            contextMenuStrip1.ResumeLayout(false);
             tabControl1.ResumeLayout(false);
             tabPage1.ResumeLayout(false);
-            contextMenuStrip1.ResumeLayout(false);
             ResumeLayout(false);
             PerformLayout();
         }

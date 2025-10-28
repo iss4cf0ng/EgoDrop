@@ -8,6 +8,7 @@
 
 void clsScreenshot::fnScreenshot()
 {
+    /*
     Display *display = XOpenDisplay(NULL);
     if (!display)
     {
@@ -24,5 +25,5 @@ void clsScreenshot::fnScreenshot()
         return;
     }
 
-    
+    */
 }

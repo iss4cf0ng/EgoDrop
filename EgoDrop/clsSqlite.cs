@@ -10,7 +10,7 @@ using System.Data.Entity.Core.Metadata.Edm;
 
 namespace EgoDrop
 {
-    internal class clsSqlite
+    public class clsSqlite
     {
         /// <summary>
         /// Database structure.
@@ -56,7 +56,7 @@ namespace EgoDrop
         private string m_szConnString { get { return $"Data Source={m_szFileName};Compress=True;"; } }
         private SQLiteConnection m_sqlConn { get; set; }
 
-        private struct stListener
+        public struct stListener
         {
             public string szName { get; set; }
             public enListenerProtocol protoListener { get; set; }
@@ -80,13 +80,11 @@ namespace EgoDrop
             }
 
         };
-        private enum enListenerProtocol
+        public enum enListenerProtocol
         {
-            RAW_TCP,
-            TLS_TCP,
-            ENCRYPTED_TCP,
+            TCP,
+            TLS,
 
-            RAW_UDP,
             DNS,
 
             HTTP,
@@ -143,5 +141,154 @@ namespace EgoDrop
 
             return dt;
         }
+
+        #region Listener
+
+        private bool fnbListenerExist(string szName)
+        {
+            try
+            {
+                string szQuery = $"SELECT EXISTS(SELECT 1 FROM \"Listener\" WHERE \"Name\" = \"{szName}\");";
+                DataTable dt = fnQuery(szQuery);
+
+                return (Int64)dt.Rows[0][0] == (Int64)1;
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message, "fnbListenerExist()", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+            finally
+            {
+                
+            }
+
+            return false;
+        }
+
+        private bool fnbListenerIsEqual(stListener lA, stListener lB)
+        {
+            return (
+                lA.szName == lB.szName
+                && lA.protoListener == lB.protoListener
+                && lA.nPort == lB.nPort
+                && lA.szDescription == lB.szDescription
+            );
+        }
+
+        public stListener fnGetListener(string szName)
+        {
+            var listeners = fnGetListeners();
+            foreach (var l in listeners)
+            {
+                if (l.szName == szName)
+                {
+                    return l;
+                }
+            }
+
+            return new stListener();
+        }
+        public List<stListener> fnGetListeners()
+        {
+            List<stListener> lsListener = new List<stListener>();
+
+            try
+            {
+                string szQuery = "SELECT * FROM \"Listener\";";
+                DataTable dt = fnQuery(szQuery);
+
+                foreach (DataRow dr in dt.Rows)
+                {
+                    string szName = (string)dr["Name"];
+                    int nPort = int.Parse((string)dr["Port"]);
+                    string szDescription = (string)dr["Description"];
+
+                    enListenerProtocol proto = (enListenerProtocol)Enum.Parse(typeof(enListenerProtocol), (string)dr["Protocol"]);
+                    DateTime date = DateTime.Parse((string)dr["CreationDate"]);
+
+                    stListener st = new stListener(
+                        szName,
+                        proto,
+                        nPort,
+                        szDescription,
+                        date
+                    );
+
+                    lsListener.Add(st);
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message, "fnGetListener()", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+
+            return lsListener;
+        }
+
+        public void fnSaveListener(stListener listener)
+        {
+            try
+            {
+                string szQuery = string.Empty;
+                if (fnbListenerExist(listener.szName))
+                {
+                    DialogResult dr = MessageBox.Show(
+                        $"\"{listener.szName}\" is existed, do you want to replace it?",
+                        "Same name.",
+                        MessageBoxButtons.YesNo,
+                        MessageBoxIcon.Warning
+                    );
+
+                    if (dr != DialogResult.Yes)
+                        return;
+
+                    szQuery = $"UPDATE \"Listener\" SET " +
+                        $"\"Name\"=\"{listener.szName}\"," +
+                        $"\"Protocol\"=\"{Enum.GetName(listener.protoListener)}\"," +
+                        $"\"Port\"=\"{listener.nPort}\"," +
+                        $"\"Description\"=\"{listener.szDescription}\"," +
+                        $"\"CreationDate\"=\"{listener.dtCreationDate.ToString("F")}\"" +
+                        $";";
+                }
+                else
+                {
+                    szQuery = $"INSERT INTO \"Listener\" VALUES " +
+                        $"(" +
+                        $"\"{listener.szName}\"," +
+                        $"\"{Enum.GetName(listener.protoListener)}\"," +
+                        $"\"{listener.nPort}\"," +
+                        $"\"{listener.szDescription}\"," +
+                        $"\"{listener.dtCreationDate.ToString("F")}\"" +
+                        $");";
+                }
+
+                fnQuery(szQuery);
+
+                if (!fnbListenerIsEqual(listener, fnGetListener(listener.szName)))
+                    throw new Exception("Save listener failed!");
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message, "fnSaveListener()", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        public void fnDeleteListener(string szName)
+        {
+            try
+            {
+                string szQuery = $"DELETE FROM \"Listener\" WHERE \"Name\"=\"{szName}\";";
+                fnQuery(szQuery);
+
+                if (!string.IsNullOrEmpty(fnGetListener(szName).szName))
+                    throw new Exception("Delete listener failed.");
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message, "fnDeleteListener()", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        #endregion
     }
 }

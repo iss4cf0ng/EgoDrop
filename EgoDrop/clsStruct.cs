@@ -6,8 +6,6 @@ using System.Threading.Tasks;
 
 namespace EgoDrop
 {
-
-
     internal class clsStruct
     {
 

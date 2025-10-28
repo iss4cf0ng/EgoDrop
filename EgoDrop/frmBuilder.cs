@@ -16,5 +16,15 @@ namespace EgoDrop
         {
             InitializeComponent();
         }
+
+        void fnSetup()
+        {
+
+        }
+
+        private void frmBuilder_Load(object sender, EventArgs e)
+        {
+            fnSetup();
+        }
     }
 }

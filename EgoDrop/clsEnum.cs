@@ -6,13 +6,6 @@ using System.Threading.Tasks;
 
 namespace EgoDrop
 {
-    public enum ListenerType
-    {
-        TCP,
-        UDP,
-        HTTP,
-    }
-
     internal class clsEnum
     {
     }

@@ -13,7 +13,9 @@ namespace EgoDrop
             m_szName = szName;
             m_nPort = nPort;
             m_szDescription = szDescription;
-            m_listenerType = ListenerType.HTTP;
+            m_Protocol = clsSqlite.enListenerProtocol.HTTP;
+
+
         }
     }
 }
