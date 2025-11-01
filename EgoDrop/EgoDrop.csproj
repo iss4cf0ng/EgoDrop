@@ -9,6 +9,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Fleck" Version="1.2.0" />
     <PackageReference Include="System.Data.SQLite" Version="1.0.119" />
   </ItemGroup>
 

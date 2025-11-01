@@ -12,6 +12,7 @@ namespace EgoDrop
     internal class clsUdpListener : clsListener
     {
         private UdpClient m_udpClient { get; set; }
+        public Dictionary<string, clsVictim> m_dicVictim = new Dictionary<string, clsVictim>();
 
         public clsUdpListener(string szName, int nPort, string szDescription)
         {
@@ -19,6 +20,7 @@ namespace EgoDrop
             m_nPort = nPort;
             m_szDescription = szDescription;
             m_Protocol = clsSqlite.enListenerProtocol.DNS;
+            m_stListener = new clsSqlite.stListener(m_szName, m_Protocol, m_nPort, m_szDescription, DateTime.Now);
 
             m_udpClient = new UdpClient(m_nPort);
         }

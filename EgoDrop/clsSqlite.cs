@@ -28,6 +28,13 @@ namespace EgoDrop
                 }
             },
             {
+                "Group", new string[]
+                {
+                    "Name",
+                    "CreationDate",
+                }
+            },
+            {
                 "Victim", new string[]
                 {
                     "OnlineID",

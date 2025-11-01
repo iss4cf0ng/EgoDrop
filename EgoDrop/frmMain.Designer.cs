@@ -29,6 +29,7 @@
         private void InitializeComponent()
         {
             components = new System.ComponentModel.Container();
+            TreeNode treeNode1 = new TreeNode("_All Targets");
             statusStrip1 = new StatusStrip();
             toolStripStatusLabel1 = new ToolStripStatusLabel();
             menuStrip1 = new MenuStrip();
@@ -171,6 +172,9 @@
             treeView1.Dock = DockStyle.Fill;
             treeView1.Location = new Point(0, 0);
             treeView1.Name = "treeView1";
+            treeNode1.Name = "Node0";
+            treeNode1.Text = "_All Targets";
+            treeView1.Nodes.AddRange(new TreeNode[] { treeNode1 });
             treeView1.Size = new Size(231, 318);
             treeView1.TabIndex = 0;
             // 
@@ -318,7 +322,7 @@
             tabPage2.Location = new Point(4, 4);
             tabPage2.Name = "tabPage2";
             tabPage2.Padding = new Padding(3);
-            tabPage2.Size = new Size(966, 140);
+            tabPage2.Size = new Size(966, 144);
             tabPage2.TabIndex = 1;
             tabPage2.Text = "tabPage2";
             tabPage2.UseVisualStyleBackColor = true;

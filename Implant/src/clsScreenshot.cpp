@@ -1,5 +1,5 @@
-#include "clsScreenshot.h"
-#include "clsTools.h"
+#include "clsScreenshot.hpp"
+#include "clsTools.hpp"
 
 #include <stdio.h>
 #include <stdlib.h>

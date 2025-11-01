@@ -21,7 +21,7 @@ namespace EgoDrop
         private byte[] _abMessageData = new byte[0];
         private byte[] m_abMessageData = new byte[0];
         private byte[] _abMoreData = new byte[0];
-        private byte[] m_abMoreData = new byte[0];
+        public byte[] m_abMoreData { get { return _abMoreData; } }
 
         //Constructor-1
         public clsEDP(byte[] abBuffer)

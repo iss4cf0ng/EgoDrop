@@ -8,5 +8,24 @@ namespace EgoDrop
 {
     internal class clsTools
     {
+        public clsTools()
+        {
+
+        }
+
+        public static byte[] fnabCombineBytes(byte[] abFirstBytes, byte[] abSecondBytes) => fnabCombineBytes(abFirstBytes, 0, abFirstBytes.Length, abSecondBytes, 0, abSecondBytes.Length);
+        public static byte[] fnabCombineBytes(byte[] abFirstBytes, int nFirstIndex, int nFirstLength, byte[] abSecondBytes, int nSecondIndex, int nSecondLength)
+        {
+            byte[] abBytes = { };
+            using (MemoryStream ms = new MemoryStream())
+            {
+                ms.Write(abFirstBytes, nFirstIndex, nFirstLength);
+                ms.Write(abSecondBytes, nSecondIndex, nSecondLength);
+
+                abBytes = ms.ToArray();
+            }
+
+            return abBytes;
+        }
     }
 }
