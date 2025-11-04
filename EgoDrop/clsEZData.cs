@@ -8,7 +8,7 @@ namespace EgoDrop
 {
     internal class clsEZData
     {
-        public static string fnGenerateRandomStr(int nLength)
+        public static string fnGenerateRandomStr(int nLength = 10)
         {
             const string szPattern = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
             StringBuilder sb = new StringBuilder();

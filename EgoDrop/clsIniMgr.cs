@@ -7,7 +7,7 @@ using System.Runtime.InteropServices;
 
 namespace EgoDrop
 {
-    internal class clsIniMgr
+    public class clsIniMgr
     {
         //Win32 API
         [DllImport("kernel32.dll", CharSet = CharSet.Auto)]

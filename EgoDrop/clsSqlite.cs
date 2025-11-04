@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 
 using System.Data.SQLite;
 using System.Data.Entity.Core.Metadata.Edm;
+using System.Xml.Linq;
 
 namespace EgoDrop
 {
@@ -63,14 +64,25 @@ namespace EgoDrop
         private string m_szConnString { get { return $"Data Source={m_szFileName};Compress=True;"; } }
         private SQLiteConnection m_sqlConn { get; set; }
 
+        /// <summary>
+        /// Listener struct
+        /// </summary>
         public struct stListener
         {
-            public string szName { get; set; }
-            public enListenerProtocol protoListener { get; set; }
-            public int nPort { get; set; }
-            public string szDescription { get; set; }
-            public DateTime dtCreationDate { get; set; }
+            public string szName { get; set; } //Listerner's name.
+            public enListenerProtocol protoListener { get; set; } //Protocol.
+            public int nPort { get; set; } //Port.
+            public string szDescription { get; set; } //Description.
+            public DateTime dtCreationDate { get; set; } //Creation Date.
 
+            /// <summary>
+            /// Constructor
+            /// </summary>
+            /// <param name="szName">Listener's name.</param>
+            /// <param name="proto">Protocol.</param>
+            /// <param name="nPort">Listener's port.</param>
+            /// <param name="szDescription">Description.</param>
+            /// <param name="dtDate">Creation data.</param>
             public stListener(
                 string szName,
                 enListenerProtocol proto,
@@ -118,7 +130,7 @@ namespace EgoDrop
         private void fnCreateTable(string szTableName)
         {
             string szQuery = string.Join(", ", m_dicDbStructure[szTableName].Select(x => $"{x} TEXT"));
-            szQuery = $"CREATE TABLE {szTableName} ({szQuery});";
+            szQuery = $"CREATE TABLE \"{szTableName}\" ({szQuery});";
             fnQuery(szQuery);
         }
 
@@ -250,11 +262,11 @@ namespace EgoDrop
                         return;
 
                     szQuery = $"UPDATE \"Listener\" SET " +
-                        $"\"Name\"=\"{listener.szName}\"," +
                         $"\"Protocol\"=\"{Enum.GetName(listener.protoListener)}\"," +
                         $"\"Port\"=\"{listener.nPort}\"," +
                         $"\"Description\"=\"{listener.szDescription}\"," +
                         $"\"CreationDate\"=\"{listener.dtCreationDate.ToString("F")}\"" +
+                        $"WHERE \"Name\"=\"{listener.szName}\"" +
                         $";";
                 }
                 else
@@ -293,6 +305,82 @@ namespace EgoDrop
             catch (Exception ex)
             {
                 MessageBox.Show(ex.Message, "fnDeleteListener()", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        #endregion
+
+        #region Group
+
+        /// <summary>
+        /// Check group existence.
+        /// </summary>
+        /// <param name="szName">Group name.</param>
+        /// <returns></returns>
+        public bool fnbGroupExists(string szName)
+        {
+            string szQuery = $"SELECT EXISTS(SELECT 1 FROM \"Group\" WHERE \"Name\" = \"{szName}\");";
+            DataTable dt = fnQuery(szQuery);
+
+            return (Int64)dt.Rows[0][0] == (Int64)1;
+        }
+
+        /// <summary>
+        /// Get group names.
+        /// </summary>
+        /// <returns>Group names.</returns>
+        public List<string> fnlsGetGroups()
+        {
+            List<string> ls = new List<string>();
+
+            string szQuery = "SELECT \"Name\" FROM \"Group\";";
+            DataTable dt = fnQuery(szQuery);
+
+            foreach (DataRow dr in dt.Rows)
+                ls.Add((string)dr[0]);
+
+            return ls;
+        }
+
+        public bool fnbDeleteGroup(string szName)
+        {
+            string szQuery = $"DELETE FROM \"Group\" WHERE \"Name\"=\"{szName}\" ;";
+            if (fnbGroupExists(szName))
+            {
+                fnQuery(szQuery);
+
+                return !fnbGroupExists(szName);
+            }
+            else
+            {
+                MessageBox.Show($"Cannot find group[{szName}]", "fnbDeleteGroup()", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return false;
+            }
+        }
+
+        public bool fnbSaveGroup(string szGroupName)
+        {
+            try
+            {
+                //Check group existence, delete it if exists.
+                if (fnbGroupExists(szGroupName))
+                {
+                    if (!fnbDeleteGroup(szGroupName))
+                    {
+                        throw new Exception($"Delete group[{szGroupName}] failed.");
+                    }
+                }
+
+                //Write
+                string szQuery = $"INSERT INTO \"Group\" VALUES (\"{szGroupName}\", \"{DateTime.Now.ToString("F")}\");";
+                fnQuery(szQuery);
+
+                return fnbGroupExists(szQuery);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message, "fnbSaveGroup", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return false;
             }
         }
 

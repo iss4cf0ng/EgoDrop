@@ -66,10 +66,10 @@ namespace EgoDrop
                 {
                     using (BinaryWriter bw = new BinaryWriter(ms))
                     {
-                        bw.Write(m_nCommand);
-                        bw.Write(m_nParam);
-                        bw.Write(m_nDataLength);
-                        bw.Write(m_abMessageData);
+                        bw.Write(_nCommand);
+                        bw.Write(_nParam);
+                        bw.Write(_nDataLength);
+                        bw.Write(_abMessageData);
 
                         abBuffer = ms.ToArray();
                     }

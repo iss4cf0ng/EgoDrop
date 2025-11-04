@@ -15,6 +15,7 @@ namespace EgoDrop
         public int m_nAES_BlockSize = 128;
 
         public (string szPublicKey, string szPrivateKey) m_RSAKeyPair { get; set; }
+        public (byte[] abPublicKey, string abPrivateKey) m_abRSAKeyPair { get; set; }
         public (byte[] abKey, byte[] abIV) m_abAESKey { get; set; }
         public (string szKey, string szIV) m_szAESKey { get { return (Convert.ToBase64String(m_abAESKey.abKey), Convert.ToBase64String(m_abAESKey.abIV)); } }
 
@@ -45,9 +46,13 @@ namespace EgoDrop
             string szPrivateKey = rsa.ToXmlString(true);
 
             var keyPair = (szPublicKey, szPrivateKey);
+            var abKeyPair = (rsa.ExportRSAPublicKey(), rsa.ExportRSAPrivateKey());
 
             if (bSaveInClass)
+            {
                 m_RSAKeyPair = keyPair;
+                m_abAESKey = abKeyPair;
+            }
 
             rsa.Dispose();
 

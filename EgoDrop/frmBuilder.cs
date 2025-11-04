@@ -12,9 +12,17 @@ namespace EgoDrop
 {
     public partial class frmBuilder : Form
     {
-        public frmBuilder()
+        private frmMain m_fMain { get; set; }
+        private clsSqlite m_sqlite { get; set; }
+        private clsIniMgr m_iniMgr { get; set; }
+
+        public frmBuilder(frmMain fMain, clsSqlite sqlite, clsIniMgr iniMgr)
         {
             InitializeComponent();
+
+            m_fMain = fMain;
+            m_sqlite = sqlite;
+            m_iniMgr = iniMgr;
         }
 
         void fnSetup()
