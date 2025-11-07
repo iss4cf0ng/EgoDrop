@@ -6,10 +6,10 @@
 class clsTools
 {
 private:
-    const char* RED    = "\033[31m";
-    const char* GREEN  = "\033[32m";
-    const char* BLUE   = "\033[34m";
-    const char* RESET  = "\033[0m";
+    static constexpr const char* RED = "\033[31m";
+    static constexpr const char* GREEN = "\033[32m";
+    static constexpr const char* BLUE = "\033[34m";
+    static constexpr const char* RESET = "\033[0m";
 
 public:
     clsTools()
@@ -21,22 +21,22 @@ public:
 
     }
 
-    void fnLogOK(const std::string& szMsg)
+    static void fnLogOK(const std::string& szMsg)
     {
-        std::cout << RED << "[+] " << RESET << szMsg << std::endl;
+        std::cout << GREEN << "[+] " << RESET << szMsg << std::endl;
     }
 
-    void fnLogInfo(const std::string& szMsg)
+    static void fnLogInfo(const std::string& szMsg)
     {
         std::cout << BLUE << "[*] " << RESET << szMsg << std::endl;
     }
 
-    void fnLogErr(const std::string& szMsg)
+    static void fnLogErr(const std::string& szMsg)
     {
         std::cout << RED << "[-] " << RESET << szMsg << std::endl;
     }
 
-    std::vector<unsigned char> fnvuCombineBytes(
+    static std::vector<unsigned char> fnvuCombineBytes(
         const std::vector<unsigned char>& vuFirstBytes,
         const std::vector<unsigned char>& vuSecondBytes
     )
@@ -47,7 +47,7 @@ public:
         );
     }
 
-    std::vector<unsigned char> fnvuCombineBytes(
+    static std::vector<unsigned char> fnvuCombineBytes(
         const std::vector<unsigned char>& vuFirstBytes, 
         const size_t nFirstIndex,
         const size_t nFirstLength,

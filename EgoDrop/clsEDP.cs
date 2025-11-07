@@ -6,114 +6,91 @@ using System.Threading.Tasks;
 
 namespace EgoDrop
 {
-    internal class clsEDP
+    class clsEDP
     {
-        //Header
+        public const int MAX_SIZE = 65535;
         public const int HEADER_SIZE = 6;
+
         private byte _nCommand = 0;
-        public byte m_nCommand { get { return _nCommand; } }
+        public byte m_nCommand => _nCommand;
+
         private byte _nParam = 0;
-        public byte m_nParam { get { return _nParam; } }
+        public byte m_nParam => _nParam;
+
         private int _nDataLength = 0;
-        public int m_nDataLength { get { return _nDataLength; } }
+        public int m_nDataLength => _nDataLength;
 
-        //Data Message
-        private byte[] _abMessageData = new byte[0];
-        private byte[] m_abMessageData = new byte[0];
-        private byte[] _abMoreData = new byte[0];
-        public byte[] m_abMoreData { get { return _abMoreData; } }
+        private byte[] _abMessageData = Array.Empty<byte>();
+        public byte[] m_abMessageData => _abMessageData;
 
-        //Constructor-1
+        private byte[] _abMoreData = Array.Empty<byte>();
+        public byte[] m_abMoreData => _abMoreData;
+
+        // Constructor for parsing received buffer
         public clsEDP(byte[] abBuffer)
         {
-            //Validate buffer.
             if (abBuffer == null || abBuffer.Length < HEADER_SIZE)
                 return;
 
-            //Handle buffer
-            using (MemoryStream ms = new MemoryStream(abBuffer))
+            using (var ms = new MemoryStream(abBuffer))
+            using (var br = new BinaryReader(ms))
             {
-                using (BinaryReader br = new BinaryReader(ms))
-                {
-                    _nCommand = br.ReadByte();
-                    _nParam = br.ReadByte();
-                    _nDataLength = br.ReadInt32();
+                _nCommand = br.ReadByte();
+                _nParam = br.ReadByte();
+                _nDataLength = br.ReadInt32(); // <-- little-endian by default
 
-                    if (abBuffer.Length - HEADER_SIZE >= m_nDataLength)
-                        _abMessageData = br.ReadBytes(_nDataLength);
-                    if (abBuffer.Length - HEADER_SIZE - m_nDataLength > 0)
-                        _abMoreData = br.ReadBytes(abBuffer.Length - HEADER_SIZE - m_nDataLength);
-                }
+                if (abBuffer.Length - HEADER_SIZE >= _nDataLength && _nDataLength > 0)
+                    _abMessageData = br.ReadBytes(_nDataLength);
+
+                int remaining = (int)(abBuffer.Length - HEADER_SIZE - _nDataLength);
+                if (remaining > 0)
+                    _abMoreData = br.ReadBytes(remaining);
             }
         }
 
-        //Constructor-2
+        // Constructor for building packets to send
         public clsEDP(byte nCmd, byte nParam, byte[] abMsg)
         {
             _nCommand = nCmd;
             _nParam = nParam;
             _abMessageData = abMsg;
-
-            _nDataLength = abMsg.Length;
+            _nDataLength = _abMessageData.Length;
         }
 
         public byte[] fnabGetBytes()
         {
             try
             {
-                byte[] abBuffer = { };
-                using (MemoryStream ms = new MemoryStream())
+                using (var ms = new MemoryStream())
+                using (var bw = new BinaryWriter(ms))
                 {
-                    using (BinaryWriter bw = new BinaryWriter(ms))
-                    {
-                        bw.Write(_nCommand);
-                        bw.Write(_nParam);
-                        bw.Write(_nDataLength);
-                        bw.Write(_abMessageData);
-
-                        abBuffer = ms.ToArray();
-                    }
+                    bw.Write(_nCommand);
+                    bw.Write(_nParam);
+                    bw.Write(_nDataLength);
+                    bw.Write(_abMessageData);
+                    return ms.ToArray();
                 }
-
-                return abBuffer;
             }
             catch (Exception ex)
             {
                 MessageBox.Show(ex.Message, "fnabGetBytes()", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                return new byte[0];
+                return Array.Empty<byte>();
             }
         }
 
         public (byte nCommand, byte nParam, int nLength, byte[] abMsg) fnGetMsg()
-        {
-            (
-                byte nCommand,
-                byte nParam,
-                int nLength,
-                byte[] abMsg
-            ) ret = (
-                m_nCommand,
-                m_nParam,
-                m_nDataLength,
-                m_abMessageData
-            );
-
-            return ret;
-        }
+            => (_nCommand, _nParam, _nDataLength, _abMessageData);
 
         public static (byte nCommand, byte nParam, int nLength) fnGetHeader(byte[] abBuffer)
         {
-            (
-                byte nCommand,
-                byte nParam,
-                int nLength
-            ) ret = (0, 0, 0);
+            if (abBuffer == null || abBuffer.Length < HEADER_SIZE)
+                return (0, 0, 0);
 
-            ret.nCommand = abBuffer[0];
-            ret.nParam = abBuffer[1];
-            ret.nLength = BitConverter.ToInt32(abBuffer, 2);
+            byte nCommand = abBuffer[0];
+            byte nParam = abBuffer[1];
+            int nLength = BitConverter.ToInt32(abBuffer, 2);
 
-            return ret;
+            return (nCommand, nParam, nLength);
         }
     }
 }

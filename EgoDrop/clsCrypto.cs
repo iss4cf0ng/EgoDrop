@@ -10,12 +10,14 @@ namespace EgoDrop
 {
     public class clsCrypto
     {
+        public string m_szChallenge = string.Empty;
+
         public int m_nRSA_KeySize = 4096;
         public int m_nAES_KeySize = 256;
         public int m_nAES_BlockSize = 128;
 
         public (string szPublicKey, string szPrivateKey) m_RSAKeyPair { get; set; }
-        public (byte[] abPublicKey, string abPrivateKey) m_abRSAKeyPair { get; set; }
+        public (byte[] abPublicKey, byte[] abPrivateKey) m_abRSAKeyPair { get; set; }
         public (byte[] abKey, byte[] abIV) m_abAESKey { get; set; }
         public (string szKey, string szIV) m_szAESKey { get { return (Convert.ToBase64String(m_abAESKey.abKey), Convert.ToBase64String(m_abAESKey.abIV)); } }
 
@@ -51,7 +53,7 @@ namespace EgoDrop
             if (bSaveInClass)
             {
                 m_RSAKeyPair = keyPair;
-                m_abAESKey = abKeyPair;
+                m_abRSAKeyPair = abKeyPair;
             }
 
             rsa.Dispose();
@@ -73,6 +75,20 @@ namespace EgoDrop
             return abCipher;
         }
 
+        public byte[] fnabRSADecrypt(byte[] abBuffer, byte[] abKey)
+        {
+            RSACryptoServiceProvider rsa = new RSACryptoServiceProvider();
+            rsa.KeySize = m_nRSA_KeySize;
+            rsa.ImportRSAPrivateKey(abKey, out _);
+
+            byte[] abPlain = rsa.Decrypt(abBuffer, false);
+
+            rsa.Dispose();
+
+            return abPlain;
+        }
+        public byte[] fnabRSADecrypt(string szCipher) => fnabRSADecrypt(szCipher, m_RSAKeyPair.szPrivateKey);
+        public byte[] fnabRSADecrypt(byte[] abBuffer) => fnabRSADecrypt(abBuffer, m_RSAKeyPair.szPrivateKey);
         public byte[] fnabRSADecrypt(string szCipher, string szPrivateKey) => fnabRSADecrypt(Encoding.UTF8.GetBytes(szCipher), szPrivateKey);
         public byte[] fnabRSADecrypt(byte[] abBuffer, string szPrivateKey)
         {
@@ -113,18 +129,21 @@ namespace EgoDrop
             return (abKey, abIV);
         }
 
+        public void fnAesSetNewKeyIV(byte[] abKey, byte[] abIV)
+        {
+            m_abAESKey = (abKey, abIV);
+        }
 
-        public string fnszAESEncrypt(string szPlain) => Convert.ToBase64String(fnabAESEncrypt(Encoding.UTF8.GetBytes(szPlain)));
-        public string fnszAESEncrypt(byte[] abPlain) => Convert.ToBase64String(fnabAESEncrypt(abPlain));
-        public byte[] fnabAESEncrypt(byte[] abPlain, string szKey, string szIV) => fnabAESEncrypt(abPlain, Encoding.UTF8.GetBytes(szKey), Encoding.UTF8.GetBytes(szIV));
-        public byte[] fnabAESEncrypt(byte[] abPlain) => fnabAESEncrypt(abPlain, m_abAESKey.abKey, m_abAESKey.abIV);
-        public byte[] fnabAESEncrypt(byte[] abPlain, byte[] abKey, byte[] abIV)
+        public string fnszAESEncrypt(string szPlain) => Convert.ToBase64String(fnabAESEncrypt(szPlain));
+        public byte[] fnabAESEncrypt(string szPlain) => fnabAESEncrypt(szPlain, m_abAESKey.abKey, m_abAESKey.abIV);
+        public byte[] fnabAESEncrypt(string szPlain, byte[] abKey, byte[] abIV)
         {
             byte[] abCipher = { };
             using (Aes aes = Aes.Create())
             {
                 aes.Mode = CipherMode.CBC;
                 aes.KeySize = m_nAES_KeySize;
+                aes.BlockSize = m_nAES_BlockSize;
                 aes.Key = abKey;
                 aes.IV = abIV;
 
@@ -135,9 +154,10 @@ namespace EgoDrop
                     {
                         using (StreamWriter sw = new StreamWriter(cs))
                         {
-                            sw.Write(abPlain);
-                            abCipher = ms.ToArray();
+                            sw.Write(szPlain);
                         }
+
+                        abCipher = ms.ToArray();
                     }
                 }
             }
@@ -145,6 +165,7 @@ namespace EgoDrop
             return abCipher;
         }
 
+        public string fnszAESDecrypt(byte[] abCipher) => fnszAESDecrypt(abCipher, m_abAESKey.abKey, m_abAESKey.abIV);
         public byte[] fnabAESDecrypt(byte[] abCipher, byte[] abKey, byte[] abIV) => Encoding.UTF8.GetBytes(fnszAESDecrypt(abCipher, abKey, abIV));
         public string fnszAESDecrypt(byte[] abCipher, byte[] abKey, byte[] abIV)
         {
@@ -158,19 +179,18 @@ namespace EgoDrop
                 aes.IV = abIV;
 
                 ICryptoTransform decryptor = aes.CreateDecryptor(abKey, abIV);
-                using (MemoryStream ms = new MemoryStream())
+                using (MemoryStream ms = new MemoryStream(abCipher))
                 {
                     using (CryptoStream cs = new CryptoStream(ms, decryptor, CryptoStreamMode.Read))
                     {
                         using (StreamReader sr = new StreamReader(cs))
                         {
                             szPlain = sr.ReadToEnd();
+                            return szPlain;
                         }
                     }
                 }
             }
-
-            return szPlain;
         }
 
         #endregion

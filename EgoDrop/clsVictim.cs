@@ -63,7 +63,7 @@ namespace EgoDrop
             }), abBuffer);
         }
 
-        public void fnSendEncryptedCommand(uint nCommand, uint nParam, byte[] abMsg)
+        public void fnSendEncryptedCommand(uint nCommand, uint nParam, List<string> lsMsg)
         {
 
         }
@@ -74,9 +74,15 @@ namespace EgoDrop
             fnSendRaw(edp.fnabGetBytes());
         }
 
-        public void fnSendCommand()
+        public void fnSendCommand(string szMsg) => fnSendCommand(szMsg.Split('|').ToList());
+        public void fnSendCommand(string[] aMsg) => fnSendCommand(aMsg.ToList());
+        public void fnSendCommand(List<string> lsMsg)
         {
+            lsMsg = lsMsg.Select(x => clsEZData.fnStrE2B64(x)).ToList();
+            string szMsg = string.Join("|", lsMsg);
+            byte[] abCipher = m_crypto.fnabAESEncrypt(szMsg);
 
+            fnSend(2, 0, abCipher);
         }
     }
 }

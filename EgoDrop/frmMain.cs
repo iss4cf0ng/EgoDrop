@@ -45,9 +45,23 @@ namespace EgoDrop
             }
         }
 
-        public void fnReceivedMessage(clsListener ltn, clsVictim vic, List<string> lsMsg)
+        public void fnReceivedMessage(clsListener ltn, clsVictim victim, List<string> lsMsg)
         {
+            if (lsMsg.Count == 0)
+                return;
 
+            if (lsMsg[0] == "info")
+            {
+                Invoke(new Action(() =>
+                {
+                    ListViewItem item = new ListViewItem("X");
+                    item.SubItems.Add(victim.m_sktClnt.RemoteEndPoint.ToString());
+                    item.SubItems.Add("X");
+                    item.SubItems.Add(lsMsg[3]);
+
+                    listView1.Items.Add(item);
+                }));
+            }
         }
 
         public void fnOnVictimDisconnected(clsListener ltn, clsVictim vic)

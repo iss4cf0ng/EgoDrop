@@ -1,3 +1,5 @@
+#pragma once
+
 #include <iostream>
 #include <string>
 #include <sys/utsname.h>
@@ -8,6 +10,8 @@
 #include <sstream>
 #include <vector>
 #include <unordered_map>
+
+#include "clsTools.hpp"
 
 class clsInfoSpyder
 {
@@ -49,16 +53,19 @@ public:
     clsInfoSpyder()
     {
         uid_t uid = getuid();
+        std::string szOsName = fnszGetOSName();
+        std::string szUsername = fnszUsernameFromUid(uid);
+        std::string szUname = fnszUnameInfo();
+        std::string szMachineID = fnszReadMachineId();
+        bool bIsRoot = uid == 0;
+        bool bHasDesktop = fnbHasDesktopSession();
         
-        stInfo info = {
-            uid,
-            fnszGetOSName(),
-            fnszUsernameFromUid(uid),
-            fnszUnameInfo(),
-            fnszReadMachineId(),
-            uid == 0,
-            fnbHasDesktopSession(),
-        };
+        stInfo info;
+        info.m_nUid = uid;
+        info.m_szUsername = szUsername;
+        info.m_szUname = szUname;
+        info.m_szMachineID = szMachineID;
+        info.m_bIsRoot = bIsRoot;
 
         m_info = info;
     }
@@ -99,6 +106,8 @@ public:
         {
             szPrettyName = fnszUnameInfo();
         }
+
+        return szPrettyName;
     }
 
     std::unordered_map<std::string, std::string> fnParseOSName(const std::string &szFilePath = "/etc/os-release")
@@ -157,7 +166,10 @@ public:
         struct passwd pwd_buf;
         struct passwd *pwd = nullptr;
 
-        std::vector<char> buf(16234);
+        long bufsize = sysconf(_SC_GETPW_R_SIZE_MAX);
+        if (bufsize == -1) bufsize = 16384; // fallback
+
+        std::vector<char> buf(static_cast<size_t>(bufsize));
         int r = getpwuid_r(uid, &pwd_buf, buf.data(), buf.size(), &pwd);
         if (r == 0 && pwd)
             return std::string(pwd->pw_name);
@@ -165,7 +177,7 @@ public:
         const char *env = getenv("USER");
         if (env)
             return std::string(env);
-        
+
         return "";
     }
 

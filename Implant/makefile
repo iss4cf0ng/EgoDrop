@@ -1,6 +1,6 @@
 # Variables
 CXX = g++
-CXXFLAGS = -Wall -O2
+CXXFLAGS = -Wall -O2 -std=c++17
 SRC_DIR = src
 BIN_DIR = bin
 TARGET = $(BIN_DIR)/rat_startup
@@ -8,12 +8,16 @@ TARGET = $(BIN_DIR)/rat_startup
 # Collect all .cpp files in src/
 SRCS = $(wildcard $(SRC_DIR)/*.cpp)
 
+# OpenSSL flags using pkg-config
+OPENSSL_CFLAGS := $(shell pkg-config --cflags openssl)
+OPENSSL_LIBS   := $(shell pkg-config --libs openssl)
+
 # Default target
 all: $(BIN_DIR) $(TARGET)
 
 # Compile all cpp directly into single binary
 $(TARGET): $(SRCS)
-	$(CXX) $(CXXFLAGS) -o $@ $^
+	$(CXX) $(CXXFLAGS) $(OPENSSL_CFLAGS) -o $@ $^ $(OPENSSL_LIBS)
 
 # Ensure bin/ exists
 $(BIN_DIR):

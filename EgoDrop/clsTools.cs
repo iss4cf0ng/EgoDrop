@@ -16,7 +16,7 @@ namespace EgoDrop
         public static byte[] fnabCombineBytes(byte[] abFirstBytes, byte[] abSecondBytes) => fnabCombineBytes(abFirstBytes, 0, abFirstBytes.Length, abSecondBytes, 0, abSecondBytes.Length);
         public static byte[] fnabCombineBytes(byte[] abFirstBytes, int nFirstIndex, int nFirstLength, byte[] abSecondBytes, int nSecondIndex, int nSecondLength)
         {
-            byte[] abBytes = { };
+            byte[] abBytes = new byte[nFirstLength + nSecondLength];
             using (MemoryStream ms = new MemoryStream())
             {
                 ms.Write(abFirstBytes, nFirstIndex, nFirstLength);

