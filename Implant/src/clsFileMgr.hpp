@@ -11,12 +11,13 @@
 #include <ctime>
 #include <iomanip>
 #include <dirent.h>
+#include <filesystem>
 
 #include "clsTools.hpp"
 
 class clsFileMgr
 {
-private:
+public:
     std::string m_szInitFileDir;
     
 public:
@@ -33,7 +34,7 @@ public:
 
     clsFileMgr()
     {
-
+        m_szInitFileDir = std::filesystem::current_path();
     }
 
     ~clsFileMgr()
@@ -47,17 +48,15 @@ public:
 
         if (stat(szFullPath.c_str(), &st) != 0)
         {
-            //todo: print error.
-            return {  };
+            perror(("stat failed: " + szFullPath).c_str());
+            return {};
         }
 
-        size_t nSize = st.st_size; //bytes
-        
         stFileInfo info = {
-            st.st_mode & S_IFDIR,
+            S_ISDIR(st.st_mode),
             szFullPath,
             fnszGetPermission(st),
-            nSize,
+            static_cast<size_t>(st.st_size),
             fnTimeToString(st.st_ctime),
             fnTimeToString(st.st_mtime),
             fnTimeToString(st.st_atime),
@@ -69,17 +68,27 @@ public:
     std::vector<stFileInfo> fnScandir(const std::string& szDirPath)
     {
         struct dirent** namelist;
-        int n = scandir(szDirPath.data(), &namelist, nullptr, alphasort);
+        int n = scandir(szDirPath.c_str(), &namelist, nullptr, alphasort);
         if (n < 0)
         {
-            
+            perror("scandir");
+            return {};
         }
 
-        std::vector<stFileInfo> uvFileInfo(n);
+        std::vector<stFileInfo> uvFileInfo;
+        uvFileInfo.reserve(n);  // optional optimization
+
         while (n--)
         {
             const char* pFileName = namelist[n]->d_name;
-            uvFileInfo.push_back(fnGetFileInfo(namelist[n]->d_name));
+            std::string szFileName(pFileName);
+
+            // build full path
+            std::string szFullPath = szDirPath + "/" + szFileName;
+
+            auto info = fnGetFileInfo(szFullPath);
+            uvFileInfo.push_back(info);
+
             free(namelist[n]);
         }
 

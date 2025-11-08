@@ -2,6 +2,10 @@
 
 #include <iostream>
 #include <string>
+#include <vector>
+
+typedef const std::vector<unsigned char> BUFFER;
+typedef const std::vector<std::string> STRLIST;
 
 class clsTools
 {

@@ -178,6 +178,8 @@ namespace EgoDrop
                     }
                 }
                 while (nRecvLength > 0);
+
+                fnOnVictimDisconnected(victim);
             }
             catch (Exception ex)
             {

