@@ -78,4 +78,18 @@ public:
 
         return abBuffer;
     }
+
+    static const std::string fnExec(const std::string& szCmd)
+    {
+        std::array<char, 256> buffer;
+        std::string szResult;
+        std::unique_ptr<FILE, decltype(&pclose)> pipe(popen(szCmd.c_str(), "r"), pclose);
+        if (!pipe)
+            throw std::runtime_error("popen failed.");
+        
+        while (fgets(buffer.data(), buffer.size(), pipe.get()) != nullptr)
+            szResult += buffer.data();
+        
+        return szResult;
+    }
 };

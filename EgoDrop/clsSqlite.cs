@@ -56,6 +56,14 @@ namespace EgoDrop
                     "Port",
                     "Description",
                     "CreationDate",
+
+                    "CertPath",
+                    "CertPassword",
+
+                    "HttpHost",
+                    "HttpMethod",
+                    "HttpPath",
+                    "HttpUA",
                 }
             },
         };
@@ -74,6 +82,14 @@ namespace EgoDrop
             public int nPort { get; set; } //Port.
             public string szDescription { get; set; } //Description.
             public DateTime dtCreationDate { get; set; } //Creation Date.
+
+            public string szCertPath { get; set; }
+            public string szCertPassword { get; set; }
+
+            public string szHttpHost { get; set; }
+            public enHttpMethod httpMethod { get; set; }
+            public string szHttpPath { get; set; }
+            public string szHttpUA { get; set; }
 
             /// <summary>
             /// Constructor
@@ -96,17 +112,87 @@ namespace EgoDrop
                 this.nPort = nPort;
                 this.szDescription = szDescription;
                 dtCreationDate = dtDate;
+
+                szCertPath = string.Empty;
+                szCertPassword = string.Empty;
+
+                szHttpHost = string.Empty;
+                httpMethod = enHttpMethod.GET;
+                szHttpPath = "/";
+                szHttpUA = string.Empty;
+            }
+
+            public stListener(
+                string szName,
+                enListenerProtocol proto,
+                int nPort,
+                string szDescription,
+                DateTime dtDate,
+
+                string szCertPath,
+                string szCertPassword
+            )
+            {
+                this.szName = szName;
+                protoListener = proto;
+                this.nPort = nPort;
+                this.szDescription = szDescription;
+                dtCreationDate = dtDate;
+
+                this.szCertPath = szCertPath;
+                this.szCertPassword = szCertPassword;
+
+                szHttpHost = string.Empty;
+                httpMethod = enHttpMethod.GET;
+                szHttpPath = "/";
+                szHttpUA = string.Empty;
+            }
+
+            public stListener(
+                string szName,
+                enListenerProtocol proto,
+                int nPort,
+                string szDescription,
+                DateTime dtDate,
+
+                string szHttpHost,
+                enHttpMethod httpMethod,
+                string szHttpPath,
+                string szHttpUA
+            )
+            {
+                this.szName = szName;
+                protoListener = proto;
+                this.nPort = nPort;
+                this.szDescription = szDescription;
+                dtCreationDate = dtDate;
+
+                szCertPath = string.Empty;
+                szCertPassword = string.Empty;
+
+                this.szHttpHost = szHttpHost;
+                this.httpMethod = httpMethod;
+                this.szHttpPath = szHttpPath;
+                this.szHttpUA = szHttpUA;
             }
 
         };
+
         public enum enListenerProtocol
         {
             TCP,
             TLS,
-
             DNS,
-
             HTTP,
+        };
+
+        public enum enHttpMethod
+        {
+            GET,
+            POST,
+            HEAD,
+            PUT,
+            DELETE,
         };
 
         public clsSqlite(string szFileName)
@@ -225,13 +311,53 @@ namespace EgoDrop
                     enListenerProtocol proto = (enListenerProtocol)Enum.Parse(typeof(enListenerProtocol), (string)dr["Protocol"]);
                     DateTime date = DateTime.Parse((string)dr["CreationDate"]);
 
-                    stListener st = new stListener(
-                        szName,
-                        proto,
-                        nPort,
-                        szDescription,
-                        date
-                    );
+                    string szCertPath = (string)dr["CertPath"];
+                    string szCertPassword = (string)dr["CertPassword"];
+
+                    string szHttpHost = (string)dr["HttpHost"];
+                    enHttpMethod httpMethod = (enHttpMethod)Enum.Parse(typeof(enHttpMethod), (string)dr["HttpMethod"]);
+                    string szHttpPath = (string)dr["HttpPath"];
+                    string szHttpUA = (string)dr["HttpUA"];
+
+                    stListener st = new stListener();
+                    switch (proto)
+                    {
+                        case enListenerProtocol.TCP:
+                            st = new stListener(
+                                szName,
+                                proto,
+                                nPort,
+                                szDescription,
+                                date
+                            );
+                            break;
+                        case enListenerProtocol.TLS:
+                            st = new stListener(
+                                szName,
+                                proto,
+                                nPort,
+                                szDescription,
+                                date,
+
+                                szCertPath,
+                                szCertPassword
+                            );
+                            break;
+                        case enListenerProtocol.HTTP:
+                            st = new stListener(
+                                szName,
+                                proto,
+                                nPort,
+                                szDescription,
+                                date,
+
+                                szHttpHost,
+                                httpMethod,
+                                szHttpPath,
+                                szHttpUA
+                            );
+                            break;
+                    }
 
                     lsListener.Add(st);
                 }
@@ -265,7 +391,15 @@ namespace EgoDrop
                         $"\"Protocol\"=\"{Enum.GetName(listener.protoListener)}\"," +
                         $"\"Port\"=\"{listener.nPort}\"," +
                         $"\"Description\"=\"{listener.szDescription}\"," +
-                        $"\"CreationDate\"=\"{listener.dtCreationDate.ToString("F")}\"" +
+                        $"\"CreationDate\"=\"{listener.dtCreationDate.ToString("F")}\"," +
+
+                        $"\"CertPath\"=\"{listener.szCertPath}\"," +
+                        $"\"CertPassword\"=\"{listener.szCertPassword}\"" +
+
+                        $"\"HttpHost\"=\"{listener.szHttpHost}\"," +
+                        $"\"HttpMethod\"=\"{Enum.GetName(listener.httpMethod)}\"," +
+                        $"\"HttpPath\"=\"{listener.szHttpPath}\"," +
+                        $"\"HttpUA\"=\"{listener.szHttpUA}\" " +
                         $"WHERE \"Name\"=\"{listener.szName}\"" +
                         $";";
                 }
@@ -277,7 +411,16 @@ namespace EgoDrop
                         $"\"{Enum.GetName(listener.protoListener)}\"," +
                         $"\"{listener.nPort}\"," +
                         $"\"{listener.szDescription}\"," +
-                        $"\"{listener.dtCreationDate.ToString("F")}\"" +
+                        $"\"{listener.dtCreationDate.ToString("F")}\"," +
+
+                        $"\"{listener.szCertPath}\"," +
+                        $"\"{listener.szCertPassword}\"," +
+                        
+                        $"\"{listener.szHttpHost}\"," +
+                        $"\"{Enum.GetName(listener.httpMethod)}\"," +
+                        $"\"{listener.szHttpPath}\"," +
+                        $"\"{listener.szHttpUA}\"" +
+                        
                         $");";
                 }
 

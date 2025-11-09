@@ -122,6 +122,8 @@ namespace EgoDrop
                                     lsFile.Add(file);
                             }
 
+                            //todo: sorting lists.
+
                             List<stFileInfo> lFinal = lsFolder.Concat(lsFile).ToList();
                             foreach (var entry in lFinal)
                             {
@@ -142,6 +144,9 @@ namespace EgoDrop
                                     fnAddTreeNodeByPath(entry.szFilePath);
                                 }
                             }
+
+                            tnNode.Expand();
+                            tnNode.EnsureVisible();
 
                             listView1.Refresh();
                         }

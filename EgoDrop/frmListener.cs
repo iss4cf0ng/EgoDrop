@@ -47,13 +47,13 @@ namespace EgoDrop
                             lis = new clsTcpListener(l.szName, l.nPort, l.szDescription);
                             break;
                         case clsSqlite.enListenerProtocol.TLS:
-                            //Todo: TLS communication.
+                            lis = new clsTlsListener(l.szName, l.nPort, l.szDescription, l.szCertPath, l.szCertPassword);
                             break;
                         case clsSqlite.enListenerProtocol.DNS:
                             lis = new clsUdpListener(l.szName, l.nPort, l.szDescription);
                             break;
                         case clsSqlite.enListenerProtocol.HTTP:
-                            //Todo: HTTP communication.
+                            lis = new clsHttpListener(l.szName, l.nPort, false, l.szDescription, l.szHttpHost, l.httpMethod, l.szHttpPath, l.szHttpUA);
                             break;
                     }
                 }

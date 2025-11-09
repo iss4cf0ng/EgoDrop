@@ -123,6 +123,7 @@
             // splitContainer1
             // 
             splitContainer1.Dock = DockStyle.Fill;
+            splitContainer1.FixedPanel = FixedPanel.Panel1;
             splitContainer1.Location = new Point(3, 30);
             splitContainer1.Name = "splitContainer1";
             // 

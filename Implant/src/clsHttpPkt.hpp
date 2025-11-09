@@ -41,6 +41,12 @@ private:
     }
 
 public:
+    struct stHttpResponse {
+        std::string szHeader;
+        std::string szBody;
+    };
+
+public:
     clsHttpPkt()
     {
 
@@ -76,21 +82,21 @@ public:
     }
     BUFFER fnGetPacket(
         enMethod method,
-        std::string& szPath,
-        std::string& szHost,
-        std::string& szContentType,
-        std::string& szUA,
-        std::string& szBody
+        const std::string& szPath,
+        const std::string& szHost,
+        const std::string& szContentType,
+        const std::string& szUA,
+        const std::string& szBody
     )
     {
-        std::string szMethod = fnEnumToString(m_method);
+        std::string szMethod = fnEnumToString(method);
 
         std::string szRequest = szMethod + " " + szPath + " HTTP/1.1\r\n";
         szRequest += "Host: " + szHost + "\r\n";
         szRequest += "User-Agent: " + szUA + "\r\n";
-        szRequest += "Connection: close\r\n";
+        szRequest += "Connection: keep-alive\r\n";
 
-        if (m_method == enMethod::POST || m_method == enMethod::PUT)
+        if (method == enMethod::POST || method == enMethod::PUT)
         {
             szRequest += "Content-Length: " + std::to_string(szBody.size()) + "\r\n";
             szRequest += "Content-Type: " + szContentType + "\r\n";
@@ -106,5 +112,22 @@ public:
         BUFFER abBuffer = clsEZData::fnStringToBuffer(szRequest);
 
         return abBuffer;
+    }
+
+    static stHttpResponse fnParseHttpResponse(const std::string& response) {
+        stHttpResponse result;
+
+        const std::string delimiter = "\r\n\r\n";
+        size_t pos = response.find(delimiter);
+
+        if (pos != std::string::npos) {
+            result.szHeader = response.substr(0, pos);
+            result.szBody   = response.substr(pos + delimiter.size());
+        } else {
+            result.szHeader = response;
+            result.szBody = "";
+        }
+
+        return result;
     }
 };

