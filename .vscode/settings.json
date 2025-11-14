@@ -51,6 +51,11 @@
         "iomanip": "cpp",
         "chrono": "cpp",
         "codecvt": "cpp",
-        "ratio": "cpp"
+        "ratio": "cpp",
+        "map": "cpp",
+        "semaphore": "cpp",
+        "stop_token": "cpp",
+        "thread": "cpp",
+        "csignal": "cpp"
     }
 }

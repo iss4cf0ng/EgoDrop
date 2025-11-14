@@ -68,6 +68,7 @@ namespace EgoDrop
                     bw.Write(_nParam);
                     bw.Write(_nDataLength);
                     bw.Write(_abMessageData);
+
                     return ms.ToArray();
                 }
             }

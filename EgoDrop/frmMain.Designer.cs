@@ -53,6 +53,7 @@
             contextMenuStrip1 = new ContextMenuStrip(components);
             toolStripMenuItem5 = new ToolStripMenuItem();
             toolStripMenuItem6 = new ToolStripMenuItem();
+            toolStripMenuItem11 = new ToolStripMenuItem();
             toolStripMenuItem7 = new ToolStripMenuItem();
             toolStripMenuItem8 = new ToolStripMenuItem();
             toolStripMenuItem9 = new ToolStripMenuItem();
@@ -239,49 +240,56 @@
             // contextMenuStrip1
             // 
             contextMenuStrip1.Font = new Font("Microsoft JhengHei UI", 11.25F, FontStyle.Regular, GraphicsUnit.Point, 136);
-            contextMenuStrip1.Items.AddRange(new ToolStripItem[] { toolStripMenuItem5, toolStripMenuItem6, toolStripMenuItem7, toolStripMenuItem8, toolStripMenuItem9, toolStripMenuItem10 });
+            contextMenuStrip1.Items.AddRange(new ToolStripItem[] { toolStripMenuItem5, toolStripMenuItem6, toolStripMenuItem11, toolStripMenuItem7, toolStripMenuItem8, toolStripMenuItem9, toolStripMenuItem10 });
             contextMenuStrip1.Name = "contextMenuStrip1";
-            contextMenuStrip1.Size = new Size(135, 148);
+            contextMenuStrip1.Size = new Size(181, 194);
             // 
             // toolStripMenuItem5
             // 
             toolStripMenuItem5.Name = "toolStripMenuItem5";
-            toolStripMenuItem5.Size = new Size(134, 24);
-            toolStripMenuItem5.Text = "Info";
+            toolStripMenuItem5.Size = new Size(180, 24);
+            toolStripMenuItem5.Text = "InfoSpyder";
             toolStripMenuItem5.Click += toolStripMenuItem5_Click;
             // 
             // toolStripMenuItem6
             // 
             toolStripMenuItem6.Name = "toolStripMenuItem6";
-            toolStripMenuItem6.Size = new Size(134, 24);
-            toolStripMenuItem6.Text = "File";
+            toolStripMenuItem6.Size = new Size(180, 24);
+            toolStripMenuItem6.Text = "File Manager";
             toolStripMenuItem6.Click += toolStripMenuItem6_Click;
+            // 
+            // toolStripMenuItem11
+            // 
+            toolStripMenuItem11.Name = "toolStripMenuItem11";
+            toolStripMenuItem11.Size = new Size(180, 24);
+            toolStripMenuItem11.Text = "Terminal";
+            toolStripMenuItem11.Click += toolStripMenuItem11_Click;
             // 
             // toolStripMenuItem7
             // 
             toolStripMenuItem7.Name = "toolStripMenuItem7";
-            toolStripMenuItem7.Size = new Size(134, 24);
+            toolStripMenuItem7.Size = new Size(180, 24);
             toolStripMenuItem7.Text = "Process";
             toolStripMenuItem7.Click += toolStripMenuItem7_Click;
             // 
             // toolStripMenuItem8
             // 
             toolStripMenuItem8.Name = "toolStripMenuItem8";
-            toolStripMenuItem8.Size = new Size(134, 24);
+            toolStripMenuItem8.Size = new Size(180, 24);
             toolStripMenuItem8.Text = "Service";
             toolStripMenuItem8.Click += toolStripMenuItem8_Click;
             // 
             // toolStripMenuItem9
             // 
             toolStripMenuItem9.Name = "toolStripMenuItem9";
-            toolStripMenuItem9.Size = new Size(134, 24);
+            toolStripMenuItem9.Size = new Size(180, 24);
             toolStripMenuItem9.Text = "Monitor";
             toolStripMenuItem9.Click += toolStripMenuItem9_Click;
             // 
             // toolStripMenuItem10
             // 
             toolStripMenuItem10.Name = "toolStripMenuItem10";
-            toolStripMenuItem10.Size = new Size(134, 24);
+            toolStripMenuItem10.Size = new Size(180, 24);
             toolStripMenuItem10.Text = "Camera";
             toolStripMenuItem10.Click += toolStripMenuItem10_Click;
             // 
@@ -395,5 +403,6 @@
         private ToolStripMenuItem toolStripMenuItem8;
         private ToolStripMenuItem toolStripMenuItem9;
         private ToolStripMenuItem toolStripMenuItem10;
+        private ToolStripMenuItem toolStripMenuItem11;
     }
 }

@@ -68,9 +68,10 @@
             Controls.Add(menuStrip1);
             Font = new Font("Microsoft JhengHei UI", 11.25F, FontStyle.Regular, GraphicsUnit.Point, 136);
             MainMenuStrip = menuStrip1;
-            Margin = new Padding(4, 4, 4, 4);
+            Margin = new Padding(4);
             Name = "frmSrvMgr";
             Text = "frmSrvMgr";
+            FormClosed += frmSrvMgr_FormClosed;
             Load += frmSrvMgr_Load;
             ResumeLayout(false);
             PerformLayout();

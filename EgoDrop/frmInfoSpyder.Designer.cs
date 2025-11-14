@@ -30,10 +30,10 @@
         {
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(frmInfoSpyder));
             toolStrip1 = new ToolStrip();
-            statusStrip1 = new StatusStrip();
-            richTextBox1 = new RichTextBox();
-            toolStripStatusLabel1 = new ToolStripStatusLabel();
             toolStripButton1 = new ToolStripButton();
+            statusStrip1 = new StatusStrip();
+            toolStripStatusLabel1 = new ToolStripStatusLabel();
+            richTextBox1 = new RichTextBox();
             toolStrip1.SuspendLayout();
             statusStrip1.SuspendLayout();
             SuspendLayout();
@@ -48,6 +48,15 @@
             toolStrip1.TabIndex = 0;
             toolStrip1.Text = "toolStrip1";
             // 
+            // toolStripButton1
+            // 
+            toolStripButton1.DisplayStyle = ToolStripItemDisplayStyle.Text;
+            toolStripButton1.Image = (Image)resources.GetObject("toolStripButton1.Image");
+            toolStripButton1.ImageTransparentColor = Color.Magenta;
+            toolStripButton1.Name = "toolStripButton1";
+            toolStripButton1.Size = new Size(66, 23);
+            toolStripButton1.Text = "Refresh";
+            // 
             // statusStrip1
             // 
             statusStrip1.Font = new Font("Microsoft JhengHei UI", 11.25F);
@@ -58,6 +67,12 @@
             statusStrip1.TabIndex = 1;
             statusStrip1.Text = "statusStrip1";
             // 
+            // toolStripStatusLabel1
+            // 
+            toolStripStatusLabel1.Name = "toolStripStatusLabel1";
+            toolStripStatusLabel1.Size = new Size(158, 19);
+            toolStripStatusLabel1.Text = "toolStripStatusLabel1";
+            // 
             // richTextBox1
             // 
             richTextBox1.Dock = DockStyle.Fill;
@@ -66,21 +81,6 @@
             richTextBox1.Size = new Size(800, 400);
             richTextBox1.TabIndex = 2;
             richTextBox1.Text = "";
-            // 
-            // toolStripStatusLabel1
-            // 
-            toolStripStatusLabel1.Name = "toolStripStatusLabel1";
-            toolStripStatusLabel1.Size = new Size(158, 19);
-            toolStripStatusLabel1.Text = "toolStripStatusLabel1";
-            // 
-            // toolStripButton1
-            // 
-            toolStripButton1.DisplayStyle = ToolStripItemDisplayStyle.Text;
-            toolStripButton1.Image = (Image)resources.GetObject("toolStripButton1.Image");
-            toolStripButton1.ImageTransparentColor = Color.Magenta;
-            toolStripButton1.Name = "toolStripButton1";
-            toolStripButton1.Size = new Size(128, 23);
-            toolStripButton1.Text = "toolStripButton1";
             // 
             // frmInfoSpyder
             // 

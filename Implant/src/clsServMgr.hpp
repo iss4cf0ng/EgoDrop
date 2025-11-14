@@ -1,4 +1,4 @@
-
+#pragma once
 
 #include <sstream>
 #include <vector>
@@ -6,6 +6,7 @@
 #include <array>
 #include <memory>
 #include <map>
+#include <cstdlib>
 
 #include "clsTools.hpp"
 
@@ -73,4 +74,6 @@ public:
 
         return services;
     }
+
+    
 };

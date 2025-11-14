@@ -3,9 +3,15 @@
 #include <iostream>
 #include <string>
 #include <vector>
+#include <tuple>
+#include <cstdio>
+#include <stdexcept>
 
 typedef const std::vector<unsigned char> BUFFER;
+typedef const std::string STR;
 typedef const std::vector<std::string> STRLIST;
+typedef const std::vector<STRLIST> STRLIST_2D;
+typedef const std::tuple<int, std::string> RETMSG;
 
 class clsTools
 {
@@ -79,17 +85,22 @@ public:
         return abBuffer;
     }
 
-    static const std::string fnExec(const std::string& szCmd)
+    static std::string fnExec(const std::string& szCmd)
     {
-        std::array<char, 256> buffer;
-        std::string szResult;
-        std::unique_ptr<FILE, decltype(&pclose)> pipe(popen(szCmd.c_str(), "r"), pclose);
-        if (!pipe)
-            throw std::runtime_error("popen failed.");
-        
-        while (fgets(buffer.data(), buffer.size(), pipe.get()) != nullptr)
-            szResult += buffer.data();
-        
+        std::string szResult = "";
+        FILE* pipe = popen(szCmd.c_str(), "r"); // Open a pipe to the command's stdout
+
+        if (!pipe) {
+            return "Error: Could not open pipe to command.";
+        }
+
+        char buffer[128]; // Buffer to read chunks of output
+        while (fgets(buffer, sizeof(buffer), pipe) != nullptr) {
+            szResult += buffer; // Append buffer content to the result string
+        }
+
+        pclose(pipe); // Close the pipe
         return szResult;
     }
+
 };

@@ -55,7 +55,7 @@
             // 
             listView1.Dock = DockStyle.Fill;
             listView1.Location = new Point(0, 24);
-            listView1.Margin = new Padding(4, 4, 4, 4);
+            listView1.Margin = new Padding(4);
             listView1.Name = "listView1";
             listView1.Size = new Size(741, 355);
             listView1.TabIndex = 2;
@@ -71,9 +71,10 @@
             Controls.Add(menuStrip1);
             Font = new Font("Microsoft JhengHei UI", 11.25F, FontStyle.Regular, GraphicsUnit.Point, 136);
             MainMenuStrip = menuStrip1;
-            Margin = new Padding(4, 4, 4, 4);
+            Margin = new Padding(4);
             Name = "frmProcMgr";
             Text = "frmProcMgr";
+            FormClosed += frmProcMgr_FormClosed;
             Load += frmProcMgr_Load;
             ResumeLayout(false);
             PerformLayout();

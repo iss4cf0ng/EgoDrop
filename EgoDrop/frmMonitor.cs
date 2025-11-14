@@ -12,9 +12,23 @@ namespace EgoDrop
 {
     public partial class frmMonitor : Form
     {
-        public frmMonitor()
+        private clsVictim m_victim { get; set; }
+
+        public frmMonitor(clsVictim victim)
         {
             InitializeComponent();
+
+            m_victim = victim;
+        }
+
+        private void fnSetup()
+        {
+
+        }
+
+        private void frmMonitor_Load(object sender, EventArgs e)
+        {
+            fnSetup();
         }
     }
 }

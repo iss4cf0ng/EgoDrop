@@ -14,7 +14,9 @@
 #include "clsTools.hpp"
 #include "clsEZData.hpp"
 #include "clsCrypto.hpp"
+
 #include "clsHttpPkt.hpp"
+#include "clsDnsPkt.hpp"
 
 class clsVictim
 {

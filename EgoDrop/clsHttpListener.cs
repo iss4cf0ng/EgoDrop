@@ -184,7 +184,8 @@ namespace EgoDrop
                     {
                         MessageBox.Show(ex.Message);
                     }
-                } while (nRecv > 0);
+                }
+                while (nRecv > 0);
 
                 fnOnVictimDisconnected(victim);
             }
