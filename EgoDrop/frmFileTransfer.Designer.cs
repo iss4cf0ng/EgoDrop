@@ -1,6 +1,6 @@
 ﻿namespace EgoDrop
 {
-    partial class frmSrvMgr
+    partial class frmFileTransfer
     {
         /// <summary>
         /// Required designer variable.
@@ -28,59 +28,83 @@
         /// </summary>
         private void InitializeComponent()
         {
-            menuStrip1 = new MenuStrip();
+            toolStrip1 = new ToolStrip();
             statusStrip1 = new StatusStrip();
             listView1 = new ListView();
+            columnHeader1 = new ColumnHeader();
+            columnHeader2 = new ColumnHeader();
+            columnHeader3 = new ColumnHeader();
+            columnHeader4 = new ColumnHeader();
             SuspendLayout();
             // 
-            // menuStrip1
+            // toolStrip1
             // 
-            menuStrip1.Location = new Point(0, 0);
-            menuStrip1.Name = "menuStrip1";
-            menuStrip1.Size = new Size(719, 24);
-            menuStrip1.TabIndex = 0;
-            menuStrip1.Text = "menuStrip1";
+            toolStrip1.Location = new Point(0, 0);
+            toolStrip1.Name = "toolStrip1";
+            toolStrip1.Size = new Size(684, 25);
+            toolStrip1.TabIndex = 0;
+            toolStrip1.Text = "toolStrip1";
             // 
             // statusStrip1
             // 
-            statusStrip1.Location = new Point(0, 384);
+            statusStrip1.Location = new Point(0, 405);
             statusStrip1.Name = "statusStrip1";
-            statusStrip1.Size = new Size(719, 22);
+            statusStrip1.Size = new Size(684, 22);
             statusStrip1.TabIndex = 1;
             statusStrip1.Text = "statusStrip1";
             // 
             // listView1
             // 
+            listView1.Columns.AddRange(new ColumnHeader[] { columnHeader1, columnHeader2, columnHeader3, columnHeader4 });
             listView1.Dock = DockStyle.Fill;
-            listView1.Location = new Point(0, 24);
+            listView1.Location = new Point(0, 25);
             listView1.Name = "listView1";
-            listView1.Size = new Size(719, 360);
+            listView1.Size = new Size(684, 380);
             listView1.TabIndex = 2;
             listView1.UseCompatibleStateImageBehavior = false;
+            listView1.View = View.Details;
             // 
-            // frmSrvMgr
+            // columnHeader1
+            // 
+            columnHeader1.Text = "FileName";
+            // 
+            // columnHeader2
+            // 
+            columnHeader2.Text = "FilePath";
+            // 
+            // columnHeader3
+            // 
+            columnHeader3.Text = "Type";
+            // 
+            // columnHeader4
+            // 
+            columnHeader4.Text = "Progress";
+            // 
+            // frmFileTransfer
             // 
             AutoScaleDimensions = new SizeF(9F, 19F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(719, 406);
+            ClientSize = new Size(684, 427);
             Controls.Add(listView1);
             Controls.Add(statusStrip1);
-            Controls.Add(menuStrip1);
+            Controls.Add(toolStrip1);
             Font = new Font("Microsoft JhengHei UI", 11.25F, FontStyle.Regular, GraphicsUnit.Point, 136);
-            MainMenuStrip = menuStrip1;
             Margin = new Padding(4);
-            Name = "frmSrvMgr";
-            Text = "frmSrvMgr";
-            FormClosed += frmSrvMgr_FormClosed;
-            Load += frmSrvMgr_Load;
+            Name = "frmFileTransfer";
+            Text = "frmFileTransfer";
+            Load += frmFileTransfer_Load;
             ResumeLayout(false);
             PerformLayout();
         }
 
         #endregion
 
-        private MenuStrip menuStrip1;
+        private ToolStrip toolStrip1;
         private StatusStrip statusStrip1;
         private ListView listView1;
+        private ColumnHeader columnHeader1;
+        private ColumnHeader columnHeader2;
+        private ColumnHeader columnHeader3;
+        private ColumnHeader columnHeader4;
     }
 }
