@@ -3,7 +3,7 @@ Linux Remote Access Tool \
 Still in development.
 
 # Introduction
-This is an experimental RAT(Remote Access Trojan) for Linux platform.
+This is an experimental RAT(Remote Access Trojan) for Linux platform. C# GUI based server and C++ based payload.
 
 # Goal of Learning
 - How to establish a secure, encrypted communication channel.
@@ -13,7 +13,10 @@ This is an experimental RAT(Remote Access Trojan) for Linux platform.
 - How to implement a communication through DNS tunnel.
 - How to implement remote plugin.
 - How to do beacon like CobaltStrike, Havoc Post Exploitation framework.
+- Smooth file transfer.
+- Virtual terminal based on xterm (Capable to do ssh).
 
 # Done
 - RSA + AES TCP communication.
 - TLS communication.
+- HTTP communication.
