@@ -15,6 +15,7 @@ This is an experimental RAT(Remote Access Trojan) for Linux platform. C# GUI bas
 - How to do beacon like CobaltStrike, Havoc Post Exploitation framework.
 - Smooth file transfer.
 - Virtual terminal based on xterm (Capable to do ssh).
+- VPN.
 
 # Done
 - RSA + AES TCP communication.
