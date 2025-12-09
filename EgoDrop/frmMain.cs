@@ -41,7 +41,7 @@ namespace EgoDrop
             }
             catch (Exception ex)
             {
-
+                
             }
         }
 
@@ -76,6 +76,10 @@ namespace EgoDrop
                         fnSysLog($"New victim[{victim.m_sktClnt.RemoteEndPoint.ToString()}]");
 
                         //Add to group treeview.
+
+                        var n1 = networkView1.AddNode("Host A", szID, new Point(100, 100), imageList1.Images[0]);
+
+                        //networkView1.AddConnection(n1, n2);
                     }
                 }));
             }

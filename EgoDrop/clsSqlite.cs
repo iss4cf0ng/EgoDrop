@@ -19,16 +19,18 @@ namespace EgoDrop
         private Dictionary<string, string[]> m_dicDbStructure = new Dictionary<string, string[]>()
         {
             {
+                //Log.
                 "Logs", new string[]
                 {
-                    "Type",
-                    "OnlineID",
-                    "Func",
-                    "Message",
-                    "CreationDate",
+                    "Type", //Log type: System, Error
+                    "OnlineID", //Victim online ID
+                    "Func", //Function
+                    "Message", //Log message.
+                    "CreationDate", //Log creation date.
                 }
             },
             {
+                //Victim group.
                 "Group", new string[]
                 {
                     "Name",
@@ -36,6 +38,7 @@ namespace EgoDrop
                 }
             },
             {
+                //Victim configuration.
                 "Victim", new string[]
                 {
                     "OnlineID",
@@ -49,50 +52,64 @@ namespace EgoDrop
                 }
             },
             {
+                //Listener configuration.
                 "Listener", new string[]
                 {
-                    "Name",
-                    "Protocol",
-                    "Port",
-                    "Description",
-                    "CreationDate",
+                    "Name", //Listener's name.
+                    "Protocol", //Listener's protocol.
+                    "Port", //Listener's port for listening.
+                    "Description", //Listener's description.
+                    "CreationDate", //Creation date.
 
-                    "CertPath",
-                    "CertPassword",
+                    "CertPath", //SSL certificate file path.
+                    "CertPassword", //SSL certificate file password.
 
-                    "HttpHost",
-                    "HttpMethod",
-                    "HttpPath",
-                    "HttpUA",
+                    "HttpHost", //HTTP request remote host.
+                    "HttpMethod", //HTTP request method(GET/POST/HEAD/PUT/DELETE).
+                    "HttpPath", //HTTP request resource.
+                    "HttpUA", //HTTP user-agent.
                 }
             },
         };
 
-        private string m_szFileName { get; set; }
-        private string m_szConnString { get { return $"Data Source={m_szFileName};Compress=True;"; } }
-        private SQLiteConnection m_sqlConn { get; set; }
+        #region Property
+
+        private string m_szFileName { get; set; } //SQLite3 file path.
+        private string m_szConnString { get { return $"Data Source={m_szFileName};Compress=True;"; } } //SQLite3 connection string.
+        private SQLiteConnection m_sqlConn { get; set; } //SQLite3 connection object.
+
+        #endregion
+        #region Event
+
+        public delegate void dlgLogSystemEventHandler(clsListener listener, clsVictim victim, string szMsg);
+        public event dlgLogSystemEventHandler evtNewSystemLog;
+        public delegate void dlgLogErrorEventHandler(clsListener listener, clsVictim victim, string szMsg);
+        public event dlgLogErrorEventHandler evtNewErrorLog;
+
+        #endregion
+        #region Struct
 
         /// <summary>
-        /// Listener struct
+        /// Listener struct.
         /// </summary>
         public struct stListener
         {
-            public string szName { get; set; } //Listerner's name.
+            public string szName                    { get; set; } //Listerner's name.
             public enListenerProtocol protoListener { get; set; } //Protocol.
-            public int nPort { get; set; } //Port.
-            public string szDescription { get; set; } //Description.
-            public DateTime dtCreationDate { get; set; } //Creation Date.
+            public int nPort                        { get; set; } //Port.
+            public string szDescription             { get; set; } //Description.
+            public DateTime dtCreationDate          { get; set; } //Creation date.
 
-            public string szCertPath { get; set; }
-            public string szCertPassword { get; set; }
+            public string szCertPath                { get; set; } //OpenSSL certificate file path.
+            public string szCertPassword            { get; set; } //OpenSSL certificate file password.
 
-            public string szHttpHost { get; set; }
-            public enHttpMethod httpMethod { get; set; }
-            public string szHttpPath { get; set; }
-            public string szHttpUA { get; set; }
+            public string szHttpHost                { get; set; } //Fake HTTP request host.
+            public enHttpMethod httpMethod          { get; set; } //HTTP method(GET/POST/HEAD/PUT/DELETE).
+            public string szHttpPath                { get; set; } //HTTP request resource.
+            public string szHttpUA                  { get; set; } //HTTP user-agent.
 
             /// <summary>
-            /// Constructor
+            /// Overload(Ordinary RSA + AES communication).
             /// </summary>
             /// <param name="szName">Listener's name.</param>
             /// <param name="proto">Protocol.</param>
@@ -100,84 +117,112 @@ namespace EgoDrop
             /// <param name="szDescription">Description.</param>
             /// <param name="dtDate">Creation data.</param>
             public stListener(
-                string szName,
-                enListenerProtocol proto,
-                int nPort,
-                string szDescription,
-                DateTime dtDate
+                string szName,            //Listener's name.
+                enListenerProtocol proto, //Listener protocol.
+                int nPort,                //Listener port.
+                string szDescription,     //Listener description.
+                DateTime dtDate           //Creation date.
             )
             {
-                this.szName = szName;
-                protoListener = proto;
-                this.nPort = nPort;
+                this.szName        = szName;
+                protoListener      = proto;
+                this.nPort         = nPort;
                 this.szDescription = szDescription;
-                dtCreationDate = dtDate;
+                dtCreationDate     = dtDate;
 
-                szCertPath = string.Empty;
-                szCertPassword = string.Empty;
+                szCertPath         = string.Empty;
+                szCertPassword     = string.Empty;
 
-                szHttpHost = string.Empty;
-                httpMethod = enHttpMethod.GET;
-                szHttpPath = "/";
-                szHttpUA = string.Empty;
+                szHttpHost         = string.Empty;
+                httpMethod         = enHttpMethod.GET;
+                szHttpPath         = "/";
+                szHttpUA           = string.Empty;
             }
 
+            /// <summary>
+            /// Overload(TLS communication).
+            /// </summary>
+            /// <param name="szName">Listener's name.</param>
+            /// <param name="proto">Listener's protocol.</param>
+            /// <param name="nPort">Listener's port.</param>
+            /// <param name="szDescription">Listener's description.</param>
+            /// <param name="dtDate">Creation date.</param>
+            /// <param name="szCertPath">Certificate file path.</param>
+            /// <param name="szCertPassword">Certificate file password.</param>
             public stListener(
-                string szName,
-                enListenerProtocol proto,
-                int nPort,
-                string szDescription,
-                DateTime dtDate,
+                string szName,            //Listener's name.
+                enListenerProtocol proto, //Listener's protocol.
+                int nPort,                //Listener's port.
+                string szDescription,     //Listener's description.
+                DateTime dtDate,          //Creation date.
 
-                string szCertPath,
-                string szCertPassword
+                string szCertPath,        //Certificate file path.
+                string szCertPassword     //Certificate file password.
             )
             {
-                this.szName = szName;
-                protoListener = proto;
-                this.nPort = nPort;
-                this.szDescription = szDescription;
-                dtCreationDate = dtDate;
+                this.szName         = szName;
+                protoListener       = proto;
+                this.nPort          = nPort;
+                this.szDescription  = szDescription;
+                dtCreationDate      = dtDate;
 
-                this.szCertPath = szCertPath;
+                this.szCertPath     = szCertPath;
                 this.szCertPassword = szCertPassword;
 
-                szHttpHost = string.Empty;
-                httpMethod = enHttpMethod.GET;
-                szHttpPath = "/";
-                szHttpUA = string.Empty;
+                szHttpHost          = string.Empty;
+                httpMethod          = enHttpMethod.GET;
+                szHttpPath          = "/";
+                szHttpUA            = string.Empty;
             }
 
+            /// <summary>
+            /// Overload(HTTP communication).
+            /// </summary>
+            /// <param name="szName">Listener's name.</param>
+            /// <param name="proto">Listener's protocol.</param>
+            /// <param name="nPort">Listener's port.</param>
+            /// <param name="szDescription">Listener's description.</param>
+            /// <param name="dtDate">Creation date.</param>
+            /// <param name="szHttpHost">HTTP request host.</param>
+            /// <param name="httpMethod">HTTP request method(GET/POST/HEAD/PUT/DELETE).</param>
+            /// <param name="szHttpPath">HTTP request resource.</param>
+            /// <param name="szHttpUA">HTTP user-agent.</param>
             public stListener(
-                string szName,
-                enListenerProtocol proto,
-                int nPort,
-                string szDescription,
-                DateTime dtDate,
+                string szName,            //Listener's name.
+                enListenerProtocol proto, //Listener's protocol.
+                int nPort,                //Listener's port.
+                string szDescription,     //Listener's description.
+                DateTime dtDate,          //Creation date.
 
-                string szHttpHost,
-                enHttpMethod httpMethod,
-                string szHttpPath,
-                string szHttpUA
+                string szHttpHost,        //HTTP request host.
+                enHttpMethod httpMethod,  //HTTP request method.
+                string szHttpPath,        //HTTP request resource.
+                string szHttpUA           //HTTP user-agent.
             )
             {
-                this.szName = szName;
-                protoListener = proto;
-                this.nPort = nPort;
+                this.szName        = szName;
+                protoListener      = proto;
+                this.nPort         = nPort;
                 this.szDescription = szDescription;
-                dtCreationDate = dtDate;
+                dtCreationDate     = dtDate;
 
-                szCertPath = string.Empty;
-                szCertPassword = string.Empty;
+                szCertPath         = string.Empty;
+                szCertPassword     = string.Empty;
 
-                this.szHttpHost = szHttpHost;
-                this.httpMethod = httpMethod;
-                this.szHttpPath = szHttpPath;
-                this.szHttpUA = szHttpUA;
+                this.szHttpHost    = szHttpHost;
+                this.httpMethod    = httpMethod;
+                this.szHttpPath    = szHttpPath;
+                this.szHttpUA      = szHttpUA;
             }
 
         };
 
+        #endregion
+        #region Enum
+
+        /// <summary>
+        /// 
+        /// </summary>
         public enum enListenerProtocol
         {
             TCP,
@@ -186,6 +231,9 @@ namespace EgoDrop
             HTTP,
         };
 
+        /// <summary>
+        /// 
+        /// </summary>
         public enum enHttpMethod
         {
             GET,
@@ -195,10 +243,16 @@ namespace EgoDrop
             DELETE,
         };
 
+        #endregion
+
+        /// <summary>
+        /// Sqlite3 object handler.
+        /// </summary>
+        /// <param name="szFileName">*.sqlite file path.</param>
         public clsSqlite(string szFileName)
         {
             m_szFileName = szFileName;
-            m_sqlConn = new SQLiteConnection(m_szConnString);
+            m_sqlConn    = new SQLiteConnection(m_szConnString);
 
             //DB init.
             if (File.Exists(szFileName))
@@ -216,7 +270,8 @@ namespace EgoDrop
         private void fnCreateTable(string szTableName)
         {
             string szQuery = string.Join(", ", m_dicDbStructure[szTableName].Select(x => $"{x} TEXT"));
-            szQuery = $"CREATE TABLE \"{szTableName}\" ({szQuery});";
+            szQuery        = $"CREATE TABLE \"{szTableName}\" ({szQuery});";
+
             fnQuery(szQuery);
         }
 
@@ -249,14 +304,19 @@ namespace EgoDrop
 
         #region Listener
 
+        /// <summary>
+        /// Check listener is available.
+        /// </summary>
+        /// <param name="szName">Listener's name.</param>
+        /// <returns></returns>
         private bool fnbListenerExist(string szName)
         {
             try
             {
                 string szQuery = $"SELECT EXISTS(SELECT 1 FROM \"Listener\" WHERE \"Name\" = \"{szName}\");";
-                DataTable dt = fnQuery(szQuery);
+                DataTable dt   = fnQuery(szQuery);
 
-                return (Int64)dt.Rows[0][0] == (Int64)1;
+                return (Int64)dt.Rows[0][0] == (Int64)1; //Convert result into int(64-bit).
             }
             catch (Exception ex)
             {
@@ -270,16 +330,27 @@ namespace EgoDrop
             return false;
         }
 
+        /// <summary>
+        /// Validate two specified listener are equal.
+        /// </summary>
+        /// <param name="lA"></param>
+        /// <param name="lB"></param>
+        /// <returns></returns>
         private bool fnbListenerIsEqual(stListener lA, stListener lB)
         {
             return (
-                lA.szName == lB.szName
-                && lA.protoListener == lB.protoListener
-                && lA.nPort == lB.nPort
-                && lA.szDescription == lB.szDescription
+                lA.szName        == lB.szName && 
+                lA.protoListener == lB.protoListener &&
+                lA.nPort         == lB.nPort &&
+                lA.szDescription == lB.szDescription
             );
         }
 
+        /// <summary>
+        /// Get listener through specified name.
+        /// </summary>
+        /// <param name="szName">Listener name.</param>
+        /// <returns></returns>
         public stListener fnGetListener(string szName)
         {
             var listeners = fnGetListeners();
@@ -304,20 +375,20 @@ namespace EgoDrop
 
                 foreach (DataRow dr in dt.Rows)
                 {
-                    string szName = (string)dr["Name"];
-                    int nPort = int.Parse((string)dr["Port"]);
-                    string szDescription = (string)dr["Description"];
+                    string szName            = (string)dr["Name"];
+                    int nPort                = int.Parse((string)dr["Port"]);
+                    string szDescription     = (string)dr["Description"];
 
                     enListenerProtocol proto = (enListenerProtocol)Enum.Parse(typeof(enListenerProtocol), (string)dr["Protocol"]);
-                    DateTime date = DateTime.Parse((string)dr["CreationDate"]);
+                    DateTime date            = DateTime.Parse((string)dr["CreationDate"]);
 
-                    string szCertPath = (string)dr["CertPath"];
-                    string szCertPassword = (string)dr["CertPassword"];
+                    string szCertPath        = (string)dr["CertPath"];
+                    string szCertPassword    = (string)dr["CertPassword"];
 
-                    string szHttpHost = (string)dr["HttpHost"];
-                    enHttpMethod httpMethod = (enHttpMethod)Enum.Parse(typeof(enHttpMethod), (string)dr["HttpMethod"]);
-                    string szHttpPath = (string)dr["HttpPath"];
-                    string szHttpUA = (string)dr["HttpUA"];
+                    string szHttpHost        = (string)dr["HttpHost"];
+                    enHttpMethod httpMethod  = (enHttpMethod)Enum.Parse(typeof(enHttpMethod), (string)dr["HttpMethod"]);
+                    string szHttpPath        = (string)dr["HttpPath"];
+                    string szHttpUA          = (string)dr["HttpUA"];
 
                     stListener st = new stListener();
                     switch (proto)

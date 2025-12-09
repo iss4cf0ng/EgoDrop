@@ -17,13 +17,13 @@ namespace EgoDrop
 
         public clsTcpListener(string szName, int nPort, string szDescription)
         {
-            m_szName = szName;
-            m_nPort = nPort;
+            m_szName        = szName;
+            m_nPort         = nPort;
             m_szDescription = szDescription;
-            m_Protocol = clsSqlite.enListenerProtocol.TCP;
-            m_stListener = new clsSqlite.stListener(m_szName, m_Protocol, m_nPort, m_szName, DateTime.Now);
+            m_Protocol      = clsSqlite.enListenerProtocol.TCP;
+            m_stListener    = new clsSqlite.stListener(m_szName, m_Protocol, m_nPort, m_szName, DateTime.Now);
 
-            m_sktSrv = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+            m_sktSrv        = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
         }
 
         public override void fnStart()

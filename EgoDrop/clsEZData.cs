@@ -36,5 +36,21 @@ namespace EgoDrop
 
             return lsResult;
         }
+
+        public static string fnszDateString()
+        {
+            DateTime date = DateTime.Now;
+            return string.Join(string.Empty, new int[]
+            {
+                date.Year,
+                date.Month,
+                date.Day,
+                date.Hour,
+                date.Minute,
+                date.Second,
+                date.Millisecond,
+            });
+        }
+        public static string fnszDateFileName(string szExt = "txt") => $"{fnszDateString()}{(string.Equals(string.Empty, szExt) ? string.Empty : "." + szExt)}";
     }
 }

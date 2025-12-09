@@ -17,6 +17,7 @@ namespace EgoDrop
     public partial class frmFileEditor : Form
     {
         public clsVictim m_victim { get; set; }
+        private Dictionary<string, Action> m_dicActEvent = new Dictionary<string, Action>();
 
         private struct stControl
         {
@@ -62,6 +63,12 @@ namespace EgoDrop
                             return;
 
                         page.Text = page.Text.Replace("*", string.Empty);
+
+                        if (m_dicActEvent.ContainsKey(szFilePath))
+                        {
+                            m_dicActEvent[szFilePath]();
+                            m_dicActEvent.Remove(szFilePath);
+                        }
                     }
                 }
             }));
@@ -142,7 +149,7 @@ namespace EgoDrop
         {
             tabControl1.DrawMode = TabDrawMode.OwnerDrawFixed;
             tabControl1.Padding = new Point(20, 4);
-            
+
             tabControl1.TabPages.Clear();
 
             m_victim.m_listener.evtReceivedMessage += fnRecv;
@@ -248,6 +255,62 @@ namespace EgoDrop
                     tabControl1.TabPages.RemoveAt(i);
                     break;
                 }
+            }
+        }
+
+        private void tabControl1_KeyDown(object sender, KeyEventArgs e)
+        {
+            TabPage page = tabControl1.SelectedTab;
+            if (page == null)
+                return;
+
+            var controls = fnGetControls(page);
+            if (e.Modifiers == Keys.Control)
+            {
+                if (e.KeyCode == Keys.W) //Close tab.
+                {
+                    if (page.Text.Contains("*"))
+                    {
+                        DialogResult dr = MessageBox.Show("Do you want to save changes?", "Warning", MessageBoxButtons.YesNoCancel, MessageBoxIcon.Warning);
+                        if (dr == DialogResult.Cancel)
+                        {
+                            return;
+                        }
+                        else if (dr == DialogResult.Yes)
+                        {
+                            m_dicActEvent.Add(controls.tbPath.Text, () =>
+                            {
+                                tabControl1.TabPages.Remove(page);
+                            });
+
+                            m_victim.fnSendCommand(new string[]
+                            {
+                                "file",
+                                "wf",
+                                controls.tbPath.Text,
+                                controls.editor.Text,
+                            });
+                        }
+                        else
+                        {
+                            tabControl1.TabPages.Remove(page);
+                        }
+                    }
+                }
+                else if (e.KeyCode == Keys.S) //Save file.
+                {
+                    m_victim.fnSendCommand(new string[]
+                    {
+                        "file",
+                        "wf",
+                        controls.tbPath.Text,
+                        controls.editor.Text,
+                    });
+                }
+            }
+            else
+            {
+                
             }
         }
     }

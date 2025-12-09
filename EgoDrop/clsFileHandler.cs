@@ -81,6 +81,11 @@ namespace EgoDrop
             }
         }
 
+        /// <summary>
+        /// Send file chunk through bytes.
+        /// </summary>
+        /// <param name="nSeq">Sequence number of file chunk.</param>
+        /// <param name="abChunk">File chunk byte array data.</param>
         private void fnSendChunk(int nSeq, byte[] abChunk)
         {
             m_victim.fnSendCommand(new string[]
@@ -92,6 +97,10 @@ namespace EgoDrop
             });
         }
 
+        /// <summary>
+        /// Timeout timer.
+        /// </summary>
+        /// <param name="nSeq"></param>
         private void fnStartTimer(int nSeq)
         {
             var timer = new clsChunkTimer(800, () => fnTimeout(nSeq));
@@ -99,15 +108,23 @@ namespace EgoDrop
             m_dicTimers[nSeq] = timer;
         }
 
+        /// <summary>
+        /// Timeout event.
+        /// </summary>
+        /// <param name="nSeq"></param>
         private void fnTimeout(int nSeq)
         {
             if (!m_dicTimers.ContainsKey(nSeq))
                 return;
 
-            fnSendChunk(nSeq, m_dicUnAcked[nSeq]);
-            fnStartTimer(nSeq);
+            fnSendChunk(nSeq, m_dicUnAcked[nSeq]); //Retransmit file chunk.
+            fnStartTimer(nSeq); //Restart timer.
         }
 
+        /// <summary>
+        /// File chunk acknowledgement.
+        /// </summary>
+        /// <param name="nSeq"></param>
         public void fnAck(int nSeq)
         {
             if (!m_dicUnAcked.ContainsKey(nSeq))
@@ -141,11 +158,11 @@ namespace EgoDrop
             m_timer = new System.Timers.Timer(nMiliSecond);
             m_actOnTimeout = actOnTimeout;
 
-            m_timer.Elapsed += (s, e) => m_actOnTimeout();
+            m_timer.Elapsed += (s, e) => m_actOnTimeout(); //Counting event.
             m_timer.AutoReset = false;
         }
 
-        public void fnStart() => m_timer.Start();
-        public void fnStop() => m_timer.Stop();
+        public void fnStart() => m_timer.Start();          //Start timer.
+        public void fnStop()  => m_timer.Stop();            //Stop timer.
     }
 }

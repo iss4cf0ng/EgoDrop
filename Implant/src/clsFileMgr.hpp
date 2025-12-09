@@ -273,6 +273,31 @@ public:
 
     }
 
+    RETMSG fnMkdir(const std::string& szDirPath)
+    {
+        std::filesystem::path folder = szDirPath;
+        int nCode = 0;
+        std::string szMsg;
+
+        try
+        {
+            if (std::filesystem::create_directory(szDirPath))    
+            {
+                nCode = 1;
+            }
+            else
+            {
+                szMsg = "ERROR://Create folder failed: " + szDirPath;
+            }
+        }
+        catch(const std::exception& e)
+        {
+            szMsg = e.what();
+        }
+        
+        return { nCode, szMsg };
+    }
+
 private:
     std::string fnszGetPermission(struct stat st)
     {

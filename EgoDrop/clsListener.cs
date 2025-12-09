@@ -8,7 +8,7 @@ namespace EgoDrop
 {
     public class clsListener
     {
-        protected string m_szName { get; set; }
+        protected string m_szName { get; set; } //Listener's name.
         protected int m_nPort { get; set; }
         protected string m_szDescription { get; set; }
         protected clsSqlite.enListenerProtocol m_Protocol { get; set; }
