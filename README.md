@@ -1,5 +1,5 @@
 # EgoDrop
-Linux Remote Access Tool \
+An experimential Linux Remote Access Tool \
 Still in development.
 
 # Introduction
