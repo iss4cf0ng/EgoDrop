@@ -138,6 +138,22 @@ namespace EgoDrop
                                     string szPlain = Encoding.UTF8.GetString(abBuffer);
                                     List<string> lsMsg = szPlain.Split('|').Select(x => clsEZData.fnB64D2Str(x)).ToList();
 
+                                    List<string> lsVictim = new List<string>();
+                                    for (int i = 0; i < lsMsg.Count; i++)
+                                    {
+                                        string s = lsMsg[i];
+                                        if (s.StartsWith("Hacked_"))
+                                        {
+                                            lsVictim.Add(s);
+                                            MessageBox.Show(s);
+                                        }
+                                        else
+                                        {
+                                            lsMsg = lsMsg[i..];
+                                            break;
+                                        }
+                                    }
+
                                     fnOnReceivedMessage(victim, lsMsg);
                                 }
                             }

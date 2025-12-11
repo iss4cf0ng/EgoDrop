@@ -22,10 +22,10 @@ namespace EgoDrop
                 //Log.
                 "Logs", new string[]
                 {
-                    "Type", //Log type: System, Error
-                    "OnlineID", //Victim online ID
-                    "Func", //Function
-                    "Message", //Log message.
+                    "Type",         //Log type: System, Error
+                    "OnlineID",     //Victim online ID
+                    "Func",         //Function
+                    "Message",      //Log message.
                     "CreationDate", //Log creation date.
                 }
             },
@@ -41,33 +41,33 @@ namespace EgoDrop
                 //Victim configuration.
                 "Victim", new string[]
                 {
-                    "OnlineID",
-                    "Dir",
-                    "OS",
-                    "KLF",
-                    "PD",
-                    "CreationDate",
-                    "LastOnlineDate",
-                    "Uptime",
+                    "OnlineID",       //Victim ID.
+                    "Dir",            //Victim folder.
+                    "OS",             //Victim operating system.
+                    "KLF",            //Remote keylogger file.
+                    "PD",             //Remote plugin directory.
+                    "CreationDate",   //Config creation date.
+                    "LastOnlineDate", //Victim last online date.
+                    "Uptime",         //Victim last uptime.
                 }
             },
             {
                 //Listener configuration.
                 "Listener", new string[]
                 {
-                    "Name", //Listener's name.
-                    "Protocol", //Listener's protocol.
-                    "Port", //Listener's port for listening.
-                    "Description", //Listener's description.
+                    "Name",         //Listener's name.
+                    "Protocol",     //Listener's protocol.
+                    "Port",         //Listener's port for listening.
+                    "Description",  //Listener's description.
                     "CreationDate", //Creation date.
 
-                    "CertPath", //SSL certificate file path.
+                    "CertPath",     //SSL certificate file path.
                     "CertPassword", //SSL certificate file password.
 
-                    "HttpHost", //HTTP request remote host.
-                    "HttpMethod", //HTTP request method(GET/POST/HEAD/PUT/DELETE).
-                    "HttpPath", //HTTP request resource.
-                    "HttpUA", //HTTP user-agent.
+                    "HttpHost",     //HTTP request remote host.
+                    "HttpMethod",   //HTTP request method(GET/POST/HEAD/PUT/DELETE).
+                    "HttpPath",     //HTTP request resource.
+                    "HttpUA",       //HTTP user-agent.
                 }
             },
         };
@@ -395,37 +395,37 @@ namespace EgoDrop
                     {
                         case enListenerProtocol.TCP:
                             st = new stListener(
-                                szName,
-                                proto,
-                                nPort,
-                                szDescription,
-                                date
+                                szName,        //Listener's name.
+                                proto,         //Listener's protocol.
+                                nPort,         //Listening port.
+                                szDescription, //Listener's description.
+                                date           //Creation date.
                             );
                             break;
                         case enListenerProtocol.TLS:
                             st = new stListener(
-                                szName,
-                                proto,
-                                nPort,
-                                szDescription,
-                                date,
+                                szName,        //Listener's name.
+                                proto,         //Listener's protocol.
+                                nPort,         //Listening port.
+                                szDescription, //Listener's description.
+                                date,          //Creation date.
 
-                                szCertPath,
-                                szCertPassword
+                                szCertPath,    //SSL certificate file path.
+                                szCertPassword //SSL certificate password.
                             );
                             break;
                         case enListenerProtocol.HTTP:
                             st = new stListener(
-                                szName,
-                                proto,
-                                nPort,
-                                szDescription,
-                                date,
+                                szName,        //Listener's name.
+                                proto,         //Listener's protocol.
+                                nPort,         //Listening port.
+                                szDescription, //Listener's description.
+                                date,          //Creation date.
 
-                                szHttpHost,
-                                httpMethod,
-                                szHttpPath,
-                                szHttpUA
+                                szHttpHost,    //HTTP request host.
+                                httpMethod,    //HTTP request method.
+                                szHttpPath,    //HTTP request resource.
+                                szHttpUA       //HTTP request user-agent.
                             );
                             break;
                     }

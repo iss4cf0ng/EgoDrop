@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 
 using System.Security.Cryptography;
+using EgoDrop.Properties;
 
 namespace EgoDrop
 {
@@ -97,7 +98,7 @@ namespace EgoDrop
             rsa.FromXmlString(szPrivateKey);
 
             byte[] abPlain = rsa.Decrypt(abBuffer, false);
-
+            
             rsa.Dispose();
 
             return abPlain;

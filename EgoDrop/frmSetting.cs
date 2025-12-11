@@ -12,9 +12,13 @@ namespace EgoDrop
 {
     public partial class frmSetting : Form
     {
-        public frmSetting()
+        private clsIniMgr m_iniMgr { get; init; }
+
+        public frmSetting(clsIniMgr iniMgr)
         {
             InitializeComponent();
+
+            m_iniMgr = iniMgr;
         }
     }
 }

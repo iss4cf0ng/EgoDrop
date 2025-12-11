@@ -53,7 +53,7 @@ namespace EgoDrop
             {
                 if (lsMsg[0] == "file")
                 {
-                    if (lsMsg[1] == "wf")
+                    if (lsMsg[1] == "wf") //Write file.
                     {
                         int nCode = int.Parse(lsMsg[2]);
                         string szFilePath = lsMsg[3];
@@ -69,6 +69,20 @@ namespace EgoDrop
                             m_dicActEvent[szFilePath]();
                             m_dicActEvent.Remove(szFilePath);
                         }
+                    }
+                    else if (lsMsg[1] == "rf") //Read file.
+                    {
+                        int nCode = int.Parse(lsMsg[2]);
+                        if (nCode == 0)
+                        {
+                            clsTools.fnShowErrMsgbox(lsMsg[4]);
+                            return;
+                        }
+
+                        string szFilePath = lsMsg[3];
+                        string szFileContent = lsMsg[4];
+
+                        fnAddNewPage(szFilePath, szFileContent);
                     }
                 }
             }));

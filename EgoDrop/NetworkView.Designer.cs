@@ -35,7 +35,7 @@
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             Name = "NetworkView";
-            Load += NetworkView_Load;
+            
             ResumeLayout(false);
         }
 

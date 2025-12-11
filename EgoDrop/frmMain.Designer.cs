@@ -64,6 +64,9 @@
             toolStripMenuItem10 = new ToolStripMenuItem();
             tabPage4 = new TabPage();
             networkView1 = new NetworkView();
+            contextMenuStrip2 = new ContextMenuStrip(components);
+            toolStripMenuItem12 = new ToolStripMenuItem();
+            toolStripMenuItem13 = new ToolStripMenuItem();
             tabControl1 = new TabControl();
             tabPage1 = new TabPage();
             richTextBox1 = new RichTextBox();
@@ -83,6 +86,7 @@
             tabPage3.SuspendLayout();
             contextMenuStrip1.SuspendLayout();
             tabPage4.SuspendLayout();
+            contextMenuStrip2.SuspendLayout();
             tabControl1.SuspendLayout();
             tabPage1.SuspendLayout();
             SuspendLayout();
@@ -211,7 +215,7 @@
             tabPage3.Padding = new Padding(3);
             tabPage3.Size = new Size(731, 286);
             tabPage3.TabIndex = 0;
-            tabPage3.Text = "tabPage3";
+            tabPage3.Text = "ListView";
             tabPage3.UseVisualStyleBackColor = true;
             // 
             // listView1
@@ -336,18 +340,40 @@
             tabPage4.Padding = new Padding(3);
             tabPage4.Size = new Size(731, 290);
             tabPage4.TabIndex = 1;
-            tabPage4.Text = "tabPage4";
+            tabPage4.Text = "NetworkView";
             tabPage4.UseVisualStyleBackColor = true;
             // 
             // networkView1
             // 
             networkView1.BackColor = Color.Black;
+            networkView1.ContextMenuStrip = contextMenuStrip2;
             networkView1.Dock = DockStyle.Fill;
             networkView1.ForeColor = Color.White;
             networkView1.Location = new Point(3, 3);
             networkView1.Name = "networkView1";
             networkView1.Size = new Size(725, 284);
             networkView1.TabIndex = 0;
+            networkView1.Zoom = 1F;
+            // 
+            // contextMenuStrip2
+            // 
+            contextMenuStrip2.Font = new Font("Microsoft JhengHei UI", 11.25F, FontStyle.Regular, GraphicsUnit.Point, 136);
+            contextMenuStrip2.Items.AddRange(new ToolStripItem[] { toolStripMenuItem12, toolStripMenuItem13 });
+            contextMenuStrip2.Name = "contextMenuStrip2";
+            contextMenuStrip2.Size = new Size(170, 52);
+            // 
+            // toolStripMenuItem12
+            // 
+            toolStripMenuItem12.Name = "toolStripMenuItem12";
+            toolStripMenuItem12.Size = new Size(169, 24);
+            toolStripMenuItem12.Text = "Server";
+            toolStripMenuItem12.Click += toolStripMenuItem12_Click;
+            // 
+            // toolStripMenuItem13
+            // 
+            toolStripMenuItem13.Name = "toolStripMenuItem13";
+            toolStripMenuItem13.Size = new Size(169, 24);
+            toolStripMenuItem13.Text = "File Manager";
             // 
             // tabControl1
             // 
@@ -397,7 +423,9 @@
             imageList1.ColorDepth = ColorDepth.Depth32Bit;
             imageList1.ImageStream = (ImageListStreamer)resources.GetObject("imageList1.ImageStream");
             imageList1.TransparentColor = Color.Transparent;
-            imageList1.Images.SetKeyName(0, "pc");
+            imageList1.Images.SetKeyName(0, "Linux_Infected.png");
+            imageList1.Images.SetKeyName(1, "Linux_Normal.png");
+            imageList1.Images.SetKeyName(2, "Windows_Normal");
             // 
             // frmMain
             // 
@@ -430,6 +458,7 @@
             tabPage3.ResumeLayout(false);
             contextMenuStrip1.ResumeLayout(false);
             tabPage4.ResumeLayout(false);
+            contextMenuStrip2.ResumeLayout(false);
             tabControl1.ResumeLayout(false);
             tabPage1.ResumeLayout(false);
             ResumeLayout(false);
@@ -475,5 +504,8 @@
         private TabPage tabPage4;
         private NetworkView networkView1;
         private ImageList imageList1;
+        private ContextMenuStrip contextMenuStrip2;
+        private ToolStripMenuItem toolStripMenuItem12;
+        private ToolStripMenuItem toolStripMenuItem13;
     }
 }

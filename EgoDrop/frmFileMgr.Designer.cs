@@ -67,12 +67,12 @@
             toolStripMenuItem13 = new ToolStripMenuItem();
             toolStripMenuItem14 = new ToolStripMenuItem();
             toolStripMenuItem15 = new ToolStripMenuItem();
-            toolStrip1 = new ToolStrip();
-            textBox1 = new TextBox();
-            tabPage2 = new TabPage();
             toolStripMenuItem16 = new ToolStripMenuItem();
             toolStripMenuItem17 = new ToolStripMenuItem();
             toolStripMenuItem18 = new ToolStripMenuItem();
+            toolStrip1 = new ToolStrip();
+            textBox1 = new TextBox();
+            tabPage2 = new TabPage();
             menuStrip1.SuspendLayout();
             statusStrip1.SuspendLayout();
             tabControl1.SuspendLayout();
@@ -298,6 +298,7 @@
             toolStripMenuItem3.Name = "toolStripMenuItem3";
             toolStripMenuItem3.Size = new Size(180, 24);
             toolStripMenuItem3.Text = "Edit";
+            toolStripMenuItem3.Click += toolStripMenuItem3_Click;
             // 
             // toolStripMenuItem5
             // 
@@ -372,6 +373,25 @@
             toolStripMenuItem15.Text = "Text File";
             toolStripMenuItem15.Click += toolStripMenuItem15_Click;
             // 
+            // toolStripMenuItem16
+            // 
+            toolStripMenuItem16.DropDownItems.AddRange(new ToolStripItem[] { toolStripMenuItem17, toolStripMenuItem18 });
+            toolStripMenuItem16.Name = "toolStripMenuItem16";
+            toolStripMenuItem16.Size = new Size(180, 24);
+            toolStripMenuItem16.Text = "Archive";
+            // 
+            // toolStripMenuItem17
+            // 
+            toolStripMenuItem17.Name = "toolStripMenuItem17";
+            toolStripMenuItem17.Size = new Size(164, 24);
+            toolStripMenuItem17.Text = "Compress";
+            // 
+            // toolStripMenuItem18
+            // 
+            toolStripMenuItem18.Name = "toolStripMenuItem18";
+            toolStripMenuItem18.Size = new Size(164, 24);
+            toolStripMenuItem18.Text = "Decompress";
+            // 
             // toolStrip1
             // 
             toolStrip1.Location = new Point(0, 0);
@@ -398,25 +418,6 @@
             tabPage2.TabIndex = 1;
             tabPage2.Text = "Find File";
             tabPage2.UseVisualStyleBackColor = true;
-            // 
-            // toolStripMenuItem16
-            // 
-            toolStripMenuItem16.DropDownItems.AddRange(new ToolStripItem[] { toolStripMenuItem17, toolStripMenuItem18 });
-            toolStripMenuItem16.Name = "toolStripMenuItem16";
-            toolStripMenuItem16.Size = new Size(180, 24);
-            toolStripMenuItem16.Text = "Archive";
-            // 
-            // toolStripMenuItem17
-            // 
-            toolStripMenuItem17.Name = "toolStripMenuItem17";
-            toolStripMenuItem17.Size = new Size(164, 24);
-            toolStripMenuItem17.Text = "Compress";
-            // 
-            // toolStripMenuItem18
-            // 
-            toolStripMenuItem18.Name = "toolStripMenuItem18";
-            toolStripMenuItem18.Size = new Size(164, 24);
-            toolStripMenuItem18.Text = "Decompress";
             // 
             // frmFileMgr
             // 

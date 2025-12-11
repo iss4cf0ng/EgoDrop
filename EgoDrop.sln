@@ -17,6 +17,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RemoteShell", "RemoteShell\
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RemoteShellConsole", "RemoteShellConsole\RemoteShellConsole.csproj", "{C0C2172C-E053-4863-A402-692A7EBBF6C0}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NodeEditor", "NodeEditor\NodeEditor.csproj", "{65FF5DD4-4B49-4E3C-816A-4A95BAD95724}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -47,6 +49,10 @@ Global
 		{C0C2172C-E053-4863-A402-692A7EBBF6C0}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C0C2172C-E053-4863-A402-692A7EBBF6C0}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C0C2172C-E053-4863-A402-692A7EBBF6C0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{65FF5DD4-4B49-4E3C-816A-4A95BAD95724}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{65FF5DD4-4B49-4E3C-816A-4A95BAD95724}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{65FF5DD4-4B49-4E3C-816A-4A95BAD95724}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{65FF5DD4-4B49-4E3C-816A-4A95BAD95724}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -57,6 +63,7 @@ Global
 		{CB892EDA-52E6-4B9F-A906-4073EAE2079B} = {8E4127DE-A85B-433A-BCF0-AA0F9B14A855}
 		{58E75609-EA71-4F27-9750-ADC5A1155B72} = {8E4127DE-A85B-433A-BCF0-AA0F9B14A855}
 		{C0C2172C-E053-4863-A402-692A7EBBF6C0} = {8E4127DE-A85B-433A-BCF0-AA0F9B14A855}
+		{65FF5DD4-4B49-4E3C-816A-4A95BAD95724} = {8E4127DE-A85B-433A-BCF0-AA0F9B14A855}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {C0BA96F5-E769-475E-AEE9-ED9DF140ABC0}
