@@ -84,6 +84,7 @@ void fnRecvCommand(clsVictim& victim, const std::vector<std::string>& vuMsg)
         vsMsg.insert(vsMsg.end(), vuMsg.begin() + 1, vuMsg.end());
         if (g_ltpTcp != nullptr)
             g_ltpTcp->fnSendToSub(szVictimID, vsMsg);
+            
 
         return;
     }

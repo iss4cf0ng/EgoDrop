@@ -1,3 +1,5 @@
+#pragma once
+
 #include <iostream>
 
 #include "clsTools.hpp"
@@ -6,6 +8,10 @@
 class clsDebugTools
 {
 public:
+    clsDebugTools() = default;
+
+    ~clsDebugTools() = default;
+
     static void fnPrintStringList(std::vector<std::string>& vsData)
     {
         for (int i = 0; i < vsData.size(); i++)

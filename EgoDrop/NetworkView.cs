@@ -104,7 +104,6 @@ namespace EgoDrop
 
         private void NetworkView_MouseDown(object sender, MouseEventArgs e)
         {
-            // 滾動條處理
             if (hScrollBar.Contains(e.Location))
             {
                 isDraggingHScroll = true;
@@ -119,13 +118,11 @@ namespace EgoDrop
                 return;
             }
 
-            // ⭐ 左鍵才清除 selection
             if (e.Button == MouseButtons.Left)
             {
                 selectedNodeForHighlight = null;
             }
 
-            // 判斷是否點到 node
             foreach (var node in nodes)
             {
                 Rectangle nodeRect = new Rectangle(
@@ -145,12 +142,8 @@ namespace EgoDrop
                 }
                 else if (e.Button == MouseButtons.Right)
                 {
-                    // ⭐右鍵 → 保留 selected，不要清掉
                     selectedNode = node;
                     selectedNodeForHighlight = node;
-
-                    // 這裡你的 context menu 能正常顯示
-                    // 不會取消 selection
                 }
 
                 Invalidate();
@@ -175,11 +168,9 @@ namespace EgoDrop
             }
             else if (e.Button == MouseButtons.Right)
             {
-                // 右鍵選取，但不取消既有選取
                 if (clicked != null)
                     SelectedNode = clicked;
 
-                // 顯示 context menu
                 if (SelectedNode != null && this.ContextMenuStrip != null)
                     this.ContextMenuStrip.Show(this, e.Location);
 
@@ -192,7 +183,6 @@ namespace EgoDrop
             int iconW = n.Icon.Width;
             int iconH = n.Icon.Height;
 
-            // 預留文字區域高度（可自訂）
             int textH = 40;
 
             return new Rectangle(

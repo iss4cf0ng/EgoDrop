@@ -145,8 +145,9 @@ namespace EgoDrop
                 for (int i = 0; i < lsVictim.Count; i++)
                 {
                     string szVictim = lsVictim[i];
+                    MessageBox.Show(szVictim);
 
-                    var n1 = networkView1.AddNode(Guid.NewGuid().ToString(), $"{szVictim}", new Point(100, 100), imageList1.Images[0]);
+                    var n1 = networkView1.AddNode(Guid.NewGuid().ToString(), $"{szVictim}", new Point(150, 100), imageList1.Images[0]);
                     if (i == 0)
                         continue;
 
@@ -172,17 +173,17 @@ namespace EgoDrop
 
             void fnTest()
             {
-                var n1 = networkView1.AddNode("Host A", "111", new Point(100, 100), imageList1.Images[0]); //Add to network view.
-                var n2 = networkView1.AddNode("Host B", "222", new Point(100, 100), imageList1.Images[0]);
-                var n3 = networkView1.AddNode("Host C", "333", new Point(100, 100), imageList1.Images[0]);
-                var n4 = networkView1.AddNode("Host D", "444", new Point(100, 100), imageList1.Images[0]);
+                var n1 = networkView1.AddNode("Host A", "111", new Point(150, 100), imageList1.Images[0]); //Add to network view.
+                var n2 = networkView1.AddNode("Host B", "222", new Point(150, 100), imageList1.Images[0]);
+                var n3 = networkView1.AddNode("Host C", "333", new Point(150, 100), imageList1.Images[0]);
+                var n4 = networkView1.AddNode("Host D", "444", new Point(150, 100), imageList1.Images[0]);
 
                 networkView1.AddConnection(n1, n2);
                 networkView1.AddConnection(n2, n3);
                 networkView1.AddConnection(n2, n4);
             }
-
-            //fnTest();
+            
+            fnTest();
 
             networkView1.Zoom = 1.0f;
         }

