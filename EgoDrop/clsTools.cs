@@ -35,17 +35,21 @@ namespace EgoDrop
             return v1.m_sktClnt == v2.m_sktClnt;
         }
 
-        public static T fnFindForm<T>(clsVictim victim) where T : Form
+        public static T fnFindForm<T>(clsVictim victim, string szVictimID) where T : Form
         {
             foreach (Form f in Application.OpenForms)
             {
                 if (f.GetType() == typeof(T))
                 {
-                    PropertyInfo property = f.GetType().GetProperty("m_victim", BindingFlags.Public | BindingFlags.Instance | BindingFlags.NonPublic);
-                    if (property != null)
+                    PropertyInfo ptyVictim = f.GetType().GetProperty("m_victim", BindingFlags.Public | BindingFlags.Instance | BindingFlags.NonPublic);
+                    PropertyInfo ptyID = f.GetType().GetProperty("m_szVictimID", BindingFlags.Public | BindingFlags.Instance | BindingFlags.NonPublic);
+                    if (ptyVictim != null && ptyID != null)
                     {
-                        object fieldValue = property.GetValue(f);
-                        if (fieldValue != null && fnbSameVictim(victim, (clsVictim)fieldValue))
+                        object fieldValue1 = ptyVictim.GetValue(f);
+                        object fieldValue2 = ptyID.GetValue(f);
+                        if (fieldValue1 != null && fnbSameVictim(victim, (clsVictim)fieldValue1) &&
+                            string.Equals(szVictimID, (string)fieldValue2)
+                        )
                         {
                             return (T)f;
                         }

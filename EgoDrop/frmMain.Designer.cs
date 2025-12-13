@@ -29,8 +29,8 @@
         private void InitializeComponent()
         {
             components = new System.ComponentModel.Container();
-            TreeNode treeNode1 = new TreeNode("_All Targets");
-            TreeNode treeNode2 = new TreeNode("_Orphan");
+            TreeNode treeNode5 = new TreeNode("_All Targets");
+            TreeNode treeNode6 = new TreeNode("_Orphan");
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(frmMain));
             statusStrip1 = new StatusStrip();
             toolStripStatusLabel1 = new ToolStripStatusLabel();
@@ -54,7 +54,7 @@
             columnHeader8 = new ColumnHeader();
             columnHeader9 = new ColumnHeader();
             columnHeader10 = new ColumnHeader();
-            contextMenuStrip1 = new ContextMenuStrip(components);
+            tLinuxContextMenu = new ContextMenuStrip(components);
             toolStripMenuItem5 = new ToolStripMenuItem();
             toolStripMenuItem6 = new ToolStripMenuItem();
             toolStripMenuItem11 = new ToolStripMenuItem();
@@ -62,9 +62,11 @@
             toolStripMenuItem8 = new ToolStripMenuItem();
             toolStripMenuItem9 = new ToolStripMenuItem();
             toolStripMenuItem10 = new ToolStripMenuItem();
+            tabPage5 = new TabPage();
+            listView2 = new ListView();
             tabPage4 = new TabPage();
             networkView1 = new NetworkView();
-            contextMenuStrip2 = new ContextMenuStrip(components);
+            topoLinuxContextMenu = new ContextMenuStrip(components);
             toolStripMenuItem12 = new ToolStripMenuItem();
             toolStripMenuItem13 = new ToolStripMenuItem();
             tabControl1 = new TabControl();
@@ -72,6 +74,10 @@
             richTextBox1 = new RichTextBox();
             tabPage2 = new TabPage();
             imageList1 = new ImageList(components);
+            sLinuxContextMenu = new ContextMenuStrip(components);
+            tWinContextMenu = new ContextMenuStrip(components);
+            sWinContextMenu = new ContextMenuStrip(components);
+            topoWinContextMenu = new ContextMenuStrip(components);
             statusStrip1.SuspendLayout();
             menuStrip1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)splitContainer1).BeginInit();
@@ -84,9 +90,10 @@
             splitContainer2.SuspendLayout();
             tabControl2.SuspendLayout();
             tabPage3.SuspendLayout();
-            contextMenuStrip1.SuspendLayout();
+            tLinuxContextMenu.SuspendLayout();
+            tabPage5.SuspendLayout();
             tabPage4.SuspendLayout();
-            contextMenuStrip2.SuspendLayout();
+            topoLinuxContextMenu.SuspendLayout();
             tabControl1.SuspendLayout();
             tabPage1.SuspendLayout();
             SuspendLayout();
@@ -187,11 +194,11 @@
             treeView1.Dock = DockStyle.Fill;
             treeView1.Location = new Point(0, 0);
             treeView1.Name = "treeView1";
-            treeNode1.Name = "Node0";
-            treeNode1.Text = "_All Targets";
-            treeNode2.Name = "Node1";
-            treeNode2.Text = "_Orphan";
-            treeView1.Nodes.AddRange(new TreeNode[] { treeNode1, treeNode2 });
+            treeNode5.Name = "Node0";
+            treeNode5.Text = "_All Targets";
+            treeNode6.Name = "Node1";
+            treeNode6.Text = "_Orphan";
+            treeView1.Nodes.AddRange(new TreeNode[] { treeNode5, treeNode6 });
             treeView1.Size = new Size(231, 318);
             treeView1.TabIndex = 0;
             // 
@@ -199,12 +206,14 @@
             // 
             tabControl2.Alignment = TabAlignment.Bottom;
             tabControl2.Controls.Add(tabPage3);
+            tabControl2.Controls.Add(tabPage5);
             tabControl2.Controls.Add(tabPage4);
             tabControl2.Dock = DockStyle.Fill;
             tabControl2.Location = new Point(0, 0);
             tabControl2.Name = "tabControl2";
             tabControl2.SelectedIndex = 0;
             tabControl2.Size = new Size(739, 318);
+            tabControl2.SizeMode = TabSizeMode.Fixed;
             tabControl2.TabIndex = 1;
             // 
             // tabPage3
@@ -215,13 +224,13 @@
             tabPage3.Padding = new Padding(3);
             tabPage3.Size = new Size(731, 286);
             tabPage3.TabIndex = 0;
-            tabPage3.Text = "ListView";
+            tabPage3.Text = "Targets";
             tabPage3.UseVisualStyleBackColor = true;
             // 
             // listView1
             // 
             listView1.Columns.AddRange(new ColumnHeader[] { columnHeader1, columnHeader2, columnHeader3, columnHeader4, columnHeader6, columnHeader7, columnHeader8, columnHeader9, columnHeader10 });
-            listView1.ContextMenuStrip = contextMenuStrip1;
+            listView1.ContextMenuStrip = tLinuxContextMenu;
             listView1.Dock = DockStyle.Fill;
             listView1.FullRowSelect = true;
             listView1.Location = new Point(3, 3);
@@ -276,12 +285,12 @@
             columnHeader10.Text = "Active Window";
             columnHeader10.Width = 200;
             // 
-            // contextMenuStrip1
+            // tLinuxContextMenu
             // 
-            contextMenuStrip1.Font = new Font("Microsoft JhengHei UI", 11.25F, FontStyle.Regular, GraphicsUnit.Point, 136);
-            contextMenuStrip1.Items.AddRange(new ToolStripItem[] { toolStripMenuItem5, toolStripMenuItem6, toolStripMenuItem11, toolStripMenuItem7, toolStripMenuItem8, toolStripMenuItem9, toolStripMenuItem10 });
-            contextMenuStrip1.Name = "contextMenuStrip1";
-            contextMenuStrip1.Size = new Size(170, 172);
+            tLinuxContextMenu.Font = new Font("Microsoft JhengHei UI", 11.25F, FontStyle.Regular, GraphicsUnit.Point, 136);
+            tLinuxContextMenu.Items.AddRange(new ToolStripItem[] { toolStripMenuItem5, toolStripMenuItem6, toolStripMenuItem11, toolStripMenuItem7, toolStripMenuItem8, toolStripMenuItem9, toolStripMenuItem10 });
+            tLinuxContextMenu.Name = "contextMenuStrip1";
+            tLinuxContextMenu.Size = new Size(170, 172);
             // 
             // toolStripMenuItem5
             // 
@@ -332,6 +341,26 @@
             toolStripMenuItem10.Text = "Camera";
             toolStripMenuItem10.Click += toolStripMenuItem10_Click;
             // 
+            // tabPage5
+            // 
+            tabPage5.Controls.Add(listView2);
+            tabPage5.Location = new Point(4, 4);
+            tabPage5.Name = "tabPage5";
+            tabPage5.Size = new Size(731, 286);
+            tabPage5.TabIndex = 2;
+            tabPage5.Text = "Sessions";
+            tabPage5.UseVisualStyleBackColor = true;
+            // 
+            // listView2
+            // 
+            listView2.Dock = DockStyle.Fill;
+            listView2.Location = new Point(0, 0);
+            listView2.Name = "listView2";
+            listView2.Size = new Size(731, 286);
+            listView2.TabIndex = 0;
+            listView2.UseCompatibleStateImageBehavior = false;
+            listView2.View = View.Details;
+            // 
             // tabPage4
             // 
             tabPage4.Controls.Add(networkView1);
@@ -340,13 +369,13 @@
             tabPage4.Padding = new Padding(3);
             tabPage4.Size = new Size(731, 290);
             tabPage4.TabIndex = 1;
-            tabPage4.Text = "NetworkView";
+            tabPage4.Text = "Topology";
             tabPage4.UseVisualStyleBackColor = true;
             // 
             // networkView1
             // 
             networkView1.BackColor = Color.Black;
-            networkView1.ContextMenuStrip = contextMenuStrip2;
+            networkView1.ContextMenuStrip = topoLinuxContextMenu;
             networkView1.Dock = DockStyle.Fill;
             networkView1.ForeColor = Color.White;
             networkView1.Location = new Point(3, 3);
@@ -355,12 +384,12 @@
             networkView1.TabIndex = 0;
             networkView1.Zoom = 1F;
             // 
-            // contextMenuStrip2
+            // topoLinuxContextMenu
             // 
-            contextMenuStrip2.Font = new Font("Microsoft JhengHei UI", 11.25F, FontStyle.Regular, GraphicsUnit.Point, 136);
-            contextMenuStrip2.Items.AddRange(new ToolStripItem[] { toolStripMenuItem12, toolStripMenuItem13 });
-            contextMenuStrip2.Name = "contextMenuStrip2";
-            contextMenuStrip2.Size = new Size(170, 52);
+            topoLinuxContextMenu.Font = new Font("Microsoft JhengHei UI", 11.25F, FontStyle.Regular, GraphicsUnit.Point, 136);
+            topoLinuxContextMenu.Items.AddRange(new ToolStripItem[] { toolStripMenuItem12, toolStripMenuItem13 });
+            topoLinuxContextMenu.Name = "contextMenuStrip2";
+            topoLinuxContextMenu.Size = new Size(170, 52);
             // 
             // toolStripMenuItem12
             // 
@@ -423,9 +452,35 @@
             imageList1.ColorDepth = ColorDepth.Depth32Bit;
             imageList1.ImageStream = (ImageListStreamer)resources.GetObject("imageList1.ImageStream");
             imageList1.TransparentColor = Color.Transparent;
-            imageList1.Images.SetKeyName(0, "Linux_Infected.png");
-            imageList1.Images.SetKeyName(1, "Linux_Normal.png");
-            imageList1.Images.SetKeyName(2, "Windows_Normal");
+            imageList1.Images.SetKeyName(0, "Linux_Normal");
+            imageList1.Images.SetKeyName(1, "Windows_Normal");
+            imageList1.Images.SetKeyName(2, "Firewall");
+            imageList1.Images.SetKeyName(3, "Router_Infected");
+            imageList1.Images.SetKeyName(4, "Router_Normal");
+            imageList1.Images.SetKeyName(5, "Linux_Beacon");
+            imageList1.Images.SetKeyName(6, "Windows_Beacon");
+            imageList1.Images.SetKeyName(7, "Linux_Infected");
+            imageList1.Images.SetKeyName(8, "Windows_Infected");
+            // 
+            // sLinuxContextMenu
+            // 
+            sLinuxContextMenu.Name = "sLinuxContextMenu";
+            sLinuxContextMenu.Size = new Size(61, 4);
+            // 
+            // tWinContextMenu
+            // 
+            tWinContextMenu.Name = "tWinContextMenu";
+            tWinContextMenu.Size = new Size(61, 4);
+            // 
+            // sWinContextMenu
+            // 
+            sWinContextMenu.Name = "sWinContextMenu";
+            sWinContextMenu.Size = new Size(61, 4);
+            // 
+            // topoWinContextMenu
+            // 
+            topoWinContextMenu.Name = "topoWinContextMenu";
+            topoWinContextMenu.Size = new Size(61, 4);
             // 
             // frmMain
             // 
@@ -456,9 +511,10 @@
             splitContainer2.ResumeLayout(false);
             tabControl2.ResumeLayout(false);
             tabPage3.ResumeLayout(false);
-            contextMenuStrip1.ResumeLayout(false);
+            tLinuxContextMenu.ResumeLayout(false);
+            tabPage5.ResumeLayout(false);
             tabPage4.ResumeLayout(false);
-            contextMenuStrip2.ResumeLayout(false);
+            topoLinuxContextMenu.ResumeLayout(false);
             tabControl1.ResumeLayout(false);
             tabPage1.ResumeLayout(false);
             ResumeLayout(false);
@@ -491,7 +547,7 @@
         private ColumnHeader columnHeader8;
         private ColumnHeader columnHeader9;
         private ColumnHeader columnHeader10;
-        private ContextMenuStrip contextMenuStrip1;
+        private ContextMenuStrip tLinuxContextMenu;
         private ToolStripMenuItem toolStripMenuItem5;
         private ToolStripMenuItem toolStripMenuItem6;
         private ToolStripMenuItem toolStripMenuItem7;
@@ -504,8 +560,14 @@
         private TabPage tabPage4;
         private NetworkView networkView1;
         private ImageList imageList1;
-        private ContextMenuStrip contextMenuStrip2;
+        private ContextMenuStrip topoLinuxContextMenu;
         private ToolStripMenuItem toolStripMenuItem12;
         private ToolStripMenuItem toolStripMenuItem13;
+        private TabPage tabPage5;
+        private ListView listView2;
+        private ContextMenuStrip sLinuxContextMenu;
+        private ContextMenuStrip tWinContextMenu;
+        private ContextMenuStrip sWinContextMenu;
+        private ContextMenuStrip topoWinContextMenu;
     }
 }

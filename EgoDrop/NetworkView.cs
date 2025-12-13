@@ -18,6 +18,8 @@ namespace EgoDrop
         private List<Node> nodes = new List<Node>();
         private List<Connection> connections = new List<Connection>();
 
+        private HashSet<Node> selectedNdoes = new HashSet<Node>();
+
         private Node selectedNode = null;
         private Node selectedNodeForHighlight = null;
         private Point dragOffset;
@@ -38,7 +40,7 @@ namespace EgoDrop
         private int virtualHeight = 2000;
 
         public Node SelectedNode { get; private set; }
-        public ImageList ImageList;
+        public ImageList imageList;
 
         public float Zoom
         {
@@ -48,6 +50,27 @@ namespace EgoDrop
                 zoom = Math.Max(0.1f, Math.Min(5f, value));
                 Invalidate();
             }
+        }
+
+        public enum enMachineStatus
+        {
+            Linux_Normal,
+            Linux_Infected,
+            Linux_Beacon,
+            Windows_Normal,
+            Windows_Infected,
+            Windows_Beacon,
+
+            Firewall,
+
+            Router_Normal,
+            Router_Infected,
+        }
+        public enum enTopologyLayout
+        {
+            Tree,
+            Pyramid,
+            Line,
         }
 
         public NetworkView()
@@ -204,8 +227,6 @@ namespace EgoDrop
             return null;
         }
 
-
-
         private void NetworkView_MouseMove(object sender, MouseEventArgs e)
         {
             currentMousePos = e.Location;
@@ -232,8 +253,11 @@ namespace EgoDrop
 
             if (selectedNode != null && e.Button == MouseButtons.Left)
             {
-                selectedNode.Position = new Point((int)((e.X - dragOffset.X) / zoom - panOffset.X),
-                                                 (int)((e.Y - dragOffset.Y) / zoom - panOffset.Y));
+                selectedNode.Position = new Point(
+                    (int)((e.X - dragOffset.X) / zoom - panOffset.X), 
+                    (int)((e.Y - dragOffset.Y) / zoom - panOffset.Y)
+                );
+
                 Invalidate();
             }
 
@@ -282,7 +306,7 @@ namespace EgoDrop
 
             //Draw line.
             foreach (var c in connections)
-                DrawArrow(g, c.From, c.To, Color.LimeGreen);
+                DrawArrow(g, c.From, c.To, Color.LimeGreen, c.nOffsetIndex);
 
             //Draw dragging line.
             if (isDraggingConnection && connectionStartNode != null)
@@ -310,6 +334,24 @@ namespace EgoDrop
             );
         }
 
+        private Rectangle GetImageRectKeepAspect(Image img, Point center, int maxSize)
+        {
+            float ratio = Math.Min(
+                (float)maxSize / img.Width,
+                (float)maxSize / img.Height
+            );
+
+            int w = (int)(img.Width * ratio);
+            int h = (int)(img.Height * ratio);
+
+            return new Rectangle(
+                center.X - w / 2,
+                center.Y - h / 2,
+                w,
+                h
+            );
+        }
+
         private void DrawNode(Graphics g, Node node)
         {
             int iconSize = (int)(node.Size * zoom);
@@ -331,9 +373,24 @@ namespace EgoDrop
                 }
             }
 
-            var iconRect = new Rectangle(pos.X - iconSize / 2,
-                                         pos.Y - iconSize / 2,
-                                         iconSize, iconSize);
+            Rectangle iconRect;
+
+            if (node.Icon != null)
+            {
+                iconRect = GetImageRectKeepAspect(node.Icon, pos, iconSize);
+                g.DrawImage(node.Icon, iconRect);
+            }
+            else
+            {
+                iconRect = new Rectangle(
+                    pos.X - iconSize / 2,
+                    pos.Y - iconSize / 2,
+                    iconSize,
+                    iconSize);
+
+                using (var p = new Pen(Color.White, 2 * zoom))
+                    g.DrawRectangle(p, iconRect);
+            }
 
             if (node.Icon != null)
                 g.DrawImage(node.Icon, iconRect);
@@ -341,7 +398,7 @@ namespace EgoDrop
                 using (var p = new Pen(Color.White, 2 * zoom))
                     g.DrawRectangle(p, iconRect);
 
-            if (!string.IsNullOrEmpty(node.HostID))
+            if (!string.IsNullOrEmpty(node.szVictimID))
             {
                 int maxWidth = (int)(iconRect.Width + 20);
                 var idRect = new Rectangle(iconRect.X - 10, iconRect.Bottom + textMargin, maxWidth, 1000);
@@ -355,7 +412,7 @@ namespace EgoDrop
                 using (var font = new Font(Font.FontFamily, 9 * zoom, FontStyle.Bold))
                 using (var brush = new SolidBrush(Color.White))
                 {
-                    g.DrawString(node.HostID, font, brush, idRect, sf);
+                    g.DrawString(node.szVictimID, font, brush, idRect, sf);
                 }
             }
         }
@@ -385,7 +442,7 @@ namespace EgoDrop
             PointF start = TransformF(new PointF(p1.X + offset.X, p1.Y + offset.Y));
             PointF end = TransformF(new PointF(p2.X + offset.X, p2.Y + offset.Y));
 
-            using (var shadow = new Pen(Color.FromArgb(150, 0, 0, 0), 6 * zoom))
+            using (var shadow = new Pen(Color.FromArgb(150, 0, 0, 0), 8 * zoom))
             {
                 shadow.StartCap = LineCap.Round;
                 shadow.EndCap = LineCap.ArrowAnchor;
@@ -431,34 +488,79 @@ namespace EgoDrop
         #endregion
         #region Public API
 
-        public Node AddNode(string name, string hostID, Point pos, Image icon = null)
+        /// <summary>
+        /// Add node into NetworkView.
+        /// </summary>
+        /// <param name="szVictimID">Device victim ID.</param>
+        /// <param name="szDisplayName">Node display name.</param>
+        /// <param name="status">Victim status.</param>
+        /// <returns></returns>
+        public Node AddNode(string szVictimID, string szDisplayName, enMachineStatus status)
         {
-            Node n = new Node { Name = name, HostID = hostID, Position = pos, Icon = icon };
+            int rightMostX = nodes.Count == 0 ? 0 : nodes.Max(n => n.Position.X);
+            Point pos = new Point(100, 100);
+            pos = new Point(rightMostX + 200, pos.Y);
+
+            Node n = new Node { szDisplayName = szDisplayName, szVictimID = szVictimID, Position = pos, };
+            fnSetMahcineStatus(n, status);
             n.Position = GetNonOverlappingPosition(n);
             nodes.Add(n);
             Invalidate();
             return n;
         }
 
+        /// <summary>
+        /// Remove node from NetworkView.
+        /// </summary>
+        /// <param name="node"></param>
         public void RemoveNode(Node node)
         {
-            if (node == null) return;
+            if (node == null)
+                return;
+
             connections.RemoveAll(c => c.From == node || c.To == node);
             nodes.Remove(node);
+
+            if (node.ChildNodes.Count != 0)
+                node.ChildNodes.Clear();
+
+            if (node.ParentNode != null)
+                node.ParentNode.ChildNodes.Remove(node);
+
             if (selectedNodeForHighlight == node)
                 selectedNodeForHighlight = null;
+
             Invalidate();
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="a"></param>
+        /// <param name="b"></param>
         public void AddConnection(Node a, Node b)
         {
-            if (a != null && b != null)
+            if (a == null || b == null)
+                return;
+
+            int count = connections.Count(c => c.From == a && c.To == b);
+
+            connections.Add(new Connection
             {
-                connections.Add(new Connection { From = a, To = b });
-                Invalidate();
-            }
+                From = a,
+                To = b,
+                nOffsetIndex = count
+            });
+
+            a.ChildNodes.Add(b);
+            b.ParentNode = a;
+
+            Invalidate();
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
         public void Clear()
         {
             nodes.Clear();
@@ -499,24 +601,41 @@ namespace EgoDrop
             return newPos;
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="szName"></param>
+        /// <returns></returns>
         public Node FindNodeWithName(string szName)
         {
             foreach (var node in nodes)
-                if (string.Equals(node.Name, szName))
+                if (string.Equals(node.szDisplayName, szName))
                     return node;
 
             return null;
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="szID"></param>
+        /// <returns></returns>
         public Node FindNodeWithID(string szID)
         {
             foreach (var node in nodes)
-                if (string.Equals(node.HostID, szID))
+                if (string.Equals(node.szVictimID, szID))
                     return node;
 
             return null;
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="srcNode"></param>
+        /// <param name="dstNode"></param>
+        /// <param name="bDirected"></param>
+        /// <returns></returns>
         public Connection FindConnection(Node srcNode, Node dstNode, bool bDirected = true)
         {
             foreach (var conn in connections)
@@ -534,6 +653,41 @@ namespace EgoDrop
             return null;
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="node"></param>
+        /// <param name="status"></param>
+        public void fnSetMahcineStatus(Node node, enMachineStatus status)
+        {
+            node.Icon = imageList.Images[Enum.GetName(status)];
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="node"></param>
+        public void MoveNodeToLeft(Node node)
+        {
+            if (node == null || nodes.Count == 0)
+                return;
+
+            int leftMostX = nodes.Min(n => n.Position.X);
+
+            node.Position = new Point(leftMostX - 200, node.Position.Y);
+
+            Invalidate();
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="layout"></param>
+        public void fnSetTopology(enTopologyLayout layout)
+        {
+
+        }
+
         #endregion
     }
 
@@ -542,26 +696,16 @@ namespace EgoDrop
     /// </summary>
     public class Node
     {
-        public string Name;    //Node's name.
-        public string HostID;  //Host's ID.
+        public string szDisplayName;    //Node's name.
+        public string szVictimID;  //Host's ID.
         public Point Position; //Node's position.
         public Image Icon;     //Node's icon.
 
         public int Size = 100;
         public Rectangle Bounds => new Rectangle(Position.X - Size / 2, Position.Y - Size / 2, Size, Size);
 
-        public Node ChildNode = null;
+        public HashSet<Node> ChildNodes = new HashSet<Node>();
         public Node ParentNode = null;
-
-        public void fnSetChildNode(Node node)
-        {
-
-        }
-
-        public void fnSetParentNode(Node node)
-        {
-            
-        }
     }
 
     /// <summary>
@@ -571,5 +715,6 @@ namespace EgoDrop
     {
         public Node From; //Source node.
         public Node To; //Destination node.
+        public int nOffsetIndex;
     }
 }
