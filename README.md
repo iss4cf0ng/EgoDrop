@@ -21,3 +21,7 @@ This is an experimental RAT(Remote Access Trojan) for Linux platform. C# GUI bas
 - RSA + AES TCP communication.
 - TLS communication.
 - HTTP communication.
+- Chain
+
+# Screenshot
+![Topology](https://github.com/iss4cf0ng/EgoDrop/screenshot/topology.jpg)
