@@ -24,4 +24,4 @@ This is an experimental RAT(Remote Access Trojan) for Linux platform. C# GUI bas
 - Chain
 
 # Screenshot
-![Topology](https://github.com/iss4cf0ng/EgoDrop/screenshot/topology.jpg)
+![Topology](https://github.com/iss4cf0ng/EgoDrop/blob/main/screenshot/topology.jpg)
