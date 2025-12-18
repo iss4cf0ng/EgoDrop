@@ -2,13 +2,22 @@
 
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
-    <TargetFramework>net8.0-windows</TargetFramework>
+    <TargetFramework>net6.0-windows</TargetFramework>
     <Nullable>enable</Nullable>
     <UseWindowsForms>true</UseWindowsForms>
+	  <UseWPF>true</UseWPF>
     <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Avalonia" Version="11.3.9" />
+    <PackageReference Include="Avalonia.Win32" Version="11.3.9" />
+    <PackageReference Include="AvalonStudio.winpty.NET" Version="0.4.6" />
+    <PackageReference Include="EasyWindowsTerminalControl" Version="1.0.36" />
+    <PackageReference Include="Poderosa.TerminalControl" Version="0.1.0" />
+    <PackageReference Include="Rebex.Terminal" Version="7.0.9448" />
+    <PackageReference Include="Rmg.Windows.ShellControls" Version="1.0.0" />
+    <PackageReference Include="SteamCMD.ConPTY" Version="1.2.0" />
     <PackageReference Include="Terminal.Gui" Version="1.19.0" />
   </ItemGroup>
 

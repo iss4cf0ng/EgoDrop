@@ -52,19 +52,50 @@ namespace EgoDrop
             }
         }
 
+        public Dictionary<clsSqlite.enListenerProtocol, Color> m_dicConnectionColor = new Dictionary<clsSqlite.enListenerProtocol, Color>()
+        {
+            { clsSqlite.enListenerProtocol.TCP, Color.LimeGreen },
+            { clsSqlite.enListenerProtocol.TLS, Color.Purple },
+            { clsSqlite.enListenerProtocol.DNS, Color.Blue },
+            { clsSqlite.enListenerProtocol.HTTP, Color.Green },
+        };
+
         public enum enMachineStatus
         {
+            Unknown,
+            Firewall,
+
             Linux_Normal,
             Linux_Infected,
+            Linux_Super,
             Linux_Beacon,
+
             Windows_Normal,
             Windows_Infected,
+            Windows_Super,
             Windows_Beacon,
 
-            Firewall,
+            Mac_Normal,
+            Mac_Infected,
+            Mac_Super,
+            Mac_Beacon,
 
             Router_Normal,
             Router_Infected,
+            Router_Super,
+            Router_Beacon,
+
+            Printer_Normal,
+            Printer_Infected,
+            Printer_Super,
+            Printer_Beacon,
+
+            Webcam_Normal,
+            Webcam_Infected,
+            Webcam_Super,
+            Webcam_Beacon,
+
+
         }
         public enum enTopologyLayout
         {
@@ -412,7 +443,7 @@ namespace EgoDrop
                 using (var font = new Font(Font.FontFamily, 9 * zoom, FontStyle.Bold))
                 using (var brush = new SolidBrush(Color.White))
                 {
-                    g.DrawString(node.szVictimID, font, brush, idRect, sf);
+                    g.DrawString(node.szDisplayName, font, brush, idRect, sf);
                 }
             }
         }
@@ -559,7 +590,7 @@ namespace EgoDrop
         }
 
         /// <summary>
-        /// 
+        /// Clear all nodes and connections.
         /// </summary>
         public void Clear()
         {
@@ -569,7 +600,11 @@ namespace EgoDrop
             Invalidate();
         }
 
-        //Avoiding overlapping.
+        /// <summary>
+        /// Avoiding overlapping.
+        /// </summary>
+        /// <param name="node"></param>
+        /// <returns></returns>
         private Point GetNonOverlappingPosition(Node node)
         {
             const int padding = 10;
@@ -654,10 +689,10 @@ namespace EgoDrop
         }
 
         /// <summary>
-        /// 
+        /// Set victim machine's status.
         /// </summary>
-        /// <param name="node"></param>
-        /// <param name="status"></param>
+        /// <param name="node">Specified node.</param>
+        /// <param name="status">Machine's status.</param>
         public void fnSetMahcineStatus(Node node, enMachineStatus status)
         {
             node.Icon = imageList.Images[Enum.GetName(status)];

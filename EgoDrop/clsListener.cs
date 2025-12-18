@@ -20,9 +20,9 @@ namespace EgoDrop
         public event dlgNewVictim evtNewVictim;
         public delegate void dlgReceivedMessage(clsListener listener, clsVictim victim, string szSrcVictimID, List<string> lsMsg);
         public event dlgReceivedMessage evtReceivedMessage;
-        public delegate void dlgVictimDisconnected(clsListener listener, clsVictim victim);
+        public delegate void dlgVictimDisconnected(clsListener listener, clsVictim victim, string szVictimID);
         public event dlgVictimDisconnected evtVictimDisconnected;
-        public delegate void dlgAddChain(List<string> lsVictim);
+        public delegate void dlgAddChain(List<string> lsVictim, string szOS, string szUsername, bool bRoot, string szIPv4);
         public event dlgAddChain evtAddChain;
 
         public clsListener()
@@ -50,14 +50,14 @@ namespace EgoDrop
             evtReceivedMessage?.Invoke(this, victim, szSrcVictimID, lsMsg);
         }
 
-        public void fnOnVictimDisconnected(clsVictim victim)
+        public void fnOnVictimDisconnected(clsVictim victim, string szVictimID)
         {
-            evtVictimDisconnected?.Invoke(this, victim);
+            evtVictimDisconnected?.Invoke(this, victim, szVictimID);
         }
 
-        public void fnOnAddChain(List<string> lsVictim)
+        public void fnOnAddChain(List<string> lsVictim, string szOS, string szUsername, bool bRoot, string szIPv4)
         {
-            evtAddChain?.Invoke(lsVictim);
+            evtAddChain?.Invoke(lsVictim, szOS, szUsername, bRoot, szIPv4);
         }
     }
 }

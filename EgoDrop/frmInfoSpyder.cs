@@ -30,18 +30,45 @@ namespace EgoDrop
 
             Invoke(new Action(() =>
             {
+                if (lsMsg[0] == "info")
+                {
+                    if (lsMsg[1] == "init")
+                    {
 
+                    }
+                    else if (lsMsg[1] == "env")
+                    {
+
+                    }
+                    else if (lsMsg[1] == "app")
+                    {
+
+                    }
+                }
             }));
+        }
+
+        void fnGetInfo()
+        {
+            m_victim.fnSendCommand(m_szVictimID, new string[]
+            {
+                "info",
+            });
         }
 
         private void fnSetup()
         {
-
+            fnGetInfo();
         }
 
         private void frmInfoSpyder_Load(object sender, EventArgs e)
         {
             fnSetup();
+        }
+
+        private void toolStripButton1_Click(object sender, EventArgs e)
+        {
+            fnGetInfo();
         }
     }
 }

