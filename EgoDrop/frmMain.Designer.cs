@@ -366,6 +366,7 @@
             treeView2.Name = "treeView2";
             treeView2.Size = new Size(731, 286);
             treeView2.TabIndex = 0;
+            treeView2.AfterSelect += treeView2_AfterSelect;
             // 
             // tabPage4
             // 
@@ -466,11 +467,11 @@
             imageList1.Images.SetKeyName(4, "Router_Normal");
             imageList1.Images.SetKeyName(5, "Linux_Beacon");
             imageList1.Images.SetKeyName(6, "Windows_Beacon");
-            imageList1.Images.SetKeyName(7, "Linux_Super");
-            imageList1.Images.SetKeyName(8, "Windows_Super");
-            imageList1.Images.SetKeyName(9, "Unknown");
-            imageList1.Images.SetKeyName(10, "Linux_Infected");
-            imageList1.Images.SetKeyName(11, "Windows_Infected");
+            imageList1.Images.SetKeyName(7, "Unknown");
+            imageList1.Images.SetKeyName(8, "Linux_Infected");
+            imageList1.Images.SetKeyName(9, "Windows_Infected");
+            imageList1.Images.SetKeyName(10, "Linux_Super");
+            imageList1.Images.SetKeyName(11, "Windows_Super");
             // 
             // sLinuxContextMenu
             // 

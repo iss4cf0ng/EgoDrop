@@ -530,5 +530,24 @@ namespace EgoDrop
             stFileInfo info = fnGetInfoStruct(item);
             fnReadFile(info.szFilePath);
         }
+
+        //New.Folder
+        private void toolStripMenuItem19_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        //New.Text File
+        private void toolStripMenuItem20_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        //Home
+        private void toolStripButton2_Click(object sender, EventArgs e)
+        {
+            TreeNode node = fnFindTreeNodeByPath(m_szInitDir, treeView1.Nodes);
+            treeView1.SelectedNode = node;
+        }
     }
 }

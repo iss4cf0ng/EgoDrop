@@ -225,10 +225,19 @@ namespace EgoDrop
         /// </summary>
         public enum enListenerProtocol
         {
+            //General.
             TCP,
             TLS,
             DNS,
             HTTP,
+            HTTPS,
+
+            //Linux.
+
+
+            //Windows
+            SMBv2,
+            SMBv3,
         };
 
         /// <summary>

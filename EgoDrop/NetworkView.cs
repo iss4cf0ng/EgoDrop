@@ -18,7 +18,15 @@ namespace EgoDrop
         private List<Node> nodes = new List<Node>();
         private List<Connection> connections = new List<Connection>();
 
-        private HashSet<Node> selectedNdoes = new HashSet<Node>();
+        // ===== Selection =====
+        private HashSet<Node> selectedNodes = new HashSet<Node>();
+        private bool isBoxSelecting = false;
+        private Point boxSelectStart;
+        private Rectangle boxSelectRect;
+
+        // ===== Drag =====
+        private bool isDraggingNodes = false;
+        private Dictionary<Node, Point> dragStartPositions = new Dictionary<Node, Point>();
 
         private Node selectedNode = null;
         private Node selectedNodeForHighlight = null;
@@ -65,31 +73,37 @@ namespace EgoDrop
             Unknown,
             Firewall,
 
+            //Linux.
             Linux_Normal,
             Linux_Infected,
             Linux_Super,
             Linux_Beacon,
 
+            //Windows.
             Windows_Normal,
             Windows_Infected,
             Windows_Super,
             Windows_Beacon,
 
+            //MacOS.
             Mac_Normal,
             Mac_Infected,
             Mac_Super,
             Mac_Beacon,
-
+            
+            //Router.
             Router_Normal,
             Router_Infected,
             Router_Super,
             Router_Beacon,
 
+            //Printer.
             Printer_Normal,
             Printer_Infected,
             Printer_Super,
             Printer_Beacon,
 
+            //Webcam.
             Webcam_Normal,
             Webcam_Infected,
             Webcam_Super,
@@ -108,6 +122,7 @@ namespace EgoDrop
         {
             DoubleBuffered = true;
             BackColor = Color.Black;
+
             Paint += NetworkView_Paint;
             MouseDown += NetworkView_MouseDown;
             MouseMove += NetworkView_MouseMove;
@@ -158,6 +173,9 @@ namespace EgoDrop
 
         private void NetworkView_MouseDown(object sender, MouseEventArgs e)
         {
+            Focus();
+
+            // ===== Scrollbar priority =====
             if (hScrollBar.Contains(e.Location))
             {
                 isDraggingHScroll = true;
@@ -172,40 +190,60 @@ namespace EgoDrop
                 return;
             }
 
+            Node hit = HitTestNode(e.Location);
+
+            // ===== Left Button =====
             if (e.Button == MouseButtons.Left)
             {
-                selectedNodeForHighlight = null;
-            }
-
-            foreach (var node in nodes)
-            {
-                Rectangle nodeRect = new Rectangle(
-                    Transform(node.Position).X - (int)(node.Size * zoom / 2),
-                    Transform(node.Position).Y - (int)(node.Size * zoom / 2),
-                    (int)(node.Size * zoom),
-                    (int)(node.Size * zoom));
-
-                if (!nodeRect.Contains(e.Location))
-                    continue;
-
-                if (e.Button == MouseButtons.Left)
+                //Ctrl multi selection.
+                if ((ModifierKeys & Keys.Control) == Keys.Control)
                 {
-                    selectedNode = node;
-                    selectedNodeForHighlight = node;
-                    dragOffset = new Point(e.X - Transform(node.Position).X, e.Y - Transform(node.Position).Y);
+                    if (hit != null)
+                    {
+                        if (selectedNodes.Contains(hit))
+                            selectedNodes.Remove(hit);
+                        else
+                            selectedNodes.Add(hit);
+                    }
                 }
-                else if (e.Button == MouseButtons.Right)
+                else
                 {
-                    selectedNode = node;
-                    selectedNodeForHighlight = node;
+                    if (hit != null)
+                    {
+                        //Drag all.
+                        if (!selectedNodes.Contains(hit))
+                        {
+                            selectedNodes.Clear();
+                            selectedNodes.Add(hit);
+                        }
+
+                        StartDragNodes(e.Location);
+                    }
+                    else
+                    {
+                        //Draw selection box.
+                        selectedNodes.Clear();
+                        isBoxSelecting = true;
+                        boxSelectStart = e.Location;
+                    }
                 }
 
+                SelectedNode = hit;
                 Invalidate();
-                return;
             }
-
-            lastMouse = e.Location;
         }
+
+        private void StartDragNodes(Point mousePos)
+        {
+            isDraggingNodes = true;
+            dragStartPositions.Clear();
+
+            foreach (var n in selectedNodes)
+                dragStartPositions[n] = n.Position;
+
+            lastMouse = mousePos;
+        }
+
 
         protected override void OnMouseDown(MouseEventArgs e)
         {
@@ -247,12 +285,17 @@ namespace EgoDrop
             );
         }
 
-        private Node HitTestNode(Point p)
+        private Node HitTestNode(Point screenPoint)
         {
+            // screen → world
+            Point world = new Point(
+                (int)(screenPoint.X / zoom - panOffset.X),
+                (int)(screenPoint.Y / zoom - panOffset.Y)
+            );
+
             foreach (var n in nodes)
             {
-                var r = GetNodeBounds(n);
-                if (r.Contains(p))
+                if (n.Bounds.Contains(world))
                     return n;
             }
             return null;
@@ -262,10 +305,11 @@ namespace EgoDrop
         {
             currentMousePos = e.Location;
 
+            // ===== Scrollbar =====
             if (isDraggingHScroll)
             {
                 int dx = e.X - scrollDragStart.X;
-                panOffset.X -= (int)(dx * virtualWidth * zoom / this.Width);
+                panOffset.X -= (int)(dx * virtualWidth * zoom / Width);
                 scrollDragStart = e.Location;
                 UpdateScrollBar();
                 Invalidate();
@@ -275,86 +319,88 @@ namespace EgoDrop
             if (isDraggingVScroll)
             {
                 int dy = e.Y - scrollDragStart.Y;
-                panOffset.Y -= (int)(dy * virtualHeight * zoom / this.Height);
+                panOffset.Y -= (int)(dy * virtualHeight * zoom / Height);
                 scrollDragStart = e.Location;
                 UpdateScrollBar();
                 Invalidate();
                 return;
             }
 
-            if (selectedNode != null && e.Button == MouseButtons.Left)
+            // ===== Drag nodes =====
+            if (isDraggingNodes)
             {
-                selectedNode.Position = new Point(
-                    (int)((e.X - dragOffset.X) / zoom - panOffset.X), 
-                    (int)((e.Y - dragOffset.Y) / zoom - panOffset.Y)
-                );
+                int dx = (int)((e.X - lastMouse.X) / zoom);
+                int dy = (int)((e.Y - lastMouse.Y) / zoom);
+
+                foreach (var n in selectedNodes)
+                {
+                    Point p = dragStartPositions[n];
+                    n.Position = ClampToVirtual(new Point(p.X + dx, p.Y + dy));
+                }
 
                 Invalidate();
+                return;
             }
 
-            if (isDraggingConnection)
+            // ===== Box select =====
+            if (isBoxSelecting)
+            {
+                boxSelectRect = GetRect(boxSelectStart, e.Location);
                 Invalidate();
+            }
         }
 
         private void NetworkView_MouseUp(object sender, MouseEventArgs e)
         {
-            selectedNode = null;
             isDraggingHScroll = false;
             isDraggingVScroll = false;
+            isDraggingNodes = false;
 
-            if (isDraggingConnection && connectionStartNode != null)
+            if (isBoxSelecting)
             {
-                foreach (var node in nodes)
+                selectedNodes.Clear();
+
+                foreach (var n in nodes)
                 {
-                    Rectangle nodeRect = new Rectangle(Transform(node.Position).X - (int)(node.Size * zoom / 2),
-                                                       Transform(node.Position).Y - (int)(node.Size * zoom / 2),
-                                                       (int)(node.Size * zoom),
-                                                       (int)(node.Size * zoom));
-                    if (nodeRect.Contains(e.Location) && node != connectionStartNode)
-                    {
-                        connections.Add(new Connection { From = connectionStartNode, To = node });
-                        break;
-                    }
+                    Rectangle r = GetNodeBoundsScreen(n);
+                    if (boxSelectRect.IntersectsWith(r))
+                        selectedNodes.Add(n);
                 }
             }
 
-            isDraggingConnection = false;
-            connectionStartNode = null;
-
+            isBoxSelecting = false;
             UpdateScrollBar();
             Invalidate();
         }
+
+
 
         #endregion
         #region Painting
 
         private void NetworkView_Paint(object sender, PaintEventArgs e)
         {
-            var g = e.Graphics;
+            Graphics g = e.Graphics;
             g.SmoothingMode = SmoothingMode.AntiAlias;
-
             g.Clear(Color.Black);
 
-            //Draw line.
             foreach (var c in connections)
                 DrawArrow(g, c.From, c.To, Color.LimeGreen, c.nOffsetIndex);
 
-            //Draw dragging line.
-            if (isDraggingConnection && connectionStartNode != null)
-            {
-                Node temp = new Node { Position = currentMousePos, Size = 1 };
-                DrawArrow(g, connectionStartNode, temp, Color.Gray);
-            }
-
-            //Draw node.
             foreach (var n in nodes)
                 DrawNode(g, n);
 
-            //Draw scrollbar.
-            using (var brush = new SolidBrush(Color.Gray))
-                g.FillRectangle(brush, hScrollBar);
-            using (var brush = new SolidBrush(Color.Gray))
-                g.FillRectangle(brush, vScrollBar);
+            // ===== Box select =====
+            if (isBoxSelecting)
+            {
+                using var pen = new Pen(Color.Cyan, 1) { DashStyle = DashStyle.Dash };
+                g.DrawRectangle(pen, boxSelectRect);
+            }
+
+            // ===== Scrollbar =====
+            using var brush = new SolidBrush(Color.Gray);
+            g.FillRectangle(brush, hScrollBar);
+            g.FillRectangle(brush, vScrollBar);
         }
 
         private Point Transform(Point p)
@@ -385,67 +431,81 @@ namespace EgoDrop
 
         private void DrawNode(Graphics g, Node node)
         {
-            int iconSize = (int)(node.Size * zoom);
-            int highlightMargin = (int)(6 * zoom);
-            int textMargin = (int)(4 * zoom);
-
             Point pos = Transform(node.Position);
+            int size = (int)(node.Size * zoom);
+            int textMargin = (int)(6 * zoom);
 
-            if (node == selectedNodeForHighlight)
+            // ===== Selection highlight =====
+            if (selectedNodes.Contains(node))
             {
-                using (var highlightPen = new Pen(Color.Cyan, 3 * zoom))
-                {
-                    int highlightSize = iconSize + highlightMargin * 2;
-                    g.DrawEllipse(highlightPen,
-                        pos.X - highlightSize / 2,
-                        pos.Y - highlightSize / 2,
-                        highlightSize,
-                        highlightSize);
-                }
+                using var pen = new Pen(Color.Cyan, 3 * zoom);
+                g.DrawEllipse(
+                    pen,
+                    pos.X - size / 2 - 6,
+                    pos.Y - size / 2 - 6,
+                    size + 12,
+                    size + 12);
             }
 
-            Rectangle iconRect;
-
-            if (node.Icon != null)
-            {
-                iconRect = GetImageRectKeepAspect(node.Icon, pos, iconSize);
-                g.DrawImage(node.Icon, iconRect);
-            }
-            else
-            {
-                iconRect = new Rectangle(
-                    pos.X - iconSize / 2,
-                    pos.Y - iconSize / 2,
-                    iconSize,
-                    iconSize);
-
-                using (var p = new Pen(Color.White, 2 * zoom))
-                    g.DrawRectangle(p, iconRect);
-            }
+            // ===== Icon =====
+            Rectangle iconRect = new Rectangle(
+                pos.X - size / 2,
+                pos.Y - size / 2,
+                size,
+                size);
 
             if (node.Icon != null)
                 g.DrawImage(node.Icon, iconRect);
             else
-                using (var p = new Pen(Color.White, 2 * zoom))
-                    g.DrawRectangle(p, iconRect);
+                g.DrawRectangle(Pens.White, iconRect);
 
-            if (!string.IsNullOrEmpty(node.szVictimID))
+            // ===== Text (Display Name) =====
+            if (!string.IsNullOrEmpty(node.szDisplayName))
             {
-                int maxWidth = (int)(iconRect.Width + 20);
-                var idRect = new Rectangle(iconRect.X - 10, iconRect.Bottom + textMargin, maxWidth, 1000);
+                Rectangle textRect = new Rectangle(
+                    iconRect.X - 20,
+                    iconRect.Bottom + textMargin,
+                    iconRect.Width + 40,
+                    (int)(40 * zoom));
 
-                using (var sf = new StringFormat
+                using var sf = new StringFormat
                 {
-                    LineAlignment = StringAlignment.Near,
                     Alignment = StringAlignment.Center,
-                    FormatFlags = 0,
-                })
-                using (var font = new Font(Font.FontFamily, 9 * zoom, FontStyle.Bold))
-                using (var brush = new SolidBrush(Color.White))
-                {
-                    g.DrawString(node.szDisplayName, font, brush, idRect, sf);
-                }
+                    LineAlignment = StringAlignment.Near
+                };
+
+                using var font = new Font(
+                    Font.FontFamily,
+                    Math.Max(8f, 9f * zoom),
+                    FontStyle.Bold);
+
+                using var brush = new SolidBrush(Color.White);
+
+                g.DrawString(node.szDisplayName, font, brush, textRect, sf);
             }
+        }
+
+        private Point ClampToVirtual(Point p)
+        {
+            p.X = Math.Max(0, Math.Min(virtualWidth, p.X));
+            p.Y = Math.Max(0, Math.Min(virtualHeight, p.Y));
+            return p;
+        }
+
+        private Rectangle GetRect(Point a, Point b)
+        {
+            return new Rectangle(
+                Math.Min(a.X, b.X),
+                Math.Min(a.Y, b.Y),
+                Math.Abs(a.X - b.X),
+                Math.Abs(a.Y - b.Y));
+        }
+
+        private Rectangle GetNodeBoundsScreen(Node n)
+        {
+            Point p = Transform(n.Position);
+            int s = (int)(n.Size * zoom);
+            return new Rectangle(p.X - s / 2, p.Y - s / 2, s, s);
         }
 
         private void DrawArrow(Graphics g, Node fromNode, Node toNode, Color color, int edgeIndex = 0)
@@ -516,8 +576,67 @@ namespace EgoDrop
             return new Point((int)(p1.X + dx * scale), (int)(p1.Y + dy * scale));
         }
 
+        private Rectangle GetGraphBounds()
+        {
+            if (nodes.Count == 0)
+                return new Rectangle(0, 0, virtualWidth, virtualHeight);
+
+            int minX = nodes.Min(n => n.Position.X - n.Size / 2);
+            int minY = nodes.Min(n => n.Position.Y - n.Size / 2);
+            int maxX = nodes.Max(n => n.Position.X + n.Size / 2);
+            int maxY = nodes.Max(n => n.Position.Y + n.Size / 2);
+
+            return Rectangle.FromLTRB(minX, minY, maxX, maxY);
+        }
+
+        private void ClampPanOffset()
+        {
+            Rectangle graph = GetGraphBounds();
+
+            float viewW = Width / zoom;
+            float viewH = Height / zoom;
+
+            if (graph.Width <= viewW)
+                panOffset.X = (int)(-graph.Left + (viewW - graph.Width) / 2);
+            else
+                panOffset.X = Math.Min(-graph.Left, Math.Max((int)(viewW - graph.Right), panOffset.X));
+
+            if (graph.Height <= viewH)
+                panOffset.Y = (int)(-graph.Top + (viewH - graph.Height) / 2);
+            else
+                panOffset.Y = Math.Min(
+                    -graph.Top,
+                    Math.Max((int)(viewH - graph.Bottom), panOffset.Y)
+                );
+        }
+
         #endregion
         #region Public API
+
+        public void BringGraphIntoView()
+        {
+            if (nodes.Count == 0) return;
+
+            int minX = nodes.Min(n => n.Position.X - n.Size / 2);
+            int minY = nodes.Min(n => n.Position.Y - n.Size / 2);
+
+            if (minX >= 0 && minY >= 0)
+                return;
+
+            int offsetX = minX < 0 ? -minX + 20 : 0;
+            int offsetY = minY < 0 ? -minY + 20 : 0;
+
+            foreach (var n in nodes)
+            {
+                n.Position = new Point(
+                    n.Position.X + offsetX,
+                    n.Position.Y + offsetY
+                );
+            }
+
+            Invalidate();
+        }
+
 
         /// <summary>
         /// Add node into NetworkView.
@@ -533,7 +652,7 @@ namespace EgoDrop
             pos = new Point(rightMostX + 200, pos.Y);
 
             Node n = new Node { szDisplayName = szDisplayName, szVictimID = szVictimID, Position = pos, };
-            fnSetMahcineStatus(n, status);
+            fnSetMachineStatus(n, status);
             n.Position = GetNonOverlappingPosition(n);
             nodes.Add(n);
             Invalidate();
@@ -693,9 +812,12 @@ namespace EgoDrop
         /// </summary>
         /// <param name="node">Specified node.</param>
         /// <param name="status">Machine's status.</param>
-        public void fnSetMahcineStatus(Node node, enMachineStatus status)
+        public void fnSetMachineStatus(Node node, enMachineStatus status)
         {
             node.Icon = imageList.Images[Enum.GetName(status)];
+            node.MachineStatus = status;
+
+            Invalidate();
         }
 
         /// <summary>
@@ -741,6 +863,8 @@ namespace EgoDrop
 
         public HashSet<Node> ChildNodes = new HashSet<Node>();
         public Node ParentNode = null;
+
+        public NetworkView.enMachineStatus MachineStatus { get; set; }
     }
 
     /// <summary>

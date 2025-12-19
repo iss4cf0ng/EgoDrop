@@ -17,6 +17,14 @@ namespace EgoDrop
         private X509Certificate m_certificate { get; set; }
         private TcpListener m_listener { get; set; }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="szName"></param>
+        /// <param name="nPort"></param>
+        /// <param name="szDescription"></param>
+        /// <param name="szCertificatePath"></param>
+        /// <param name="szCertificatePassword"></param>
         public clsTlsListener(
             string szName, 
             int nPort, 

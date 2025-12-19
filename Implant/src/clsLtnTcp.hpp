@@ -226,8 +226,8 @@ private:
 
         m_vVictim.erase(std::remove(m_vVictim.begin(), m_vVictim.end(), victim), m_vVictim.end());
         close(nSktClnt);
+        free(&nSktClnt);
 
-
-        delete &victim;
+        m_vicParent.fnSendCommand("disconnect");
     }
 };
