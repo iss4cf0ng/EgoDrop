@@ -77,8 +77,12 @@
             imageList1 = new ImageList(components);
             sLinuxContextMenu = new ContextMenuStrip(components);
             tWinContextMenu = new ContextMenuStrip(components);
+            toolStripMenuItem17 = new ToolStripMenuItem();
+            toolStripMenuItem18 = new ToolStripMenuItem();
             sWinContextMenu = new ContextMenuStrip(components);
             topoWinContextMenu = new ContextMenuStrip(components);
+            toolStripMenuItem15 = new ToolStripMenuItem();
+            toolStripMenuItem16 = new ToolStripMenuItem();
             statusStrip1.SuspendLayout();
             menuStrip1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)splitContainer1).BeginInit();
@@ -97,6 +101,8 @@
             topoLinuxContextMenu.SuspendLayout();
             tabControl1.SuspendLayout();
             tabPage1.SuspendLayout();
+            tWinContextMenu.SuspendLayout();
+            topoWinContextMenu.SuspendLayout();
             SuspendLayout();
             // 
             // statusStrip1
@@ -247,6 +253,7 @@
             listView1.TabIndex = 0;
             listView1.UseCompatibleStateImageBehavior = false;
             listView1.View = View.Details;
+            listView1.MouseDown += listView1_MouseDown;
             // 
             // columnHeader1
             // 
@@ -354,7 +361,7 @@
             tabPage5.Controls.Add(treeView2);
             tabPage5.Location = new Point(4, 4);
             tabPage5.Name = "tabPage5";
-            tabPage5.Size = new Size(731, 286);
+            tabPage5.Size = new Size(731, 290);
             tabPage5.TabIndex = 2;
             tabPage5.Text = "Sessions";
             tabPage5.UseVisualStyleBackColor = true;
@@ -364,7 +371,7 @@
             treeView2.Dock = DockStyle.Fill;
             treeView2.Location = new Point(0, 0);
             treeView2.Name = "treeView2";
-            treeView2.Size = new Size(731, 286);
+            treeView2.Size = new Size(731, 290);
             treeView2.TabIndex = 0;
             treeView2.AfterSelect += treeView2_AfterSelect;
             // 
@@ -390,6 +397,7 @@
             networkView1.Size = new Size(725, 284);
             networkView1.TabIndex = 0;
             networkView1.Zoom = 1F;
+            networkView1.MouseDown += networkView1_MouseDown;
             // 
             // topoLinuxContextMenu
             // 
@@ -460,18 +468,22 @@
             imageList1.ColorDepth = ColorDepth.Depth32Bit;
             imageList1.ImageStream = (ImageListStreamer)resources.GetObject("imageList1.ImageStream");
             imageList1.TransparentColor = Color.Transparent;
-            imageList1.Images.SetKeyName(0, "Linux_Normal");
-            imageList1.Images.SetKeyName(1, "Windows_Normal");
-            imageList1.Images.SetKeyName(2, "Firewall");
-            imageList1.Images.SetKeyName(3, "Router_Infected");
-            imageList1.Images.SetKeyName(4, "Router_Normal");
+            imageList1.Images.SetKeyName(0, "Unknown");
+            imageList1.Images.SetKeyName(1, "Firewall");
+            imageList1.Images.SetKeyName(2, "Linux_Normal");
+            imageList1.Images.SetKeyName(3, "Windows_Normal");
+            imageList1.Images.SetKeyName(4, "Router_Infected");
             imageList1.Images.SetKeyName(5, "Linux_Beacon");
             imageList1.Images.SetKeyName(6, "Windows_Beacon");
-            imageList1.Images.SetKeyName(7, "Unknown");
-            imageList1.Images.SetKeyName(8, "Linux_Infected");
-            imageList1.Images.SetKeyName(9, "Windows_Infected");
-            imageList1.Images.SetKeyName(10, "Linux_Super");
-            imageList1.Images.SetKeyName(11, "Windows_Super");
+            imageList1.Images.SetKeyName(7, "Linux_Infected");
+            imageList1.Images.SetKeyName(8, "Windows_Infected");
+            imageList1.Images.SetKeyName(9, "Linux_Super");
+            imageList1.Images.SetKeyName(10, "Windows_Super");
+            imageList1.Images.SetKeyName(11, "Router_Normal");
+            imageList1.Images.SetKeyName(12, "Mac_Beacon");
+            imageList1.Images.SetKeyName(13, "Mac_Super");
+            imageList1.Images.SetKeyName(14, "Mac_Infected");
+            imageList1.Images.SetKeyName(15, "Mac_Normal");
             // 
             // sLinuxContextMenu
             // 
@@ -480,8 +492,24 @@
             // 
             // tWinContextMenu
             // 
+            tWinContextMenu.Font = new Font("Microsoft JhengHei UI", 11.25F, FontStyle.Regular, GraphicsUnit.Point, 136);
+            tWinContextMenu.Items.AddRange(new ToolStripItem[] { toolStripMenuItem17, toolStripMenuItem18 });
             tWinContextMenu.Name = "tWinContextMenu";
-            tWinContextMenu.Size = new Size(61, 4);
+            tWinContextMenu.Size = new Size(170, 52);
+            // 
+            // toolStripMenuItem17
+            // 
+            toolStripMenuItem17.Name = "toolStripMenuItem17";
+            toolStripMenuItem17.Size = new Size(169, 24);
+            toolStripMenuItem17.Text = "Information";
+            toolStripMenuItem17.Click += toolStripMenuItem17_Click;
+            // 
+            // toolStripMenuItem18
+            // 
+            toolStripMenuItem18.Name = "toolStripMenuItem18";
+            toolStripMenuItem18.Size = new Size(169, 24);
+            toolStripMenuItem18.Text = "File Manager";
+            toolStripMenuItem18.Click += toolStripMenuItem18_Click;
             // 
             // sWinContextMenu
             // 
@@ -490,8 +518,23 @@
             // 
             // topoWinContextMenu
             // 
+            topoWinContextMenu.Font = new Font("Microsoft JhengHei UI", 11.25F, FontStyle.Regular, GraphicsUnit.Point, 136);
+            topoWinContextMenu.Items.AddRange(new ToolStripItem[] { toolStripMenuItem15, toolStripMenuItem16 });
             topoWinContextMenu.Name = "topoWinContextMenu";
-            topoWinContextMenu.Size = new Size(61, 4);
+            topoWinContextMenu.Size = new Size(181, 74);
+            // 
+            // toolStripMenuItem15
+            // 
+            toolStripMenuItem15.Name = "toolStripMenuItem15";
+            toolStripMenuItem15.Size = new Size(180, 24);
+            toolStripMenuItem15.Text = "Pivoting";
+            // 
+            // toolStripMenuItem16
+            // 
+            toolStripMenuItem16.Name = "toolStripMenuItem16";
+            toolStripMenuItem16.Size = new Size(180, 24);
+            toolStripMenuItem16.Text = "File Manager";
+            toolStripMenuItem16.Click += toolStripMenuItem16_Click;
             // 
             // frmMain
             // 
@@ -528,6 +571,8 @@
             topoLinuxContextMenu.ResumeLayout(false);
             tabControl1.ResumeLayout(false);
             tabPage1.ResumeLayout(false);
+            tWinContextMenu.ResumeLayout(false);
+            topoWinContextMenu.ResumeLayout(false);
             ResumeLayout(false);
             PerformLayout();
         }
@@ -581,5 +626,9 @@
         private ContextMenuStrip topoWinContextMenu;
         private TreeView treeView2;
         private ToolStripMenuItem toolStripMenuItem14;
+        private ToolStripMenuItem toolStripMenuItem15;
+        private ToolStripMenuItem toolStripMenuItem16;
+        private ToolStripMenuItem toolStripMenuItem17;
+        private ToolStripMenuItem toolStripMenuItem18;
     }
 }

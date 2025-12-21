@@ -18,6 +18,9 @@ namespace EgoDrop
         private string m_szInitDir { get; set; }
         private string m_szCurrentPath { get { return (string)textBox1.Tag; } }
 
+        private bool m_bIsUnixLike { get; set; }
+        private bool m_bIsWindows { get { return !m_bIsUnixLike; } }
+
         /// <summary>
         /// File information struct.
         /// Store the file information of remote file.
@@ -66,13 +69,14 @@ namespace EgoDrop
             }
         }
 
-        public frmFileMgr(string szVictimID, clsVictim victim)
+        public frmFileMgr(string szVictimID, clsVictim victim, bool bUnixLike)
         {
             InitializeComponent();
 
             m_szVictimID = szVictimID;
             m_victim = victim;
             m_szInitDir = string.Empty;
+            m_bIsUnixLike = bUnixLike;
         }
 
         /// <summary>
@@ -98,9 +102,15 @@ namespace EgoDrop
                             textBox1.Tag = lsMsg[2];
                             m_szInitDir = lsMsg[2];
 
-                            TreeNode node = fnAddTreeNodeByPath(m_szInitDir);
+                            TreeNode node = m_bIsUnixLike ? fnAddTreeNodeByPath(m_szInitDir) : fnWinAddTreeNodeByPath(m_szInitDir);
                             treeView1.ExpandAll();
                             treeView1.SelectedNode = node;
+                        }
+                        else if (lsMsg[1] == "drive") //Windows.AddDrive
+                        {
+                            List<string> lsDrive = clsEZData.fnlsB64D2Str(lsMsg[2]);
+                            foreach (string szDrive in lsDrive)
+                                fnWinAddTreeNodeByPath(szDrive);
                         }
                         else if (lsMsg[1] == "sd") //Scan directory.
                         {
@@ -278,6 +288,88 @@ namespace EgoDrop
             return node;
         }
 
+        private TreeNode fnWinAddTreeNodeByPath(string szPath)
+        {
+            TreeNode fnRecursive(TreeNode node, string szRelativePath)
+            {
+                if (string.IsNullOrEmpty(szRelativePath))
+                    return node;
+
+                szRelativePath = szRelativePath.Trim('\\');
+
+                string[] split = szRelativePath.Split('\\');
+                string currentName = split.First();
+
+                TreeNode tnNode = null;
+
+                foreach (TreeNode t in node.Nodes)
+                {
+                    if (string.Equals(t.Text, currentName, StringComparison.OrdinalIgnoreCase))
+                    {
+                        tnNode = t;
+                        break;
+                    }
+                }
+
+                if (tnNode == null)
+                {
+                    tnNode = new TreeNode(currentName);
+
+                    int nIdx = 0;
+                    foreach (TreeNode t in node.Nodes)
+                    {
+                        if (string.Compare(tnNode.Text, t.Text, StringComparison.OrdinalIgnoreCase) > 0)
+                            nIdx++;
+                    }
+
+                    node.Nodes.Insert(nIdx, tnNode);
+                }
+
+                string nextPath = string.Join("\\", split.Skip(1));
+                return fnRecursive(tnNode, nextPath);
+            }
+
+            if (string.IsNullOrWhiteSpace(szPath))
+                return null;
+
+            szPath = szPath.TrimEnd('\\');
+            string[] parts = szPath.Split('\\');
+
+            string drive = parts[0];
+            string relativePath = string.Join("\\", parts.Skip(1));
+
+            TreeNode driveNode = null;
+
+            foreach (TreeNode t in treeView1.Nodes)
+            {
+                if (string.Equals(t.Text, drive, StringComparison.OrdinalIgnoreCase))
+                {
+                    driveNode = t;
+                    break;
+                }
+            }
+
+            if (driveNode == null)
+            {
+                driveNode = new TreeNode(drive);
+
+                int nIdx = 0;
+                foreach (TreeNode t in treeView1.Nodes)
+                {
+                    if (string.Compare(driveNode.Text, t.Text, StringComparison.OrdinalIgnoreCase) > 0)
+                        nIdx++;
+                }
+
+                treeView1.Nodes.Insert(nIdx, driveNode);
+            }
+
+            if (string.IsNullOrEmpty(relativePath))
+                return driveNode;
+
+            return fnRecursive(driveNode, relativePath);
+        }
+
+
         private TreeNode fnAddTreeNodeByPath(string szPath)
         {
             TreeNode fnRecursive(TreeNode node, string szRelativePath)
@@ -334,6 +426,20 @@ namespace EgoDrop
             else
             {
                 tnRoot = treeView1.Nodes[0];
+                if (m_bIsWindows)
+                {
+                    string[] s = szPath.Split('/');
+                    foreach (TreeNode n in treeView1.Nodes)
+                    {
+                        if (string.Equals(n.Text, s.First()))
+                        {
+                            tnRoot = n;
+                            szPath = string.Join('/', s[1..]);
+
+                            break;
+                        }
+                    }
+                }
             }
 
             if (szPath == "/")

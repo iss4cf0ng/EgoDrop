@@ -6,6 +6,7 @@
 #include <ostream>
 #include <string>
 #include <vector>
+#include <atomic>
 
 #include <openssl/ssl.h>
 #include <openssl/err.h>
@@ -37,26 +38,29 @@ public:
     enMethod m_method;
 
     int m_nSkt = -1;
-    SSL* m_ssl;
+    SSL* m_ssl = nullptr;
 
-    clsCrypto m_crypto;
+    std::unique_ptr<clsCrypto> m_crypto;
     clsHttpPkt m_httpPkt;
+
+    std::atomic<bool> m_bClosed { false };
 
 public:
     clsVictim()
     {
 
     }
+
+    clsVictim(const clsVictim&) = delete;
+    clsVictim& operator=(const clsVictim&) = delete;
+
+    clsVictim(clsVictim&&) = delete;
+    clsVictim& operator=(clsVictim&&) = delete;
+
     clsVictim(enMethod method, int nSkt)
     {
         m_method = method;
         m_nSkt = nSkt;
-    }
-    clsVictim(enMethod method, int nSkt, clsCrypto crypto)
-    {
-        m_method = method;
-        m_nSkt = nSkt;
-        m_crypto = crypto;
     }
     clsVictim(enMethod method, int nSkt, SSL* ssl)
     {
@@ -71,11 +75,32 @@ public:
         m_httpPkt = http;
     }
 
-    ~clsVictim() = default;
-
-    bool operator==(const clsVictim& victim) const
+    ~clsVictim()
     {
-        return m_szVictimID == victim.m_szVictimID;
+        fnSafeClose();
+    }
+
+    void fnSafeClose()
+    {
+        bool bExpected = false;
+        if (!m_bClosed.compare_exchange_strong(bExpected, true))
+        {
+            return;
+        }
+
+        if (m_nSkt >= 0)
+        {
+            ::shutdown(m_nSkt, SHUT_RDWR);
+            ::close(m_nSkt);
+            m_nSkt = -1;
+        }
+
+        if (m_ssl)
+        {
+            SSL_shutdown(m_ssl);
+            SSL_free(m_ssl);
+            m_ssl = nullptr;
+        }
     }
 
     ssize_t fnSendRAW(const std::string& szMsg)
@@ -169,7 +194,7 @@ public:
     {
         if (m_method == enMethod::TCP)
         {
-            std::vector<unsigned char> vuCipher = m_crypto.fnvuAESEncrypt(szMsg);
+            std::vector<unsigned char> vuCipher = m_crypto->fnvuAESEncrypt(szMsg);
             return fnSend(2, 0, vuCipher);
         }
         else if (m_method == enMethod::TLS)
@@ -182,7 +207,7 @@ public:
         }
         else if (m_method == enMethod::HTTP)
         {
-            BUFFER abData = m_crypto.fnvuAESEncrypt(szMsg);
+            BUFFER abData = m_crypto->fnvuAESEncrypt(szMsg);
             clsEDP edp(2, 0, abData);
             BUFFER abBuffer = edp.fnabGetBytes();
             std::string szData = clsEZData::fnb64Encode(abBuffer);
