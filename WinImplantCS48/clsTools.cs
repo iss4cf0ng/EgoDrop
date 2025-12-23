@@ -1,6 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Drawing;
+using System.Drawing.Imaging;
+using System.IO;
 using System.Linq;
 using System.Management;
 using System.Text;
@@ -41,10 +44,34 @@ namespace WinImplantCS48
             }
             catch (Exception ex)
             {
+                DataRow dr = dt.NewRow();
+                dt.Columns.Add("Error");
+                dr["Error"] = ex.Message;
 
+                dt.Rows.Add(dr);
             }
 
             return dt;
+        }
+
+        public static string fnszImageToString(Image img)
+        {
+            using (MemoryStream ms = new MemoryStream())
+            {
+                img.Save(ms, ImageFormat.Png);
+                byte[] abBuffer = ms.ToArray();
+
+                return Convert.ToBase64String(abBuffer);
+            }
+        }
+
+        public static Image fnStringToImage(string szB64)
+        {
+            byte[] abBuffer = Convert.FromBase64String(szB64);
+            using (MemoryStream ms = new MemoryStream(abBuffer))
+            {
+                return Image.FromStream(ms);
+            }
         }
     }
 }

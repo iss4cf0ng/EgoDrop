@@ -80,11 +80,14 @@ public:
 
     ~clsLtnTcp()
     {
-        
+        fnStop();
     }
 
     void fnStart()
     {
+        if (m_bListening)
+            return;
+
         listen(m_nSktSrv, 1000);
         clsTools::fnLogInfo("Listening...");
         m_bListening = true;
@@ -111,7 +114,7 @@ public:
     {
         m_bListening = false;
         close(m_nSktSrv);
-    }
+    } 
 
     void fnSendToSub(std::string& szSubID, std::vector<std::string>& vuMsg)
     {

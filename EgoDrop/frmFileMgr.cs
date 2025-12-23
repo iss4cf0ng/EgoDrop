@@ -530,6 +530,7 @@ namespace EgoDrop
             }
             else
             {
+
                 fnReadFile(info.szFilePath);
             }
         }
@@ -640,13 +641,22 @@ namespace EgoDrop
         //New.Folder
         private void toolStripMenuItem19_Click(object sender, EventArgs e)
         {
+            ListViewItem item = new ListViewItem($"Folder_{clsEZData.fnszDateString()}");
+            listView1.Items.Add(item);
 
+            listView1.LabelEdit = true;
+            item.BeginEdit();
         }
 
         //New.Text File
         private void toolStripMenuItem20_Click(object sender, EventArgs e)
         {
+            frmFileEditor f = new frmFileEditor(m_szVictimID, m_victim);
 
+            f.Show();
+
+            string szFilePath = $"{m_szCurrentPath}/{clsEZData.fnszDateFileName("txt")}";
+            f.fnAddNewPage(szFilePath, string.Empty);
         }
 
         //Home
@@ -654,6 +664,61 @@ namespace EgoDrop
         {
             TreeNode node = fnFindTreeNodeByPath(m_szInitDir, treeView1.Nodes);
             treeView1.SelectedNode = node;
+        }
+
+        //Copy
+        private void toolStripMenuItem5_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        //Move
+        private void toolStripMenuItem6_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        //Paste
+        private void toolStripMenuItem7_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        //Delete
+        private void toolStripMenuItem4_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        //Upload
+        private void toolStripMenuItem8_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        //Download
+        private void toolStripMenuItem9_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        //WGET
+        private void toolStripMenuItem10_Click(object sender, EventArgs e)
+        {
+            frmFileWGET f = new frmFileWGET(m_szVictimID, m_victim);
+            f.Show();
+        }
+
+        //Archive.Compress
+        private void toolStripMenuItem17_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        //Archive.Decompress
+        private void toolStripMenuItem18_Click(object sender, EventArgs e)
+        {
+
         }
     }
 }

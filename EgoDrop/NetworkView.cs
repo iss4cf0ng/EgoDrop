@@ -91,7 +91,7 @@ namespace EgoDrop
             Mac_Infected,
             Mac_Super,
             Mac_Beacon,
-            
+
             //Router.
             Router_Normal,
             Router_Infected,
@@ -851,12 +851,22 @@ namespace EgoDrop
             if (selectedNodeForHighlight == node)
                 selectedNodeForHighlight = null;
 
-            if (node.ParentNode.ChildNodes.Contains(node))
-                node.ParentNode.ChildNodes.Remove(node);
+            if (node.ParentNode == null) //Firewall
+            {
+                nodes.Remove(node);
+                return;
+            }
+            else
+            {
+                Node nodeParent = node.ParentNode;
+                Connection conn = FindConnection(nodeParent, node);
+                if (node.ParentNode != null && node.ParentNode.ChildNodes.Contains(node))
+                    node.ParentNode.ChildNodes.Remove(node);
 
-            connections.Remove(connections.Where(x => x.To == node || x.From == node).First());
+                connections.Remove(conn);
 
-            nodes.Remove(node);
+                nodes.Remove(node);
+            }
 
             Invalidate();
         }
@@ -1034,6 +1044,11 @@ namespace EgoDrop
         }
 
         #endregion
+
+        private void NetworkView_Load(object sender, EventArgs e)
+        {
+
+        }
     }
 
     /// <summary>

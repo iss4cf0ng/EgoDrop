@@ -87,6 +87,10 @@
     <Compile Include="clsEZData.cs" />
     <Compile Include="clsfnFileMgr.cs" />
     <Compile Include="clsfnInfoSpyder.cs" />
+    <Compile Include="clsfnShell.cs" />
+    <Compile Include="clsLtnHttp.cs" />
+    <Compile Include="clsLtnTls.cs" />
+    <Compile Include="clsWin32.cs" />
     <Compile Include="clsLtnTcp.cs" />
     <Compile Include="clsTools.cs" />
     <Compile Include="clsVictim.cs" />

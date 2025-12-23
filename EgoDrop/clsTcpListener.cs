@@ -224,8 +224,10 @@ namespace EgoDrop
             }
             catch (Exception ex)
             {
-                Socket sktClnt = victim.m_sktClnt;
-                MessageBox.Show(ex.Message, "fnBeginRecvCallback()", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                //Socket sktClnt = victim.m_sktClnt;
+                //MessageBox.Show(ex.Message, "fnBeginRecvCallback()", MessageBoxButtons.OK, MessageBoxIcon.Error);
+
+                fnOnVictimDisconnected(victim, szVictimID);
             }
         }
     }
