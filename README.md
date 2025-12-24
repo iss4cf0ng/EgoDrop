@@ -27,5 +27,5 @@ This is an experimental RAT(Remote Access Trojan) for Linux platform. C# GUI bas
 ## Topology
 ![Topology](https://github.com/iss4cf0ng/EgoDrop/blob/main/screenshot/topology.png)
 
-## Termianl(Virtual terminal, but is capable to use ssh or vim.)
+## Terminal(Virtual terminal, but is capable to use ssh or vim.)
 ![Terminal](https://github.com/iss4cf0ng/EgoDrop/blob/main/screenshot/terminal.png)
