@@ -37,7 +37,11 @@ namespace EgoDrop
         {
             m_szName = szName;
             m_nPort = nPort;
-            m_cert = new X509Certificate(szCertFilePath);
+            m_szDescription = szDescription;
+
+            m_stListener = new clsSqlite.stListener();
+
+            m_cert = new X509Certificate(szCertFilePath, szCertPassword);
             m_listener = new TcpListener(IPAddress.Any, nPort);
         }
 

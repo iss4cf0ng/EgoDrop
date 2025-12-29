@@ -22,7 +22,7 @@ namespace EgoDrop
         public event dlgReceivedMessage evtReceivedMessage;
         public delegate void dlgVictimDisconnected(clsListener listener, clsVictim victim, string szVictimID);
         public event dlgVictimDisconnected evtVictimDisconnected;
-        public delegate void dlgAddChain(List<string> lsVictim, string szOS, string szUsername, bool bRoot, string szIPv4);
+        public delegate void dlgAddChain(clsListener listemer, clsVictim victim, List<string> lsVictim, string szOS, string szUsername, bool bRoot, string szIPv4, NetworkView.enConnectionType enProtocol);
         public event dlgAddChain evtAddChain;
 
         public clsListener()
@@ -40,24 +40,47 @@ namespace EgoDrop
 
         }
 
+        /// <summary>
+        /// Add new victim.
+        /// </summary>
+        /// <param name="victim"></param>
         public void fnOnNewVictim(clsVictim victim)
         {
             evtNewVictim?.Invoke(this, victim);
         }
 
+        /// <summary>
+        /// Victim's message handler.
+        /// </summary>
+        /// <param name="victim"></param>
+        /// <param name="szSrcVictimID"></param>
+        /// <param name="lsMsg"></param>
         public void fnOnReceivedMessage(clsVictim victim, string szSrcVictimID, List<string> lsMsg)
         {
             evtReceivedMessage?.Invoke(this, victim, szSrcVictimID, lsMsg);
         }
 
+        /// <summary>
+        /// Victim disconnect event.
+        /// </summary>
+        /// <param name="victim"></param>
+        /// <param name="szVictimID"></param>
         public void fnOnVictimDisconnected(clsVictim victim, string szVictimID)
         {
             evtVictimDisconnected?.Invoke(this, victim, szVictimID);
         }
 
-        public void fnOnAddChain(List<string> lsVictim, string szOS, string szUsername, bool bRoot, string szIPv4)
+        /// <summary>
+        /// Add new victim chain.
+        /// </summary>
+        /// <param name="lsVictim"></param>
+        /// <param name="szOS"></param>
+        /// <param name="szUsername"></param>
+        /// <param name="bRoot"></param>
+        /// <param name="szIPv4"></param>
+        public void fnOnAddChain(clsListener listener, clsVictim victim, List<string> lsVictim, string szOS, string szUsername, bool bRoot, string szIPv4, NetworkView.enConnectionType enProtocol)
         {
-            evtAddChain?.Invoke(lsVictim, szOS, szUsername, bRoot, szIPv4);
+            evtAddChain?.Invoke(listener, victim, lsVictim, szOS, szUsername, bRoot, szIPv4, enProtocol);
         }
     }
 }

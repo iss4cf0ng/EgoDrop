@@ -156,6 +156,23 @@ public:
         return szJoin;
     }
 
+    static std::string fnszSendParser(const std::vector<int> vInt, const std::string szSplitter = "|")
+    {
+        std::vector<std::string> lsMsg;
+        for (int i = 0; i < vInt.size(); i++)
+            lsMsg.push_back(std::to_string(vInt[i]));
+
+        return fnszSendParser(lsMsg);
+    }
+    static std::string fnszSendParser(const std::vector<uint> vUint, const std::string szSplitter = "|")
+    {
+        std::vector<std::string> lsMsg;
+        for (int i = 0; i < vUint.size(); i++)
+            lsMsg.push_back(std::to_string(vUint[i]));
+
+        return fnszSendParser(lsMsg);
+    }
+
     static std::string fnszSend2dParser(const std::vector<std::vector<std::string>>& vsMsg, const std::string& szSplitter = "|")
     {
         std::vector<std::string> x;

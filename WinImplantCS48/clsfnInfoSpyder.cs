@@ -8,6 +8,8 @@ using System.IO;
 using System.Windows.Forms;
 using System.Data;
 using System.Security.Principal;
+using System.Diagnostics;
+using System.Threading;
 
 namespace WinImplantCS48
 {
@@ -135,6 +137,23 @@ namespace WinImplantCS48
                 }
             }
             return string.Empty;
+        }
+
+        public double fndGetCpuUsage()
+        {
+            var cpuCounter = new PerformanceCounter(
+                "Processor",
+                "% Processor Time",
+                "_Total"
+            );
+
+            // First call always returns 0
+            cpuCounter.NextValue();
+            Thread.Sleep(1000);
+
+            float cpuUsage = cpuCounter.NextValue();
+
+            return cpuUsage;
         }
     }
 }

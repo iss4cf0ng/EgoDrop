@@ -51,6 +51,70 @@ namespace EgoDrop
         public Node SelectedNode { get; private set; }
         public ImageList imageList;
 
+        private bool _DisplayProtocol = false;
+
+        /// <summary>
+        /// Display the protocol of each connection.
+        /// </summary>
+        public bool DisplayProtocol
+        {
+            get { return _DisplayProtocol; }
+            set
+            {
+                _DisplayProtocol = value;
+
+                Invalidate();
+            }
+        }
+
+        private enTopologyLayout _NetworkViewTopoLogy;
+
+        /// <summary>
+        /// NetworkView topology method.
+        /// </summary>
+        public enTopologyLayout NetworkViewTopoLogy
+        {
+            get { return _NetworkViewTopoLogy; }
+            set
+            {
+                _NetworkViewTopoLogy = value;
+
+                List<Node> lsNode = new List<Node>();
+                List<Connection> lsConn = new List<Connection>();
+
+                lsNode.AddRange(nodes);
+                lsConn.AddRange(connections);
+
+                Clear();
+
+                foreach (Node node in lsNode)
+                {
+                    if (node.MachineStatus == enMachineStatus.Firewall)
+                        continue;
+
+                    var n1 = AddNode(node.szVictimID, node.szDisplayName, node.MachineStatus);
+                    var conn = lsConn.Where(x => string.Equals(x.To.szDisplayName, n1.szDisplayName)).First();
+                    if (node.ParentNode.MachineStatus == enMachineStatus.Firewall)
+                    {
+                        var nodeFirewall = AddNode(node.ParentNode.szVictimID, node.ParentNode.szDisplayName, enMachineStatus.Firewall);
+                        n1.ParentNode = nodeFirewall;
+                        nodeFirewall.ChildNodes.Add(n1);
+
+                        AddConnection(nodeFirewall, n1, true, conn.enProtocol);
+                    }
+                    else
+                    {
+                        var nodeParent = FindNodeWithID(node.ParentNode.szVictimID);
+                        n1.ParentNode = nodeParent;
+                        nodeParent.ChildNodes.Add(n1);
+                        AddConnection(nodeParent, n1, true, conn.enProtocol);
+                    }
+
+                    BringGraphIntoView();
+                }
+            }
+        }
+
         public float Zoom
         {
             get => zoom;
@@ -61,14 +125,38 @@ namespace EgoDrop
             }
         }
 
-        public Dictionary<clsSqlite.enListenerProtocol, Color> m_dicConnectionColor = new Dictionary<clsSqlite.enListenerProtocol, Color>()
+        /// <summary>
+        /// Victim's connection type.
+        /// </summary>
+        public enum enConnectionType
         {
-            { clsSqlite.enListenerProtocol.TCP, Color.LimeGreen },
-            { clsSqlite.enListenerProtocol.TLS, Color.Purple },
-            { clsSqlite.enListenerProtocol.DNS, Color.Blue },
-            { clsSqlite.enListenerProtocol.HTTP, Color.Green },
+            DISCONNECTED,
+            SUPERUSER,
+
+            TCP,
+            TLS,
+            DNS,
+            HTTP,
+            HTTPS,
+            SMB,
+
+        }
+
+        private Dictionary<enConnectionType, Color> m_dicConnectionColor = new Dictionary<enConnectionType, Color>()
+        {
+            { enConnectionType.DISCONNECTED, Color.LightGray },
+            { enConnectionType.SUPERUSER, Color.Red },
+
+            { enConnectionType.TCP, Color.LimeGreen },
+            { enConnectionType.TLS, Color.Plum },
+            { enConnectionType.DNS, Color.Blue },
+            { enConnectionType.HTTP, Color.LightGreen },
+            { enConnectionType.HTTPS, Color.MediumAquamarine },
         };
 
+        /// <summary>
+        /// Victim machine status.
+        /// </summary>
         public enum enMachineStatus
         {
             Unknown,
@@ -425,7 +513,7 @@ namespace EgoDrop
             g.Clear(Color.Black);
 
             foreach (var c in connections)
-                DrawArrow(g, c.From, c.To, Color.LimeGreen, c.nOffsetIndex);
+                DrawArrow(g, c.From, c.To, m_dicConnectionColor[c.enProtocol], c.nOffsetIndex, c.bIsConnected);
 
             foreach (var n in nodes)
                 DrawNode(g, n);
@@ -552,7 +640,7 @@ namespace EgoDrop
             return new Rectangle(p.X - s / 2, p.Y - s / 2, s, s);
         }
 
-        private void DrawArrow(Graphics g, Node fromNode, Node toNode, Color color, int edgeIndex = 0)
+        private void DrawArrow(Graphics g, Node fromNode, Node toNode, Color color, int edgeIndex = 0, bool bIsConnected = true)
         {
             double dx = toNode.Position.X - fromNode.Position.X;
             double dy = toNode.Position.Y - fromNode.Position.Y;
@@ -577,6 +665,7 @@ namespace EgoDrop
             PointF start = TransformF(new PointF(p1.X + offset.X, p1.Y + offset.Y));
             PointF end = TransformF(new PointF(p2.X + offset.X, p2.Y + offset.Y));
 
+            //Shadow
             using (var shadow = new Pen(Color.FromArgb(150, 0, 0, 0), 8 * zoom))
             {
                 shadow.StartCap = LineCap.Round;
@@ -584,11 +673,46 @@ namespace EgoDrop
                 g.DrawLine(shadow, start, end);
             }
 
+            //Main arrow
             using (var pen = new Pen(color, 4 * zoom))
             {
+                if (!bIsConnected)
+                    pen.DashStyle = DashStyle.Dot;
+                
                 pen.StartCap = LineCap.Round;
                 pen.EndCap = LineCap.ArrowAnchor;
                 g.DrawLine(pen, start, end);
+            }
+
+            //Text(Detail)
+            if (DisplayProtocol)
+            {
+                PointF mid = new PointF((start.X + end.X) / 2, (start.Y + end.Y) / 2);
+                using (var font = new Font(Font.FontFamily, Math.Max(8f, 9f * zoom), FontStyle.Bold))
+                {
+                    var conn = FindConnection(fromNode, toNode);
+                    if (conn == null)
+                        return;
+
+                    string szText = Enum.GetName(conn.enProtocol);
+                    SizeF textSize = g.MeasureString(szText, font);
+
+                    RectangleF bg = new RectangleF(
+                        mid.X - (textSize.Width / 2) - 4,
+                        mid.Y - (textSize.Height / 2) - 2,
+                        textSize.Width + 8,
+                        textSize.Height + 4
+                    );
+
+                    using (var bgBrush = new SolidBrush(Color.FromArgb(160, 0, 0, 0)))
+                    {
+                        using (var textBrush = new SolidBrush(Color.White))
+                        {
+                            g.FillRectangle(bgBrush, bg);
+                            g.DrawString(szText, font, textBrush, mid.X - (textSize.Width / 2), mid.Y);
+                        }
+                    }
+                }
             }
         }
 
@@ -597,7 +721,10 @@ namespace EgoDrop
             float dx = to.X - from.X;
             float dy = to.Y - from.Y;
             float len = (float)Math.Sqrt(dx * dx + dy * dy);
-            if (len < 0.001f) return from;
+
+            if (len < 0.001f)
+                return from;
+
             float k = distance / len;
             return new PointF(from.X + dx * k, from.Y + dy * k);
         }
@@ -818,18 +945,36 @@ namespace EgoDrop
         public Node AddNode(string szVictimID, string szDisplayName, enMachineStatus status)
         {
             int rightMostX = nodes.Count == 0 ? 0 : nodes.Max(n => n.Position.X);
+            int bottomY = nodes.Count == 0 ? 0 : nodes.Max(n => n.Position.Y);
             Point pos = new Point(100, 100);
-            pos = new Point(rightMostX, pos.Y);
+
+            switch (_NetworkViewTopoLogy)
+            {
+                case enTopologyLayout.Tree:
+                    pos = new Point(pos.X, bottomY);
+                    break;
+                case enTopologyLayout.Pyramid:
+                    pos = new Point(rightMostX, pos.Y);
+                    break;
+            }
 
             if (status == enMachineStatus.Firewall && nodes.Select(x => x.MachineStatus).Where(x => x == enMachineStatus.Firewall).ToList().Count != 0)
             {
                 Rectangle rect = GetGraphBounds();
-                pos.Y += rect.Y + rect.Height + 50;
+
+                switch (_NetworkViewTopoLogy)
+                {
+                    case enTopologyLayout.Tree:
+                        pos.Y += rect.Y + rect.Height + 10;
+                        break;
+                    case enTopologyLayout.Pyramid:
+                        pos.X += rect.X + rect.Width + 10;
+                        break;
+                }
             }
 
             Node n = new Node { szDisplayName = szDisplayName, szVictimID = szVictimID, Position = pos, };
             fnSetMachineStatus(n, status);
-
 
             n.Position = GetNonOverlappingPosition(n);
             nodes.Add(n);
@@ -838,6 +983,8 @@ namespace EgoDrop
 
             return n;
         }
+
+        public Node AddNode(Node node) => AddNode(node.szVictimID, node.szDisplayName, node.MachineStatus);
 
         /// <summary>
         /// Remove node from NetworkView.
@@ -872,11 +1019,11 @@ namespace EgoDrop
         }
 
         /// <summary>
-        /// 
+        /// Add connection between two node.
         /// </summary>
-        /// <param name="a"></param>
-        /// <param name="b"></param>
-        public void AddConnection(Node a, Node b)
+        /// <param name="a">Source node.</param>
+        /// <param name="b">Destination node.</param>
+        public void AddConnection(Node a, Node b, bool bIsConnected, enConnectionType enProtocol)
         {
             if (a == null || b == null)
                 return;
@@ -887,7 +1034,10 @@ namespace EgoDrop
             {
                 From = a,
                 To = b,
-                nOffsetIndex = count
+                nOffsetIndex = count,
+
+                bIsConnected = bIsConnected,
+                enProtocol = enProtocol,
             });
 
             a.ChildNodes.Add(b);
@@ -896,9 +1046,35 @@ namespace EgoDrop
 
             //Rectangle rect = fnGetNetworkRectangleWithID(a.szVictimID);
 
-            fnLayoutFanOutChildren(a, enTopologyLayout.Tree);
+            fnLayoutFanOutChildren(a, _NetworkViewTopoLogy);
 
             Invalidate();
+        }
+
+        /// <summary>
+        /// Add connection between two node.
+        /// </summary>
+        /// <param name="conn"></param>
+        public void AddConnection(Connection conn) => AddConnection(conn.From, conn.To, true, conn.enProtocol);
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="conn"></param>
+        /// <param name="enProtocol"></param>
+        public void SetConnectionState(Connection conn, clsSqlite.enListenerProtocol enProtocol)
+        {
+
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="conn"></param>
+        /// <param name="bIsConnected"></param>
+        public void SetConnectionState(Connection conn, bool bIsConnected)
+        {
+
         }
 
         /// <summary>
@@ -919,7 +1095,7 @@ namespace EgoDrop
         /// <returns></returns>
         private Point GetNonOverlappingPosition(Node node)
         {
-            const int padding = 10;
+            const int padding = 5;
             Point newPos = node.Position;
 
             bool hasCollision;
@@ -935,21 +1111,38 @@ namespace EgoDrop
 
                     if (r1.IntersectsWith(r2))
                     {
+                        switch (_NetworkViewTopoLogy)
+                        {
+                            case enTopologyLayout.Tree:
+                                newPos.Y += node.Size + padding;
+                                break;
+                            case enTopologyLayout.Pyramid:
+                                newPos.X += node.Size + padding;
+                                break;
+                        }
+
+                        /*
                         newPos.X += node.Size + padding;
                         newPos.Y += node.Size + padding;
+                        */
+                        
                         hasCollision = true;
                         break;
                     }
                 }
+
                 attempt++;
-                if (attempt > 1000) break;
-            } while (hasCollision);
+                
+                if (attempt > 1000)
+                    break;
+            }
+            while (hasCollision);
 
             return newPos;
         }
 
         /// <summary>
-        /// 
+        /// Find node with display name.
         /// </summary>
         /// <param name="szName"></param>
         /// <returns></returns>
@@ -963,7 +1156,7 @@ namespace EgoDrop
         }
 
         /// <summary>
-        /// 
+        /// Find node with victim's ID.
         /// </summary>
         /// <param name="szID"></param>
         /// <returns></returns>
@@ -979,11 +1172,11 @@ namespace EgoDrop
         }
 
         /// <summary>
-        /// 
+        /// Find connection with two end nodes.
         /// </summary>
-        /// <param name="srcNode"></param>
-        /// <param name="dstNode"></param>
-        /// <param name="bDirected"></param>
+        /// <param name="srcNode">Soruce node.</param>
+        /// <param name="dstNode">Destination node.</param>
+        /// <param name="bDirected">Directed edge.</param>
         /// <returns></returns>
         public Connection FindConnection(Node srcNode, Node dstNode, bool bDirected = true)
         {
@@ -1069,6 +1262,7 @@ namespace EgoDrop
         public Node ParentNode = null;
 
         public NetworkView.enMachineStatus MachineStatus { get; set; }
+        public clsAgent Agent;
 
         public bool bIsLinux
         {
@@ -1118,5 +1312,8 @@ namespace EgoDrop
         public Node From; //Source node.
         public Node To; //Destination node.
         public int nOffsetIndex;
+
+        public NetworkView.enConnectionType enProtocol;
+        public bool bIsConnected;
     }
 }

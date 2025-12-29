@@ -42,6 +42,8 @@
             treeView1 = new TreeView();
             imageList1 = new ImageList(components);
             tabPage4 = new TabPage();
+            tabPage5 = new TabPage();
+            treeView2 = new TreeView();
             listView1 = new ListView();
             columnHeader1 = new ColumnHeader();
             columnHeader2 = new ColumnHeader();
@@ -77,8 +79,7 @@
             toolStripButton2 = new ToolStripButton();
             textBox1 = new TextBox();
             tabPage2 = new TabPage();
-            tabPage5 = new TabPage();
-            treeView2 = new TreeView();
+            toolStripButton1 = new ToolStripButton();
             menuStrip1.SuspendLayout();
             statusStrip1.SuspendLayout();
             tabControl1.SuspendLayout();
@@ -89,9 +90,9 @@
             splitContainer1.SuspendLayout();
             tabControl2.SuspendLayout();
             tabPage3.SuspendLayout();
+            tabPage5.SuspendLayout();
             contextMenuStrip1.SuspendLayout();
             toolStrip1.SuspendLayout();
-            tabPage5.SuspendLayout();
             SuspendLayout();
             // 
             // menuStrip1
@@ -215,13 +216,31 @@
             // 
             // tabPage4
             // 
-            tabPage4.Location = new Point(4, 28);
+            tabPage4.Location = new Point(4, 24);
             tabPage4.Name = "tabPage4";
             tabPage4.Padding = new Padding(3);
-            tabPage4.Size = new Size(281, 409);
+            tabPage4.Size = new Size(281, 413);
             tabPage4.TabIndex = 1;
             tabPage4.Text = "ShortCuts";
             tabPage4.UseVisualStyleBackColor = true;
+            // 
+            // tabPage5
+            // 
+            tabPage5.Controls.Add(treeView2);
+            tabPage5.Location = new Point(4, 24);
+            tabPage5.Name = "tabPage5";
+            tabPage5.Size = new Size(281, 413);
+            tabPage5.TabIndex = 2;
+            tabPage5.Text = "Clipboard";
+            tabPage5.UseVisualStyleBackColor = true;
+            // 
+            // treeView2
+            // 
+            treeView2.Dock = DockStyle.Fill;
+            treeView2.Location = new Point(0, 0);
+            treeView2.Name = "treeView2";
+            treeView2.Size = new Size(281, 413);
+            treeView2.TabIndex = 0;
             // 
             // listView1
             // 
@@ -413,7 +432,7 @@
             // toolStrip1
             // 
             toolStrip1.Font = new Font("Microsoft JhengHei UI", 11.25F, FontStyle.Regular, GraphicsUnit.Point, 136);
-            toolStrip1.Items.AddRange(new ToolStripItem[] { toolStripDropDownButton1, toolStripButton2 });
+            toolStrip1.Items.AddRange(new ToolStripItem[] { toolStripDropDownButton1, toolStripButton2, toolStripButton1 });
             toolStrip1.Location = new Point(0, 0);
             toolStrip1.Name = "toolStrip1";
             toolStrip1.Size = new Size(725, 26);
@@ -473,23 +492,15 @@
             tabPage2.Text = "Find File";
             tabPage2.UseVisualStyleBackColor = true;
             // 
-            // tabPage5
+            // toolStripButton1
             // 
-            tabPage5.Controls.Add(treeView2);
-            tabPage5.Location = new Point(4, 28);
-            tabPage5.Name = "tabPage5";
-            tabPage5.Size = new Size(281, 409);
-            tabPage5.TabIndex = 2;
-            tabPage5.Text = "Clipboard";
-            tabPage5.UseVisualStyleBackColor = true;
-            // 
-            // treeView2
-            // 
-            treeView2.Dock = DockStyle.Fill;
-            treeView2.Location = new Point(0, 0);
-            treeView2.Name = "treeView2";
-            treeView2.Size = new Size(281, 409);
-            treeView2.TabIndex = 0;
+            toolStripButton1.DisplayStyle = ToolStripItemDisplayStyle.Text;
+            toolStripButton1.Image = (Image)resources.GetObject("toolStripButton1.Image");
+            toolStripButton1.ImageTransparentColor = Color.Magenta;
+            toolStripButton1.Name = "toolStripButton1";
+            toolStripButton1.Size = new Size(58, 23);
+            toolStripButton1.Text = "Parent";
+            toolStripButton1.Click += toolStripButton1_Click;
             // 
             // frmFileMgr
             // 
@@ -521,10 +532,10 @@
             splitContainer1.ResumeLayout(false);
             tabControl2.ResumeLayout(false);
             tabPage3.ResumeLayout(false);
+            tabPage5.ResumeLayout(false);
             contextMenuStrip1.ResumeLayout(false);
             toolStrip1.ResumeLayout(false);
             toolStrip1.PerformLayout();
-            tabPage5.ResumeLayout(false);
             ResumeLayout(false);
             PerformLayout();
         }
@@ -580,5 +591,6 @@
         private ToolStripMenuItem toolStripMenuItem20;
         private TabPage tabPage5;
         private TreeView treeView2;
+        private ToolStripButton toolStripButton1;
     }
 }

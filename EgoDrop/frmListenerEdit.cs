@@ -38,6 +38,8 @@ namespace EgoDrop
             tabControl1.ItemSize = new Size(0, 1);
             tabControl1.SizeMode = TabSizeMode.Fixed;
 
+            checkBox1.Checked = true;
+
             m_bNewListener = string.IsNullOrEmpty(m_listener.szName);
 
             //Combobox
@@ -74,7 +76,7 @@ namespace EgoDrop
                 switch (protocol)
                 {
                     case clsSqlite.enListenerProtocol.TCP:
-                        
+
                         break;
                     case clsSqlite.enListenerProtocol.TLS:
                         textBox3.Text = m_listener.szCertPath;
@@ -117,7 +119,7 @@ namespace EgoDrop
             switch (listener.protoListener)
             {
                 case clsSqlite.enListenerProtocol.TCP:
-                    
+
                     break;
                 case clsSqlite.enListenerProtocol.TLS:
                     listener.szCertPath = textBox3.Text;
@@ -147,6 +149,11 @@ namespace EgoDrop
         {
             frmSslCert f = new frmSslCert();
             f.ShowDialog();
+        }
+
+        private void checkBox1_CheckedChanged(object sender, EventArgs e)
+        {
+            textBox4.UseSystemPasswordChar = !checkBox1.Checked;
         }
     }
 }

@@ -76,6 +76,7 @@ namespace EgoDrop
                     if (lsMsg[1] == "img")
                     {
                         string szFilePath = lsMsg[2];
+
                         byte[] abImage = Convert.FromBase64String(lsMsg[3]);
 
                         if (abImage.Length == 0)

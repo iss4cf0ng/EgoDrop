@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Org.BouncyCastle.Asn1.X509;
+using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
@@ -111,6 +112,72 @@ namespace WinImplantCS48
             {
                 Image image = Image.FromFile(szFilePath);
                 return (1, clsTools.fnszImageToString(image));
+            }
+            catch (Exception ex)
+            {
+                return (0, ex.Message);
+            }
+        }
+
+        public (int nCode, string szMsg) fnCopy(string szSrcPath, string szDstPath)
+        {
+
+            void fnCopyRecursively(DirectoryInfo source, DirectoryInfo target)
+            {
+                foreach (DirectoryInfo dir in source.GetDirectories())
+                    fnCopyRecursively(dir, target.CreateSubdirectory(dir.Name));
+                foreach (FileInfo file in source.GetFiles())
+                    file.CopyTo(Path.Combine(target.FullName, file.Name));
+            }
+
+            try
+            {
+                if (Directory.Exists(szSrcPath))
+                    fnCopyRecursively(new DirectoryInfo(szSrcPath), new DirectoryInfo(szDstPath));
+                else if (File.Exists(szSrcPath))
+                    File.Copy(szSrcPath, szDstPath);
+                else
+                    throw new Exception("Copy failed.");
+
+                return (1, string.Empty);
+            }
+            catch (Exception ex)
+            {
+                return (0, ex.Message);
+            }
+        }
+
+        public (int nCode, string szMsg) fnMove(string szSrcPath, string szDstPath)
+        {
+            try
+            {
+                if (Directory.Exists(szSrcPath))
+                    Directory.Move(szSrcPath, szDstPath);
+                else if (File.Exists(szSrcPath))
+                    File.Move(szSrcPath, szDstPath);
+                else
+                    throw new Exception("Move failed.");
+
+                return (1, string.Empty);
+            }
+            catch (Exception ex)
+            {
+                return (0, ex.Message);
+            }
+        }
+
+        public (int nCode, string szMsg) fnDelete(string szPath)
+        {
+            try
+            {
+                if (File.Exists(szPath))
+                    File.Delete(szPath);
+                else if (Directory.Exists(szPath))
+                    Directory.Delete(szPath, true);
+                else
+                    throw new Exception("Not found: " + szPath);
+
+                return (1, szPath);
             }
             catch (Exception ex)
             {

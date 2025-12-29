@@ -43,7 +43,15 @@ namespace EgoDrop
 
             using (var rsa = RSA.Create(nLength))
             {
-                var req = new CertificateRequest(szCertName, rsa, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);
+                byte[] abKey = rsa.ExportPkcs8PrivateKey();
+
+                var req = new CertificateRequest(
+                    szCertName, 
+                    rsa, 
+                    HashAlgorithmName.SHA256, 
+                    RSASignaturePadding.Pkcs1
+                );
+
                 req.CertificateExtensions.Add(
                     new X509EnhancedKeyUsageExtension(
                         new OidCollection { new Oid("1.3.6.1.5.5.7.3.1") },
@@ -51,7 +59,10 @@ namespace EgoDrop
                     )
                 );
 
-                var cert = req.CreateSelfSigned(DateTimeOffset.Now, DateTimeOffset.Now.AddYears(nYear));
+                var cert = req.CreateSelfSigned(
+                    DateTimeOffset.Now, 
+                    DateTimeOffset.Now.AddYears(nYear)
+                );
 
                 byte[] abPFX = cert.Export(X509ContentType.Pfx, szPassword);
                 SaveFileDialog sfd = new SaveFileDialog();

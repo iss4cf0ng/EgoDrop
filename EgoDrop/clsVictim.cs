@@ -206,11 +206,16 @@ namespace EgoDrop
         public void fnSendCommand(string szVictimID, string szMsg) => fnSendCommand(szVictimID, szMsg.Split('|').ToList());
 
         /// <summary>
-        /// 
+        /// Send C2 command.
         /// </summary>
         /// <param name="aMsg"></param>
         public void fnSendCommand(string[] aMsg) => fnSendCommand(aMsg.ToList());
 
+        /// <summary>
+        /// Send C2 COMMAND.
+        /// </summary>
+        /// <param name="szVictimID"></param>
+        /// <param name="aMsg"></param>
         public void fnSendCommand(string szVictimID, string[] aMsg) => fnSendCommand(szVictimID, aMsg.ToList());
 
         /// <summary>

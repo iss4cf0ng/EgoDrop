@@ -70,6 +70,16 @@ namespace EgoDrop
                     "HttpUA",       //HTTP user-agent.
                 }
             },
+            {
+                "Proxy", new string[]
+                {
+                    "Name",
+                    "Protocol", //Socks4, Socks5, HTTPS
+                    "Port",
+                    "Description",
+                    "CreationData",
+                }
+            },
         };
 
         #region Property
@@ -217,11 +227,38 @@ namespace EgoDrop
 
         };
 
+        /// <summary>
+        /// Proxy struct.
+        /// </summary>
+        public struct stProxy
+        {
+            public string szName { get; init; }
+            public int nPort { get; init; }
+            public string szDescription { get; init; }
+
+            public enProxyProtocol enProtocol { get; init; }
+
+            /// <summary>
+            /// Constructor.
+            /// </summary>
+            /// <param name="szName"></param>
+            /// <param name="nPort"></param>
+            /// <param name="szDescription"></param>
+            /// <param name="enProtocol"></param>
+            public stProxy(string szName, int nPort, string szDescription, enProxyProtocol enProtocol)
+            {
+                this.szName = szName;
+                this.nPort = nPort;
+                this.szDescription = szDescription;
+                this.enProtocol = enProtocol;
+            }
+        }
+
         #endregion
         #region Enum
 
         /// <summary>
-        /// 
+        /// Listener protocol.
         /// </summary>
         public enum enListenerProtocol
         {
@@ -241,7 +278,15 @@ namespace EgoDrop
         };
 
         /// <summary>
-        /// 
+        /// Proxy protocol.
+        /// </summary>
+        public enum enProxyProtocol
+        {
+            Socks5,
+        }
+
+        /// <summary>
+        /// HTTP communication method.
         /// </summary>
         public enum enHttpMethod
         {
@@ -373,6 +418,11 @@ namespace EgoDrop
 
             return new stListener();
         }
+
+        /// <summary>
+        /// Get all listeners in list.
+        /// </summary>
+        /// <returns></returns>
         public List<stListener> fnGetListeners()
         {
             List<stListener> lsListener = new List<stListener>();
@@ -532,7 +582,117 @@ namespace EgoDrop
         }
 
         #endregion
+        #region Proxy
 
+        /// <summary>
+        /// Check proxy existence.
+        /// </summary>
+        /// <param name="szName">Proxy's name.</param>
+        /// <returns>Proxy's existence.</returns>
+        public bool fnbProxyExists(string szName)
+        {
+            string szQuery = $"SELECT EXISTS(SELECT 1 FROM \"Proxy\" WHERE \"Name\"=\"{szName}\");";
+            DataTable dt = fnQuery(szQuery);
+
+            return (Int64)dt.Rows[0][0] == (Int64)1;
+        }
+
+        /// <summary>
+        /// Get all proxies in list.
+        /// </summary>
+        /// <returns>Proxy list.</returns>
+        public List<stProxy> fnlsGetProxies()
+        {
+            List<stProxy> ls = new List<stProxy>();
+            DataTable dt = fnQuery("SELECT * FROM \"Proxy\"");
+            foreach (DataRow dr in dt.Rows)
+            {
+                ls.Add(new stProxy(
+                    (string)dr["Name"],
+                    int.Parse((string)dr["Port"]),
+                    (string)dr["Description"],
+                    (enProxyProtocol)Enum.Parse(typeof(enProxyProtocol), (string)dr["Protocol"])
+                ));
+            }
+
+            return ls;
+        }
+
+        /// <summary>
+        /// Get proxy's config with name.
+        /// </summary>
+        /// <param name="szName"></param>
+        /// <returns></returns>
+        public stProxy fnGetProxy(string szName)
+        {
+            var ls = fnlsGetProxies();
+            foreach (var config in ls)
+            {
+                if (string.Equals(szName, config.szName))
+                    return config;
+            }
+
+            return new stProxy();
+        }
+
+        /// <summary>
+        /// Save proxy with config.
+        /// </summary>
+        /// <param name="config"></param>
+        /// <returns></returns>
+        public bool fnbSaveProxy(stProxy config)
+        {
+            string szQuery = string.Empty;
+            if (fnbProxyExists(config.szName))
+            {
+                DialogResult dr = MessageBox.Show(
+                    $"Proxy[{config.szName}] is already existed, do you want to replace it?", 
+                    "Warning", 
+                    MessageBoxButtons.YesNo, 
+                    MessageBoxIcon.Warning
+                );
+
+                if (dr != DialogResult.Yes)
+                    return false;
+
+                szQuery = $"UPDATE \"Proxy\" SET " +
+                    $"\"Protocol\"=\"{Enum.GetName(typeof(enProxyProtocol), config.enProtocol)}\"," +
+                    $"\"Port\"=\"{config.nPort}\"," +
+                    $"\"Description\"=\"{config.szDescription}\"," +
+                    $"\"CreationDate\"=\"{DateTime.Now.ToString("F")}\"" +
+                    $" WHERE \"Name\"=\"{config.szName}\";";
+            }
+            else
+            {
+                szQuery = $"INSERT INTO \"Proxy\" VALUES " +
+                    $"(" +
+                    $"\"{config.szName}\"," +
+                    $"\"{Enum.GetName(typeof(enProxyProtocol), config.enProtocol)}\"," +
+                    $"\"{config.nPort}\"," +
+                    $"\"{config.szDescription}\"," +
+                    $"\"{DateTime.Now.ToString("F")}\"" +
+                    $");";
+            }
+
+            fnQuery(szQuery);
+
+            return fnbProxyExists(config.szName);
+        }
+
+        /// <summary>
+        /// Delete proxy with name.
+        /// </summary>
+        /// <param name="szName"></param>
+        /// <returns></returns>
+        public bool fnbDeleteProxy(string szName)
+        {
+            string szQuery = $"DELETE FROM \"Proxy\" WHERE \"Name\"=\"{szName}\";";
+            fnQuery(szQuery);
+
+            return !fnbProxyExists(szName);
+        }
+
+        #endregion
         #region Group
 
         /// <summary>

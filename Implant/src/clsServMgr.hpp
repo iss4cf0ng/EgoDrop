@@ -9,6 +9,7 @@
 #include <cstdlib>
 
 #include "clsTools.hpp"
+#include "clsEZData.hpp"
 
 class clsServMgr
 {
@@ -16,64 +17,89 @@ public:
     struct stServiceInfo
     {
         std::string szName;
-        std::string szDescription;
         std::string szLoadState;
         std::string szActiveState;
         std::string szSubState;
-        std::string szMainPid;
+        std::string szEnabled;
+        int nMainPid;
         std::string szExecStart;
+        std::string szDescription;
     };
 
 public:
-    clsServMgr()
-    {
-
-    }
+    clsServMgr() = default;
 
     ~clsServMgr() = default;
 
-    std::vector<stServiceInfo> fnGetServices()
+    stServiceInfo fnGetServiceInfo(const std::string& szName)
+    {
+        stServiceInfo info {};
+        info.szName = szName;
+
+        std::string cmd = "systemctl show " + szName + " --no-pager";
+        FILE* fp = popen(cmd.c_str(), "r");
+        if (!fp) return info;
+
+        char line[512];
+        while (fgets(line, sizeof(line), fp))
+        {
+            std::string s(line);
+
+            auto getVal = [&](const std::string& key) -> std::string {
+                if (s.rfind(key + "=", 0) == 0)
+                    return s.substr(key.size() + 1);
+                return "";
+            };
+
+            if (!getVal("LoadState").empty())
+                info.szLoadState = getVal("LoadState");
+            if (!getVal("ActiveState").empty())
+                info.szActiveState = getVal("ActiveState");
+            if (!getVal("SubState").empty())
+                info.szSubState = getVal("SubState");
+            if (!getVal("MainPID").empty())
+                info.nMainPid = std::stoi(getVal("MainPID"));
+            if (!getVal("ExecStart").empty())
+                info.szExecStart = getVal("ExecStart");
+            if (!getVal("Description").empty())
+                info.szDescription = getVal("Description");
+            if (!getVal("UnitFileState").empty())
+                info.szEnabled = getVal("UnitFileState");
+        }
+
+        pclose(fp);
+        return info;
+    }
+
+    std::vector<stServiceInfo> fnGetAllServices()
     {
         std::vector<stServiceInfo> services;
-        std::string szList = clsTools::fnExec("system list-units --type=service --all --no-legend --no-pager");
-        
-        std::istringstream iss(szList);
-        std::string szLine;
 
-        while (std::getline(iss, szLine))
+        FILE* fp = popen("systemctl list-unit-files --type=service --no-pager", "r");
+        if (!fp)
+            return services;
+
+        char line[256];
+
+        while (fgets(line, sizeof(line), fp))
         {
-            std::istringstream ls(szLine);
-            stServiceInfo info;
-            ls >> info.szName >> info.szLoadState >> info.szActiveState >> info.szSubState;
+            std::string s(line);
 
-            std::getline(ls, info.szDescription);
-            if (info.szName.empty())
+            if (s.find(".service") == std::string::npos)
                 continue;
 
-            std::string szDetail = clsTools::fnExec("systemctl show " + info.szName + " --no-pager");
-            std::istringstream ds(szDetail);
-            std::string szKV;
+            std::istringstream iss(s);
+            std::string serviceName;
+            iss >> serviceName;
 
-            while (std::getline(ds, szKV))
-            {
-                auto pos = szKV.find('=');
-                if (pos == std::string::npos)
-                    continue;
+            if (serviceName.find(".service") == std::string::npos)
+                continue;
 
-                std::string szKey = szKV.substr(0, pos);
-                std::string szVal = szKV.substr(pos + 1);
-
-                if (szKey == "MainPID")
-                    info.szMainPid = szVal;
-                else if (szKey == "ExecStart")
-                    info.szExecStart = szVal;
-            }
-
-            services.push_back(info);
+            services.push_back(fnGetServiceInfo(serviceName));
         }
+
+        pclose(fp);
 
         return services;
     }
-
-    
 };

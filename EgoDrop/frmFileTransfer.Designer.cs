@@ -32,7 +32,6 @@
             statusStrip1 = new StatusStrip();
             listView1 = new ListView();
             columnHeader1 = new ColumnHeader();
-            columnHeader2 = new ColumnHeader();
             columnHeader3 = new ColumnHeader();
             columnHeader4 = new ColumnHeader();
             SuspendLayout();
@@ -55,7 +54,7 @@
             // 
             // listView1
             // 
-            listView1.Columns.AddRange(new ColumnHeader[] { columnHeader1, columnHeader2, columnHeader3, columnHeader4 });
+            listView1.Columns.AddRange(new ColumnHeader[] { columnHeader1, columnHeader3, columnHeader4 });
             listView1.Dock = DockStyle.Fill;
             listView1.Location = new Point(0, 25);
             listView1.Name = "listView1";
@@ -67,18 +66,17 @@
             // columnHeader1
             // 
             columnHeader1.Text = "FileName";
-            // 
-            // columnHeader2
-            // 
-            columnHeader2.Text = "FilePath";
+            columnHeader1.Width = 250;
             // 
             // columnHeader3
             // 
-            columnHeader3.Text = "Type";
+            columnHeader3.Text = "Size";
+            columnHeader3.Width = 150;
             // 
             // columnHeader4
             // 
             columnHeader4.Text = "Progress";
+            columnHeader4.Width = 200;
             // 
             // frmFileTransfer
             // 
@@ -103,7 +101,6 @@
         private StatusStrip statusStrip1;
         private ListView listView1;
         private ColumnHeader columnHeader1;
-        private ColumnHeader columnHeader2;
         private ColumnHeader columnHeader3;
         private ColumnHeader columnHeader4;
     }

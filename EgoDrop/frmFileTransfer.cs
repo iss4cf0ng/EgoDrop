@@ -125,8 +125,7 @@ namespace EgoDrop
                 m_dicHandler[szFilePath] = handler;
             }
 
-            foreach (var h in m_dicHandler.Values)
-                _ = h.fnSendFileAsync();
+            
         }
 
         private void frmFileTransfer_Load(object sender, EventArgs e)

@@ -88,18 +88,18 @@ public:
             return;
         }
 
-        if (m_nSkt >= 0)
-        {
-            ::shutdown(m_nSkt, SHUT_RDWR);
-            ::close(m_nSkt);
-            m_nSkt = -1;
-        }
-
         if (m_ssl)
         {
             SSL_shutdown(m_ssl);
             SSL_free(m_ssl);
             m_ssl = nullptr;
+        }
+
+        if (m_nSkt >= 0)
+        {
+            ::shutdown(m_nSkt, SHUT_RDWR);
+            ::close(m_nSkt);
+            m_nSkt = -1;
         }
     }
 
