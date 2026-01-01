@@ -55,6 +55,7 @@
             toolStripMenuItem2 = new ToolStripMenuItem();
             toolStripMenuItem11 = new ToolStripMenuItem();
             toolStripMenuItem12 = new ToolStripMenuItem();
+            toolStripMenuItem21 = new ToolStripMenuItem();
             toolStripSeparator1 = new ToolStripSeparator();
             toolStripMenuItem3 = new ToolStripMenuItem();
             toolStripMenuItem5 = new ToolStripMenuItem();
@@ -77,9 +78,10 @@
             toolStripMenuItem19 = new ToolStripMenuItem();
             toolStripMenuItem20 = new ToolStripMenuItem();
             toolStripButton2 = new ToolStripButton();
+            toolStripButton1 = new ToolStripButton();
+            toolStripButton3 = new ToolStripButton();
             textBox1 = new TextBox();
             tabPage2 = new TabPage();
-            toolStripButton1 = new ToolStripButton();
             menuStrip1.SuspendLayout();
             statusStrip1.SuspendLayout();
             tabControl1.SuspendLayout();
@@ -227,9 +229,9 @@
             // tabPage5
             // 
             tabPage5.Controls.Add(treeView2);
-            tabPage5.Location = new Point(4, 24);
+            tabPage5.Location = new Point(4, 28);
             tabPage5.Name = "tabPage5";
-            tabPage5.Size = new Size(281, 413);
+            tabPage5.Size = new Size(281, 409);
             tabPage5.TabIndex = 2;
             tabPage5.Text = "Clipboard";
             tabPage5.UseVisualStyleBackColor = true;
@@ -239,7 +241,7 @@
             treeView2.Dock = DockStyle.Fill;
             treeView2.Location = new Point(0, 0);
             treeView2.Name = "treeView2";
-            treeView2.Size = new Size(281, 413);
+            treeView2.Size = new Size(281, 409);
             treeView2.TabIndex = 0;
             // 
             // listView1
@@ -291,9 +293,9 @@
             // contextMenuStrip1
             // 
             contextMenuStrip1.Font = new Font("Microsoft JhengHei UI", 11.25F, FontStyle.Regular, GraphicsUnit.Point, 136);
-            contextMenuStrip1.Items.AddRange(new ToolStripItem[] { toolStripMenuItem2, toolStripSeparator1, toolStripMenuItem3, toolStripMenuItem5, toolStripMenuItem6, toolStripMenuItem7, toolStripMenuItem4, toolStripSeparator2, toolStripMenuItem8, toolStripMenuItem9, toolStripMenuItem10, toolStripSeparator3, toolStripMenuItem13, toolStripMenuItem16 });
+            contextMenuStrip1.Items.AddRange(new ToolStripItem[] { toolStripMenuItem2, toolStripMenuItem21, toolStripSeparator1, toolStripMenuItem3, toolStripMenuItem5, toolStripMenuItem6, toolStripMenuItem7, toolStripMenuItem4, toolStripSeparator2, toolStripMenuItem8, toolStripMenuItem9, toolStripMenuItem10, toolStripSeparator3, toolStripMenuItem13, toolStripMenuItem16 });
             contextMenuStrip1.Name = "contextMenuStrip1";
-            contextMenuStrip1.Size = new Size(151, 286);
+            contextMenuStrip1.Size = new Size(151, 310);
             // 
             // toolStripMenuItem2
             // 
@@ -315,6 +317,13 @@
             toolStripMenuItem12.Size = new Size(144, 24);
             toolStripMenuItem12.Text = "Selected";
             toolStripMenuItem12.Click += toolStripMenuItem12_Click;
+            // 
+            // toolStripMenuItem21
+            // 
+            toolStripMenuItem21.Name = "toolStripMenuItem21";
+            toolStripMenuItem21.Size = new Size(150, 24);
+            toolStripMenuItem21.Text = "Terminal";
+            toolStripMenuItem21.Click += toolStripMenuItem21_Click;
             // 
             // toolStripSeparator1
             // 
@@ -432,7 +441,7 @@
             // toolStrip1
             // 
             toolStrip1.Font = new Font("Microsoft JhengHei UI", 11.25F, FontStyle.Regular, GraphicsUnit.Point, 136);
-            toolStrip1.Items.AddRange(new ToolStripItem[] { toolStripDropDownButton1, toolStripButton2, toolStripButton1 });
+            toolStrip1.Items.AddRange(new ToolStripItem[] { toolStripDropDownButton1, toolStripButton2, toolStripButton1, toolStripButton3 });
             toolStrip1.Location = new Point(0, 0);
             toolStrip1.Name = "toolStrip1";
             toolStrip1.Size = new Size(725, 26);
@@ -473,6 +482,26 @@
             toolStripButton2.Text = "Home";
             toolStripButton2.Click += toolStripButton2_Click;
             // 
+            // toolStripButton1
+            // 
+            toolStripButton1.DisplayStyle = ToolStripItemDisplayStyle.Text;
+            toolStripButton1.Image = (Image)resources.GetObject("toolStripButton1.Image");
+            toolStripButton1.ImageTransparentColor = Color.Magenta;
+            toolStripButton1.Name = "toolStripButton1";
+            toolStripButton1.Size = new Size(58, 23);
+            toolStripButton1.Text = "Parent";
+            toolStripButton1.Click += toolStripButton1_Click;
+            // 
+            // toolStripButton3
+            // 
+            toolStripButton3.DisplayStyle = ToolStripItemDisplayStyle.Text;
+            toolStripButton3.Image = (Image)resources.GetObject("toolStripButton3.Image");
+            toolStripButton3.ImageTransparentColor = Color.Magenta;
+            toolStripButton3.Name = "toolStripButton3";
+            toolStripButton3.Size = new Size(74, 23);
+            toolStripButton3.Text = "Terminal";
+            toolStripButton3.Click += toolStripButton3_Click;
+            // 
             // textBox1
             // 
             textBox1.Dock = DockStyle.Top;
@@ -491,16 +520,6 @@
             tabPage2.TabIndex = 1;
             tabPage2.Text = "Find File";
             tabPage2.UseVisualStyleBackColor = true;
-            // 
-            // toolStripButton1
-            // 
-            toolStripButton1.DisplayStyle = ToolStripItemDisplayStyle.Text;
-            toolStripButton1.Image = (Image)resources.GetObject("toolStripButton1.Image");
-            toolStripButton1.ImageTransparentColor = Color.Magenta;
-            toolStripButton1.Name = "toolStripButton1";
-            toolStripButton1.Size = new Size(58, 23);
-            toolStripButton1.Text = "Parent";
-            toolStripButton1.Click += toolStripButton1_Click;
             // 
             // frmFileMgr
             // 
@@ -592,5 +611,7 @@
         private TabPage tabPage5;
         private TreeView treeView2;
         private ToolStripButton toolStripButton1;
+        private ToolStripMenuItem toolStripMenuItem21;
+        private ToolStripButton toolStripButton3;
     }
 }

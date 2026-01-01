@@ -16,25 +16,25 @@ namespace EgoDrop
 {
     public partial class NetworkView : UserControl
     {
-        private List<Node> nodes = new List<Node>();
-        private List<Connection> connections = new List<Connection>();
+        private List<NetworkNode> nodes = new List<NetworkNode>();
+        private List<NetworkConnection> connections = new List<NetworkConnection>();
 
         // ===== Selection =====
-        private HashSet<Node> selectedNodes = new HashSet<Node>();
+        private HashSet<NetworkNode> selectedNodes = new HashSet<NetworkNode>();
         private bool isBoxSelecting = false;
         private Point boxSelectStart;
         private Rectangle boxSelectRect;
 
         // ===== Drag =====
         private bool isDraggingNodes = false;
-        private Dictionary<Node, Point> dragStartPositions = new Dictionary<Node, Point>();
+        private Dictionary<NetworkNode, Point> dragStartPositions = new Dictionary<NetworkNode, Point>();
 
-        private Node selectedNode = null;
-        private Node selectedNodeForHighlight = null;
+        private NetworkNode selectedNode = null;
+        private NetworkNode selectedNodeForHighlight = null;
         private Point dragOffset;
 
         private bool isDraggingConnection = false;
-        private Node connectionStartNode = null;
+        private NetworkNode connectionStartNode = null;
         private Point currentMousePos;
 
         private float zoom = 1.0f;
@@ -48,7 +48,7 @@ namespace EgoDrop
         private int virtualWidth = 2000;
         private int virtualHeight = 2000;
 
-        public Node SelectedNode { get; private set; }
+        public NetworkNode SelectedNode { get; private set; }
         public ImageList imageList;
 
         private bool _DisplayProtocol = false;
@@ -79,15 +79,15 @@ namespace EgoDrop
             {
                 _NetworkViewTopoLogy = value;
 
-                List<Node> lsNode = new List<Node>();
-                List<Connection> lsConn = new List<Connection>();
+                List<NetworkNode> lsNode = new List<NetworkNode>();
+                List<NetworkConnection> lsConn = new List<NetworkConnection>();
 
                 lsNode.AddRange(nodes);
                 lsConn.AddRange(connections);
 
                 Clear();
 
-                foreach (Node node in lsNode)
+                foreach (NetworkNode node in lsNode)
                 {
                     if (node.MachineStatus == enMachineStatus.Firewall)
                         continue;
@@ -315,7 +315,7 @@ namespace EgoDrop
                 return;
             }
 
-            Node hit = HitTestNode(e.Location);
+            NetworkNode hit = HitTestNode(e.Location);
 
             // ===== Left Button =====
             if (e.Button == MouseButtons.Left)
@@ -376,7 +376,7 @@ namespace EgoDrop
 
             Focus();
 
-            Node clicked = HitTestNode(e.Location);
+            NetworkNode clicked = HitTestNode(e.Location);
 
             if (e.Button == MouseButtons.Left)
             {
@@ -395,7 +395,7 @@ namespace EgoDrop
             }
         }
 
-        private Rectangle GetNodeBounds(Node n)
+        private Rectangle GetNodeBounds(NetworkNode n)
         {
             int iconW = n.Icon.Width;
             int iconH = n.Icon.Height;
@@ -410,7 +410,7 @@ namespace EgoDrop
             );
         }
 
-        private Node HitTestNode(Point screenPoint)
+        private NetworkNode HitTestNode(Point screenPoint)
         {
             // screen → world
             Point world = new Point(
@@ -561,7 +561,7 @@ namespace EgoDrop
             );
         }
 
-        private void DrawNode(Graphics g, Node node)
+        private void DrawNode(Graphics g, NetworkNode node)
         {
             Point pos = Transform(node.Position);
             int size = (int)(node.Size * zoom);
@@ -633,14 +633,14 @@ namespace EgoDrop
                 Math.Abs(a.Y - b.Y));
         }
 
-        private Rectangle GetNodeBoundsScreen(Node n)
+        private Rectangle GetNodeBoundsScreen(NetworkNode n)
         {
             Point p = Transform(n.Position);
             int s = (int)(n.Size * zoom);
             return new Rectangle(p.X - s / 2, p.Y - s / 2, s, s);
         }
 
-        private void DrawArrow(Graphics g, Node fromNode, Node toNode, Color color, int edgeIndex = 0, bool bIsConnected = true)
+        private void DrawArrow(Graphics g, NetworkNode fromNode, NetworkNode toNode, Color color, int edgeIndex = 0, bool bIsConnected = true)
         {
             double dx = toNode.Position.X - fromNode.Position.X;
             double dy = toNode.Position.Y - fromNode.Position.Y;
@@ -810,7 +810,7 @@ namespace EgoDrop
         }
         private Rectangle fnGetNetworkRectangleWithID(string szVictimID)
         {
-            Node node = null;
+            NetworkNode node = null;
             foreach (var n in nodes)
             {
                 if (string.Equals(n.szVictimID, szVictimID))
@@ -823,7 +823,7 @@ namespace EgoDrop
             if (node == null)
                 return new Rectangle();
 
-            List<Node> lsNode = fnGetAllNodesFromCurrentNetwork(node);
+            List<NetworkNode> lsNode = fnGetAllNodesFromCurrentNetwork(node);
             List<Point> lsPoint = lsNode.Select(x => x.Position).ToList();
             List<int> lsX = lsPoint.Select(x => x.X).ToList();
             List<int> lsY = lsPoint.Select(x => x.Y).ToList();
@@ -842,16 +842,16 @@ namespace EgoDrop
             };
         }
 
-        private List<Node> fnGetAllNodesFromCurrentNetwork(Node node)
+        private List<NetworkNode> fnGetAllNodesFromCurrentNetwork(NetworkNode node)
         {
-            List<Node> lsNode = new List<Node>();
+            List<NetworkNode> lsNode = new List<NetworkNode>();
 
             if (node.ParentNode != null && node.ParentNode.MachineStatus != enMachineStatus.Firewall)
                 lsNode.AddRange(fnGetAllNodesFromCurrentNetwork(node.ParentNode).Where(x => !lsNode.Contains(x)));
 
             foreach (var n in node.ChildNodes)
             {
-                List<Node> ln = fnGetAllNodesFromCurrentNetwork(n);
+                List<NetworkNode> ln = fnGetAllNodesFromCurrentNetwork(n);
                 lsNode.AddRange(ln.Where(x => !lsNode.Contains(x)));
             }
 
@@ -860,20 +860,20 @@ namespace EgoDrop
             return lsNode;
         }
 
-        private Dictionary<Node, List<Node>> fnGetAllNetworks()
+        private Dictionary<NetworkNode, List<NetworkNode>> fnGetAllNetworks()
         {
-            Dictionary<Node, List<Node>> dicNodes = new Dictionary<Node, List<Node>>();
-            List<Node> firewallNodes = nodes.Where(x => x.MachineStatus == enMachineStatus.Firewall).ToList();
+            Dictionary<NetworkNode, List<NetworkNode>> dicNodes = new Dictionary<NetworkNode, List<NetworkNode>>();
+            List<NetworkNode> firewallNodes = nodes.Where(x => x.MachineStatus == enMachineStatus.Firewall).ToList();
             foreach (var firewallNode in firewallNodes)
             {
-                List<Node> lsNode = fnGetAllNodesFromCurrentNetwork(firewallNode);
+                List<NetworkNode> lsNode = fnGetAllNodesFromCurrentNetwork(firewallNode);
                 dicNodes.Add(firewallNode, lsNode);
             }
 
             return dicNodes;
         }
 
-        private void fnLayoutFanOutChildren(Node nodeParent, enTopologyLayout layout, int nSpacingPrimary = 200, int nSpacingSecondary = 120)
+        private void fnLayoutFanOutChildren(NetworkNode nodeParent, enTopologyLayout layout, int nSpacingPrimary = 200, int nSpacingSecondary = 120)
         {
             if (nodeParent == null || nodeParent.ChildNodes.Count == 0)
                 return;
@@ -939,10 +939,10 @@ namespace EgoDrop
         /// Add node into NetworkView.
         /// </summary>
         /// <param name="szVictimID">Device victim ID.</param>
-        /// <param name="szDisplayName">Node display name.</param>
+        /// <param name="szDisplayName">NetworkNode display name.</param>
         /// <param name="status">Victim status.</param>
         /// <returns></returns>
-        public Node AddNode(string szVictimID, string szDisplayName, enMachineStatus status)
+        public NetworkNode AddNode(string szVictimID, string szDisplayName, enMachineStatus status)
         {
             int rightMostX = nodes.Count == 0 ? 0 : nodes.Max(n => n.Position.X);
             int bottomY = nodes.Count == 0 ? 0 : nodes.Max(n => n.Position.Y);
@@ -973,7 +973,7 @@ namespace EgoDrop
                 }
             }
 
-            Node n = new Node { szDisplayName = szDisplayName, szVictimID = szVictimID, Position = pos, };
+            NetworkNode n = new NetworkNode { szDisplayName = szDisplayName, szVictimID = szVictimID, Position = pos, };
             fnSetMachineStatus(n, status);
 
             n.Position = GetNonOverlappingPosition(n);
@@ -984,13 +984,13 @@ namespace EgoDrop
             return n;
         }
 
-        public Node AddNode(Node node) => AddNode(node.szVictimID, node.szDisplayName, node.MachineStatus);
+        public NetworkNode AddNode(NetworkNode node) => AddNode(node.szVictimID, node.szDisplayName, node.MachineStatus);
 
         /// <summary>
         /// Remove node from NetworkView.
         /// </summary>
         /// <param name="node"></param>
-        public void RemoveNode(Node node)
+        public void RemoveNode(NetworkNode node)
         {
             if (node == null)
                 return;
@@ -1005,8 +1005,8 @@ namespace EgoDrop
             }
             else
             {
-                Node nodeParent = node.ParentNode;
-                Connection conn = FindConnection(nodeParent, node);
+                NetworkNode nodeParent = node.ParentNode;
+                NetworkConnection conn = FindConnection(nodeParent, node);
                 if (node.ParentNode != null && node.ParentNode.ChildNodes.Contains(node))
                     node.ParentNode.ChildNodes.Remove(node);
 
@@ -1023,14 +1023,14 @@ namespace EgoDrop
         /// </summary>
         /// <param name="a">Source node.</param>
         /// <param name="b">Destination node.</param>
-        public void AddConnection(Node a, Node b, bool bIsConnected, enConnectionType enProtocol)
+        public void AddConnection(NetworkNode a, NetworkNode b, bool bIsConnected, enConnectionType enProtocol)
         {
             if (a == null || b == null)
                 return;
 
             int count = connections.Count(c => c.From == a && c.To == b);
 
-            connections.Add(new Connection
+            connections.Add(new NetworkConnection
             {
                 From = a,
                 To = b,
@@ -1055,14 +1055,14 @@ namespace EgoDrop
         /// Add connection between two node.
         /// </summary>
         /// <param name="conn"></param>
-        public void AddConnection(Connection conn) => AddConnection(conn.From, conn.To, true, conn.enProtocol);
+        public void AddConnection(NetworkConnection conn) => AddConnection(conn.From, conn.To, true, conn.enProtocol);
 
         /// <summary>
         /// 
         /// </summary>
         /// <param name="conn"></param>
         /// <param name="enProtocol"></param>
-        public void SetConnectionState(Connection conn, clsSqlite.enListenerProtocol enProtocol)
+        public void SetConnectionState(NetworkConnection conn, clsSqlite.enListenerProtocol enProtocol)
         {
 
         }
@@ -1072,7 +1072,7 @@ namespace EgoDrop
         /// </summary>
         /// <param name="conn"></param>
         /// <param name="bIsConnected"></param>
-        public void SetConnectionState(Connection conn, bool bIsConnected)
+        public void SetConnectionState(NetworkConnection conn, bool bIsConnected)
         {
 
         }
@@ -1093,7 +1093,7 @@ namespace EgoDrop
         /// </summary>
         /// <param name="node"></param>
         /// <returns></returns>
-        private Point GetNonOverlappingPosition(Node node)
+        private Point GetNonOverlappingPosition(NetworkNode node)
         {
             const int padding = 5;
             Point newPos = node.Position;
@@ -1146,7 +1146,7 @@ namespace EgoDrop
         /// </summary>
         /// <param name="szName"></param>
         /// <returns></returns>
-        public Node FindNodeWithName(string szName)
+        public NetworkNode FindNodeWithName(string szName)
         {
             foreach (var node in nodes)
                 if (string.Equals(node.szDisplayName, szName))
@@ -1160,7 +1160,7 @@ namespace EgoDrop
         /// </summary>
         /// <param name="szID"></param>
         /// <returns></returns>
-        public Node FindNodeWithID(string szID)
+        public NetworkNode FindNodeWithID(string szID)
         {
             foreach (var node in nodes)
             {
@@ -1178,7 +1178,7 @@ namespace EgoDrop
         /// <param name="dstNode">Destination node.</param>
         /// <param name="bDirected">Directed edge.</param>
         /// <returns></returns>
-        public Connection FindConnection(Node srcNode, Node dstNode, bool bDirected = true)
+        public NetworkConnection FindConnection(NetworkNode srcNode, NetworkNode dstNode, bool bDirected = true)
         {
             foreach (var conn in connections)
             {
@@ -1200,7 +1200,7 @@ namespace EgoDrop
         /// </summary>
         /// <param name="node">Specified node.</param>
         /// <param name="status">Machine's status.</param>
-        public void fnSetMachineStatus(Node node, enMachineStatus status)
+        public void fnSetMachineStatus(NetworkNode node, enMachineStatus status)
         {
             node.Icon = imageList.Images[Enum.GetName(status)];
             node.MachineStatus = status;
@@ -1212,7 +1212,7 @@ namespace EgoDrop
         /// 
         /// </summary>
         /// <param name="node"></param>
-        public void MoveNodeToLeft(Node node)
+        public void MoveNodeToLeft(NetworkNode node)
         {
             if (node == null || nodes.Count == 0)
                 return;
@@ -1247,7 +1247,7 @@ namespace EgoDrop
     /// <summary>
     /// 
     /// </summary>
-    public class Node
+    public class NetworkNode
     {
         public string szDisplayName; //Node's name.
         public string szVictimID;  //Host's ID.
@@ -1258,8 +1258,8 @@ namespace EgoDrop
         public Rectangle Bounds => new Rectangle(Position.X - Size / 2, Position.Y - Size / 2, Size, Size);
 
         public int nDepth = 0;
-        public HashSet<Node> ChildNodes = new HashSet<Node>();
-        public Node ParentNode = null;
+        public HashSet<NetworkNode> ChildNodes = new HashSet<NetworkNode>();
+        public NetworkNode ParentNode = null;
 
         public NetworkView.enMachineStatus MachineStatus { get; set; }
         public clsAgent Agent;
@@ -1307,10 +1307,10 @@ namespace EgoDrop
     /// <summary>
     /// 
     /// </summary>
-    public class Connection
+    public class NetworkConnection
     {
-        public Node From; //Source node.
-        public Node To; //Destination node.
+        public NetworkNode From; //Source node.
+        public NetworkNode To; //Destination node.
         public int nOffsetIndex;
 
         public NetworkView.enConnectionType enProtocol;

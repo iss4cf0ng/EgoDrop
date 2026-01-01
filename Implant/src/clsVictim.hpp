@@ -101,6 +101,8 @@ public:
             ::close(m_nSkt);
             m_nSkt = -1;
         }
+
+        return;
     }
 
     ssize_t fnSendRAW(const std::string& szMsg)
@@ -160,6 +162,8 @@ public:
 
             return fnSendRAW(abHttpPkt);
         }
+
+        return -1;
     }
     ssize_t fnSend(uint8_t nCommand, uint8_t nParam, const std::string& szMsg)
     {

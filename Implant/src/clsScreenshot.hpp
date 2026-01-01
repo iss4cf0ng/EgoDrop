@@ -51,6 +51,8 @@ stImage clsScreenshot::fnScreenshot()
 {
      try 
      {
+        return {0, 0, {}};
+
         XMapRaised(m_pDisplay, m_root);
         XImage* img = XGetImage(m_pDisplay, m_root, 0, 0, m_nWidth, m_nHeight, AllPlanes, ZPixmap);
         if (!img) 

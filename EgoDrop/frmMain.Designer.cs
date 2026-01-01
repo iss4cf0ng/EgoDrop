@@ -31,13 +31,15 @@
             components = new System.ComponentModel.Container();
             TreeNode treeNode1 = new TreeNode("_All Targets");
             TreeNode treeNode2 = new TreeNode("_Orphan");
+            TreeNode treeNode3 = new TreeNode("_Offline");
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(frmMain));
             statusStrip1 = new StatusStrip();
             toolStripStatusLabel1 = new ToolStripStatusLabel();
             menuStrip1 = new MenuStrip();
             toolStripMenuItem1 = new ToolStripMenuItem();
-            toolStripMenuItem26 = new ToolStripMenuItem();
             toolStripMenuItem2 = new ToolStripMenuItem();
+            toolStripMenuItem26 = new ToolStripMenuItem();
+            toolStripMenuItem29 = new ToolStripMenuItem();
             toolStripMenuItem14 = new ToolStripMenuItem();
             toolStripMenuItem3 = new ToolStripMenuItem();
             toolStripMenuItem4 = new ToolStripMenuItem();
@@ -69,6 +71,7 @@
             toolStripMenuItem8 = new ToolStripMenuItem();
             toolStripMenuItem9 = new ToolStripMenuItem();
             toolStripMenuItem10 = new ToolStripMenuItem();
+            toolStripMenuItem30 = new ToolStripMenuItem();
             tabPage5 = new TabPage();
             treeView2 = new TreeView();
             tabPage4 = new TabPage();
@@ -77,8 +80,12 @@
             toolStripMenuItem12 = new ToolStripMenuItem();
             toolStripMenuItem27 = new ToolStripMenuItem();
             toolStripMenuItem28 = new ToolStripMenuItem();
+            toolStripMenuItem31 = new ToolStripMenuItem();
+            toolStripSeparator2 = new ToolStripSeparator();
             toolStripMenuItem13 = new ToolStripMenuItem();
             toolStripMenuItem19 = new ToolStripMenuItem();
+            toolStripMenuItem32 = new ToolStripMenuItem();
+            toolStripMenuItem33 = new ToolStripMenuItem();
             toolStrip1 = new ToolStrip();
             toolStripButton1 = new ToolStripButton();
             toolStripButton2 = new ToolStripButton();
@@ -87,7 +94,6 @@
             tabControl1 = new TabControl();
             tabPage1 = new TabPage();
             richTextBox1 = new RichTextBox();
-            tabPage2 = new TabPage();
             imageList1 = new ImageList(components);
             sLinuxContextMenu = new ContextMenuStrip(components);
             tWinContextMenu = new ContextMenuStrip(components);
@@ -150,7 +156,7 @@
             // menuStrip1
             // 
             menuStrip1.Font = new Font("Microsoft JhengHei UI", 11.25F);
-            menuStrip1.Items.AddRange(new ToolStripItem[] { toolStripMenuItem1, toolStripMenuItem26, toolStripMenuItem2, toolStripMenuItem14, toolStripMenuItem3, toolStripMenuItem4 });
+            menuStrip1.Items.AddRange(new ToolStripItem[] { toolStripMenuItem1, toolStripMenuItem2, toolStripMenuItem26, toolStripMenuItem29, toolStripMenuItem14, toolStripMenuItem3, toolStripMenuItem4 });
             menuStrip1.Location = new Point(0, 0);
             menuStrip1.Name = "menuStrip1";
             menuStrip1.Size = new Size(974, 27);
@@ -164,6 +170,13 @@
             toolStripMenuItem1.Text = "Listener";
             toolStripMenuItem1.Click += toolStripMenuItem1_Click;
             // 
+            // toolStripMenuItem2
+            // 
+            toolStripMenuItem2.Name = "toolStripMenuItem2";
+            toolStripMenuItem2.Size = new Size(71, 23);
+            toolStripMenuItem2.Text = "Builder";
+            toolStripMenuItem2.Click += toolStripMenuItem2_Click;
+            // 
             // toolStripMenuItem26
             // 
             toolStripMenuItem26.Name = "toolStripMenuItem26";
@@ -171,12 +184,12 @@
             toolStripMenuItem26.Text = "Proxy";
             toolStripMenuItem26.Click += toolStripMenuItem26_Click;
             // 
-            // toolStripMenuItem2
+            // toolStripMenuItem29
             // 
-            toolStripMenuItem2.Name = "toolStripMenuItem2";
-            toolStripMenuItem2.Size = new Size(71, 23);
-            toolStripMenuItem2.Text = "Builder";
-            toolStripMenuItem2.Click += toolStripMenuItem2_Click;
+            toolStripMenuItem29.Name = "toolStripMenuItem29";
+            toolStripMenuItem29.Size = new Size(66, 23);
+            toolStripMenuItem29.Text = "Plugin";
+            toolStripMenuItem29.Click += toolStripMenuItem29_Click;
             // 
             // toolStripMenuItem14
             // 
@@ -269,7 +282,9 @@
             treeNode1.Text = "_All Targets";
             treeNode2.Name = "Node1";
             treeNode2.Text = "_Orphan";
-            treeView1.Nodes.AddRange(new TreeNode[] { treeNode1, treeNode2 });
+            treeNode3.Name = "Node2";
+            treeNode3.Text = "_Offline";
+            treeView1.Nodes.AddRange(new TreeNode[] { treeNode1, treeNode2, treeNode3 });
             treeView1.Size = new Size(217, 265);
             treeView1.TabIndex = 0;
             // 
@@ -384,9 +399,9 @@
             // tLinuxContextMenu
             // 
             tLinuxContextMenu.Font = new Font("Microsoft JhengHei UI", 11.25F, FontStyle.Regular, GraphicsUnit.Point, 136);
-            tLinuxContextMenu.Items.AddRange(new ToolStripItem[] { toolStripMenuItem5, toolStripMenuItem6, toolStripMenuItem11, toolStripMenuItem7, toolStripMenuItem8, toolStripMenuItem9, toolStripMenuItem10 });
+            tLinuxContextMenu.Items.AddRange(new ToolStripItem[] { toolStripMenuItem5, toolStripMenuItem6, toolStripMenuItem11, toolStripMenuItem7, toolStripMenuItem8, toolStripMenuItem9, toolStripMenuItem10, toolStripMenuItem30 });
             tLinuxContextMenu.Name = "contextMenuStrip1";
-            tLinuxContextMenu.Size = new Size(170, 172);
+            tLinuxContextMenu.Size = new Size(170, 196);
             // 
             // toolStripMenuItem5
             // 
@@ -437,6 +452,13 @@
             toolStripMenuItem10.Text = "Camera";
             toolStripMenuItem10.Click += toolStripMenuItem10_Click;
             // 
+            // toolStripMenuItem30
+            // 
+            toolStripMenuItem30.Name = "toolStripMenuItem30";
+            toolStripMenuItem30.Size = new Size(169, 24);
+            toolStripMenuItem30.Text = "Plugin";
+            toolStripMenuItem30.Click += toolStripMenuItem30_Click;
+            // 
             // tabPage5
             // 
             tabPage5.Controls.Add(treeView2);
@@ -486,9 +508,9 @@
             // topoLinuxContextMenu
             // 
             topoLinuxContextMenu.Font = new Font("Microsoft JhengHei UI", 11.25F, FontStyle.Regular, GraphicsUnit.Point, 136);
-            topoLinuxContextMenu.Items.AddRange(new ToolStripItem[] { toolStripMenuItem12, toolStripMenuItem13, toolStripMenuItem19 });
+            topoLinuxContextMenu.Items.AddRange(new ToolStripItem[] { toolStripMenuItem12, toolStripMenuItem31, toolStripSeparator2, toolStripMenuItem13, toolStripMenuItem19, toolStripMenuItem32, toolStripMenuItem33 });
             topoLinuxContextMenu.Name = "contextMenuStrip2";
-            topoLinuxContextMenu.Size = new Size(170, 76);
+            topoLinuxContextMenu.Size = new Size(170, 154);
             // 
             // toolStripMenuItem12
             // 
@@ -512,6 +534,18 @@
             toolStripMenuItem28.Text = "Socks5";
             toolStripMenuItem28.Click += toolStripMenuItem28_Click;
             // 
+            // toolStripMenuItem31
+            // 
+            toolStripMenuItem31.Name = "toolStripMenuItem31";
+            toolStripMenuItem31.Size = new Size(169, 24);
+            toolStripMenuItem31.Text = "Interact";
+            toolStripMenuItem31.Click += toolStripMenuItem31_Click;
+            // 
+            // toolStripSeparator2
+            // 
+            toolStripSeparator2.Name = "toolStripSeparator2";
+            toolStripSeparator2.Size = new Size(166, 6);
+            // 
             // toolStripMenuItem13
             // 
             toolStripMenuItem13.Name = "toolStripMenuItem13";
@@ -525,6 +559,18 @@
             toolStripMenuItem19.Size = new Size(169, 24);
             toolStripMenuItem19.Text = "Terminal";
             toolStripMenuItem19.Click += toolStripMenuItem19_Click;
+            // 
+            // toolStripMenuItem32
+            // 
+            toolStripMenuItem32.Name = "toolStripMenuItem32";
+            toolStripMenuItem32.Size = new Size(169, 24);
+            toolStripMenuItem32.Text = "Process";
+            // 
+            // toolStripMenuItem33
+            // 
+            toolStripMenuItem33.Name = "toolStripMenuItem33";
+            toolStripMenuItem33.Size = new Size(169, 24);
+            toolStripMenuItem33.Text = "Service";
             // 
             // toolStrip1
             // 
@@ -582,13 +628,11 @@
             // 
             tabControl1.Alignment = TabAlignment.Bottom;
             tabControl1.Controls.Add(tabPage1);
-            tabControl1.Controls.Add(tabPage2);
             tabControl1.Dock = DockStyle.Fill;
             tabControl1.Location = new Point(0, 0);
             tabControl1.Name = "tabControl1";
             tabControl1.SelectedIndex = 0;
             tabControl1.Size = new Size(974, 187);
-            tabControl1.SizeMode = TabSizeMode.Fixed;
             tabControl1.TabIndex = 0;
             // 
             // tabPage1
@@ -613,16 +657,6 @@
             richTextBox1.Size = new Size(960, 149);
             richTextBox1.TabIndex = 0;
             richTextBox1.Text = "";
-            // 
-            // tabPage2
-            // 
-            tabPage2.Location = new Point(4, 4);
-            tabPage2.Name = "tabPage2";
-            tabPage2.Padding = new Padding(3);
-            tabPage2.Size = new Size(966, 159);
-            tabPage2.TabIndex = 1;
-            tabPage2.Text = "tabPage2";
-            tabPage2.UseVisualStyleBackColor = true;
             // 
             // imageList1
             // 
@@ -805,7 +839,6 @@
         private ListView listView1;
         private TabControl tabControl1;
         private TabPage tabPage1;
-        private TabPage tabPage2;
         private RichTextBox richTextBox1;
         private ToolStripStatusLabel toolStripStatusLabel1;
         private ToolStripMenuItem toolStripMenuItem1;
@@ -870,5 +903,11 @@
         private ToolStripSeparator toolStripSeparator1;
         private ToolStripButton toolStripButton3;
         private System.Windows.Forms.Timer timer1;
+        private ToolStripMenuItem toolStripMenuItem29;
+        private ToolStripMenuItem toolStripMenuItem30;
+        private ToolStripMenuItem toolStripMenuItem31;
+        private ToolStripSeparator toolStripSeparator2;
+        private ToolStripMenuItem toolStripMenuItem32;
+        private ToolStripMenuItem toolStripMenuItem33;
     }
 }

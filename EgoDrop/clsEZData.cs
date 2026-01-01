@@ -27,7 +27,7 @@ namespace EgoDrop
 
         public static List<List<string>> fn2dLB64Decode(string szInput, string szSplitter = ",")
         {
-            List<string> ls = szInput.Split(",").Select(x => fnB64D2Str(x)).ToList();
+            List<string> ls = szInput.Split(szSplitter).Select(x => fnB64D2Str(x)).ToList();
             List<List<string>> lsResult = new List<List<string>>();
             foreach (string s in ls)
             {

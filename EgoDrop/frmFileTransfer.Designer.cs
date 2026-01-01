@@ -34,6 +34,7 @@
             columnHeader1 = new ColumnHeader();
             columnHeader3 = new ColumnHeader();
             columnHeader4 = new ColumnHeader();
+            columnHeader2 = new ColumnHeader();
             SuspendLayout();
             // 
             // toolStrip1
@@ -54,7 +55,7 @@
             // 
             // listView1
             // 
-            listView1.Columns.AddRange(new ColumnHeader[] { columnHeader1, columnHeader3, columnHeader4 });
+            listView1.Columns.AddRange(new ColumnHeader[] { columnHeader1, columnHeader3, columnHeader4, columnHeader2 });
             listView1.Dock = DockStyle.Fill;
             listView1.Location = new Point(0, 25);
             listView1.Name = "listView1";
@@ -66,17 +67,22 @@
             // columnHeader1
             // 
             columnHeader1.Text = "FileName";
-            columnHeader1.Width = 250;
+            columnHeader1.Width = 200;
             // 
             // columnHeader3
             // 
             columnHeader3.Text = "Size";
-            columnHeader3.Width = 150;
+            columnHeader3.Width = 120;
             // 
             // columnHeader4
             // 
-            columnHeader4.Text = "Progress";
-            columnHeader4.Width = 200;
+            columnHeader4.Text = "Method";
+            columnHeader4.Width = 120;
+            // 
+            // columnHeader2
+            // 
+            columnHeader2.Text = "Progress";
+            columnHeader2.Width = 150;
             // 
             // frmFileTransfer
             // 
@@ -103,5 +109,6 @@
         private ColumnHeader columnHeader1;
         private ColumnHeader columnHeader3;
         private ColumnHeader columnHeader4;
+        private ColumnHeader columnHeader2;
     }
 }

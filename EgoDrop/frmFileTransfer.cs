@@ -12,30 +12,24 @@ namespace EgoDrop
 {
     public partial class frmFileTransfer : Form
     {
-        private clsVictim m_victim { get; set; }
+        private clsAgent m_agent { get; init; }
         private List<string> m_lsFilePath { get; set; }
-        private enTransfer m_enTransfer { get; set; }
+        private clsFileHandler.enMode m_enTransfer { get; set; }
 
         private Dictionary<string, clsFileHandler> m_dicHandler = new Dictionary<string, clsFileHandler>();
 
-        public enum enTransfer
-        {
-            Upload,
-            Download,
-        };
-
-        public frmFileTransfer(clsVictim victim, List<string> lsFilePath, enTransfer enTransfer)
+        public frmFileTransfer(clsAgent agent, List<string> lsFilePath, clsFileHandler.enMode enTransfer)
         {
             InitializeComponent();
 
-            m_victim = victim;
+            m_agent = agent;
             m_lsFilePath = lsFilePath;
             m_enTransfer = enTransfer;
         }
 
         void fnRecv(clsListener listener, clsVictim victim, List<string> lsMsg)
         {
-            if (!clsTools.fnbSameVictim(victim, m_victim))
+            if (!clsTools.fnbSameVictim(victim, m_agent.m_victim))
                 return;
 
             if (lsMsg[0] == "file")
@@ -47,8 +41,7 @@ namespace EgoDrop
                     string szFilePath = lsMsg[3];
 
                     clsFileHandler handler = m_dicHandler[szFilePath];
-                    handler.fnAck(nSeq);
-
+                    
 
                 }
                 else if (lsMsg[1] == "df") //Download File.
@@ -57,6 +50,8 @@ namespace EgoDrop
                 }
             }
         }
+
+        bool fnbAllCompleted() => listView1.Items.Cast<ListViewItem>().Where(x => !string.Equals(x.SubItems[3].Text, "100")).ToList().Count == 0;
 
         void fnUpdateProgress(string szFilePath, int nValue)
         {
@@ -114,13 +109,7 @@ namespace EgoDrop
 
                 listView1.Items.Add(item);
 
-                clsFileHandler handler = new clsFileHandler(
-                    m_victim,
-                    szFilePath,
-                    m_enTransfer,
-                    1024 * 5,
-                    5
-                );
+                clsFileHandler handler = new clsFileHandler(m_enTransfer, m_agent, szFileName);
 
                 m_dicHandler[szFilePath] = handler;
             }

@@ -42,29 +42,44 @@ public:
 
     ~clsShell() = default;
 
-    void fnStart()
+    void fnStart(const std::string& szShellPath, const std::string& szInitPath)
     {
         clsTools::fnLogInfo("Starting terminal...");
 
         if (m_bIsRunning)
             return;
 
+        std::string szShell;
+        if (!szShellPath.empty() && access(szShell.c_str(), X_OK) == 0)
+            szShell = szShellPath;
+        else
+            szShell = "bash";
+
         m_pid = forkpty(&m_ptyFd, nullptr, nullptr, nullptr);
         if (m_pid == 0)
         {
+            if (!szInitPath.empty())
+            {
+                if (chdir(szInitPath.c_str()) != 0)
+                    chdir(getenv("HOME"));
+            }
+
             setenv("TERM", "xterm-256color", 1);
             setenv("SHELL", "/bin/bash", 1);
 
-            execlp(
-                "bash",
-                "bash",
-                "-i",
-                "-c",
+            std::string szCmd =
                 "echo '=== EgoDrop Remote Shell ==='; "
                 "echo 'User: '$(whoami); "
                 "echo 'Host: '$(hostname); "
                 "echo '============================'; "
-                "exec bash -i",
+                "exec " + szShell + " -i";
+
+            execlp(
+                szShell.c_str(),
+                szShell.c_str(),
+                "-i",
+                "-c",
+                szCmd.c_str(),
                 nullptr
             );
 
@@ -154,5 +169,14 @@ public:
         ws.ws_row = nRow;
 
         ioctl(m_ptyFd, TIOCSWINSZ, &ws);
+    }
+
+    std::string fnGetUserShell()
+    {
+        struct passwd* pw = getpwuid(getuid());
+        if (pw && pw->pw_shell && access(pw->pw_shell, X_OK) == 0)
+            return pw->pw_shell;
+
+        return "/bin/bash";
     }
 };

