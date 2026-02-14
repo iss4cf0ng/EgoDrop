@@ -17,11 +17,19 @@ This is an experimental RAT(Remote Access Trojan) for Linux platform. C# GUI bas
 - Virtual terminal based on xterm (Capable to do ssh).
 - VPN.
 
+# Todo List
+
+- File Manager
+  - Upload
+  - Download
+
 # Done
 - RSA + AES TCP communication.
 - TLS communication.
 - HTTP communication.
 - Chain
+- Simple Plugins
+- Virtual Terminal
 
 # Screenshot
 ## Topology
@@ -30,3 +38,4 @@ This is an experimental RAT(Remote Access Trojan) for Linux platform. C# GUI bas
 ## Terminal(Virtual terminal, but is capable to use ssh or vim.)
 
 ![Terminal](https://github.com/iss4cf0ng/EgoDrop/blob/main/screenshot/terminal.png)
+
