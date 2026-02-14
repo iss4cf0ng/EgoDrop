@@ -24,11 +24,11 @@ namespace EgoDrop
         {
             public bool bIsNull { get { return string.IsNullOrEmpty(Name) || string.IsNullOrEmpty(Version); } }
 
-            public string Name { get; set; }
-            public string Version { get; set; }
-            public string Description { get; set; }
-            public string Author { get; set; }
-            public string Entry { get; set; }
+            public string Name { get; set; } //Name of plugin.
+            public string Version { get; set; } //Version of plugin.
+            public string Description { get; set; } //Description of plugin.
+            public string Author { get; set; } //Author of plugin.
+            public string Entry { get; set; } //Password entry.
 
             public List<stPluginCommand> command { get; set; }
         }

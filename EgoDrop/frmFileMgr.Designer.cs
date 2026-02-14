@@ -110,8 +110,8 @@
             // toolStripMenuItem1
             // 
             toolStripMenuItem1.Name = "toolStripMenuItem1";
-            toolStripMenuItem1.Size = new Size(161, 23);
-            toolStripMenuItem1.Text = "toolStripMenuItem1";
+            toolStripMenuItem1.Size = new Size(45, 23);
+            toolStripMenuItem1.Text = "File";
             // 
             // statusStrip1
             // 
@@ -218,10 +218,10 @@
             // 
             // tabPage4
             // 
-            tabPage4.Location = new Point(4, 24);
+            tabPage4.Location = new Point(4, 28);
             tabPage4.Name = "tabPage4";
             tabPage4.Padding = new Padding(3);
-            tabPage4.Size = new Size(281, 413);
+            tabPage4.Size = new Size(281, 409);
             tabPage4.TabIndex = 1;
             tabPage4.Text = "ShortCuts";
             tabPage4.UseVisualStyleBackColor = true;

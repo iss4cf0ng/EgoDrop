@@ -49,6 +49,7 @@ namespace EgoDrop
         private int virtualHeight = 2000;
 
         public NetworkNode SelectedNode { get; private set; }
+        public List<NetworkNode> SelectNodes { get { return selectedNodes.ToList(); } }
         public ImageList imageList;
 
         private bool _DisplayProtocol = false;

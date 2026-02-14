@@ -33,7 +33,7 @@ extern "C"
     bool fnbPluginInit(stAgentAPI* api)
     {
         g_api = api;
-
+        
         const char* result[] = {
             "[test] init"
         };

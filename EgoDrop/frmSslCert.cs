@@ -23,8 +23,10 @@ namespace EgoDrop
         private void fnSetup()
         {
             textBox1.Text = "CN=MyTestServer";
+
             comboBox1.SelectedIndex = 0;
             comboBox1.DropDownStyle = ComboBoxStyle.DropDownList;
+
             numericUpDown1.Value = 1;
             numericUpDown1.Minimum = 1;
         }

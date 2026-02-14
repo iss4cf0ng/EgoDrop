@@ -41,8 +41,11 @@ namespace EgoDrop
                     string szFilePath = lsMsg[3];
 
                     clsFileHandler handler = m_dicHandler[szFilePath];
-                    
 
+                    if (handler.fnbIsLast(nSeq))
+                        m_dicHandler.Remove(szFilePath);
+                    else
+                        handler.fnSend();
                 }
                 else if (lsMsg[1] == "df") //Download File.
                 {

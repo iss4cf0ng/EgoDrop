@@ -6,11 +6,19 @@ using System.Threading.Tasks;
 
 namespace WinImplantCS48
 {
-    public class clsLtnTcp : clsLtn
+    public class clsLtn
     {
-        public clsLtnTcp()
+        public clsLtn()
         {
 
+        }
+
+        public enum enMethod
+        {
+            TCP,
+            TLS,
+            HTTP,
+            HTTPS,
         }
     }
 }

@@ -26,8 +26,6 @@ namespace EgoDrop
             m_agent = agent;
         }
 
-        
-
         clsPlugin.stPluginInfo fnGetPluginInfoFromTag(ListViewItem item) => item.Tag == null ? new clsPlugin.stPluginInfo() : (clsPlugin.stPluginInfo)item.Tag;
         void fnSetAbiVersion(ListViewItem item, string szVersion) => item.SubItems[2].Text = szVersion;
         void fnSetLoadStatus(ListViewItem item, string szStatus) => item.SubItems[4].Text = szStatus;
@@ -205,12 +203,12 @@ namespace EgoDrop
                         Args = cmd.args,
                         Description = cmd.desc,
                     });
+                }
 
-                    if (!m_agent.m_dicCommandRegistry.ContainsKey(meta.Entry))
-                    {
-                        m_agent.m_dicCommandRegistry[meta.Entry] = list;
-                        m_frmMain.fnSysLogInfo($"Register command successfully: (Agent={m_agent.m_szVictimID}, Command={meta.Entry})");
-                    }
+                if (!m_agent.m_dicCommandRegistry.ContainsKey(meta.Entry))
+                {
+                    m_agent.m_dicCommandRegistry[meta.Entry] = list;
+                    m_frmMain.fnSysLogInfo($"Register command successfully: (Agent={m_agent.m_szVictimID}, Command={meta.Entry})");
                 }
             }
         }

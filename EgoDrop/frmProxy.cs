@@ -45,6 +45,18 @@ namespace EgoDrop
         {
             foreach (ListViewItem item in listView1.CheckedItems)
             {
+                string szEpId = item.SubItems[1].Text;
+                string szEpIp = item.SubItems[2].Text;
+
+                if (string.IsNullOrEmpty(szEpId) || string.IsNullOrEmpty(szEpIp))
+                {
+                    MessageBox.Show("Endpoint data is null or empty!", "Proxy", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return;
+                }
+            }
+
+            foreach (ListViewItem item in listView1.CheckedItems)
+            {
                 string szName = item.Text;
                 m_frmMain.m_dicLtnProxy[szName].fnStart();
             }
