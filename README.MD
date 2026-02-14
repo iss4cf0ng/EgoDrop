@@ -43,5 +43,11 @@ This is an experimental RAT(Remote Access Trojan) for Linux platform. C# GUI bas
 
 ![Terminal](https://github.com/iss4cf0ng/EgoDrop/blob/main/screenshot/terminal.png)
 
+# Demonstration
+
+<p align="center">
+<img src="https://github.com/iss4cf0ng/EgoDrop/blob/main/screenshot/demo.gif" width=1000>
+</p>
+
 
 
