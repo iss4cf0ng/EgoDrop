@@ -1,5 +1,5 @@
 # EgoDrop
-An experimential Linux Remote Access Tool \
+An experimential Linux RAT for learning post-exploitation. \
 Still in development.
 
 # Introduction
@@ -38,4 +38,5 @@ This is an experimental RAT(Remote Access Trojan) for Linux platform. C# GUI bas
 ## Terminal(Virtual terminal, but is capable to use ssh or vim.)
 
 ![Terminal](https://github.com/iss4cf0ng/EgoDrop/blob/main/screenshot/terminal.png)
+
 
