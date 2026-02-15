@@ -1,3 +1,10 @@
+/*
+Cryptographical algorithm class of EgoDrop client.
+Author: ISSAC
+
+Introduction: It provides AES and RSA encryption and decryption algorithms for TCP and HTTP methods.
+*/
+
 #pragma once
 
 #include <vector>
@@ -61,6 +68,9 @@ public:
         return *this;
     }
 
+    /// @brief Use this constructor for connecting to C2 server.
+    /// @param vuRSAPublicKey 
+    /// @param bCreateAES 
     clsCrypto(const std::vector<unsigned char>& vuRSAPublicKey, bool bCreateAES = true) 
     {
         m_vuRSAPublicKey = vuRSAPublicKey;
@@ -74,6 +84,9 @@ public:
             fnCreateAESKey();
     }
 
+    /// @brief Use this constructor for pivoting.
+    /// @param vuRSAPublicKey Byte array of RSA public key.
+    /// @param vuRSAPrivateKey Byte array of RSA private key.
     clsCrypto(const std::vector<unsigned char>& vuRSAPublicKey, const std::vector<unsigned char>& vuRSAPrivateKey)
     {
         m_vuRSAPublicKey = vuRSAPublicKey;
@@ -90,6 +103,10 @@ public:
         if (!m_rsaPrivate)
             throw std::runtime_error("Failed to parse RSA private key.");
     }
+
+    /// @brief Use this constructor for pivoting
+    /// @param szRSAPublicKey String of RSA public key.
+    /// @param szRSAPrivateKey String of RSA private key.
     clsCrypto(std::string& szRSAPublicKey, std::string& szRSAPrivateKey)
     {
         std::vector<unsigned char> vuPub(szRSAPublicKey.begin(), szRSAPublicKey.end());
@@ -108,7 +125,8 @@ public:
 
     #pragma region AES
 
-    // ===== AES key creation =====
+    /// @brief Generate AES key and initial vector.
+    /// @return 
     std::tuple<std::array<unsigned char, 32>, std::array<unsigned char, 16>> fnCreateAESKey() {
         if (RAND_bytes(m_aesKey.data(), m_aesKey.size()) != 1)
             throw std::runtime_error("RAND_bytes AES key failed.");
@@ -117,7 +135,10 @@ public:
         return { m_aesKey, m_aesIV };
     }
 
-    // ===== AES encrypt =====
+    /// @brief AES encryption.
+    /// @param ucPlainText 
+    /// @param nPlainTextLength 
+    /// @return 
     std::vector<unsigned char> fnvuAESEncrypt(const unsigned char* ucPlainText, int nPlainTextLength) {
         EVP_CIPHER_CTX* ctx = EVP_CIPHER_CTX_new();
         if (!ctx)
@@ -142,15 +163,25 @@ public:
         return cipher;
     }
 
+    /// @brief AES encryption.
+    /// @param szPlain 
+    /// @return 
     std::vector<unsigned char> fnvuAESEncrypt(const std::string& szPlain) {
         return fnvuAESEncrypt(reinterpret_cast<const unsigned char*>(szPlain.data()), szPlain.size());
     }
 
-    // ===== AES decrypt =====
+    /// @brief AES decryption.
+    /// @param vuCipher 
+    /// @return 
     std::vector<unsigned char> fnvuAESDecrypt(std::vector<unsigned char> vuCipher)
     {
         return fnvuAESDecrypt(vuCipher.data(), vuCipher.size());
     }
+
+    /// @brief AES decryption
+    /// @param ucCipherText 
+    /// @param nCipherTextLength 
+    /// @return 
     std::vector<unsigned char> fnvuAESDecrypt(const unsigned char* ucCipherText, int nCipherTextLength) {
         EVP_CIPHER_CTX* ctx = EVP_CIPHER_CTX_new();
         if (!ctx)
@@ -175,8 +206,11 @@ public:
         return plain;
     }
 
-     void fnAesSetNewKeyIV(const std::vector<unsigned char>& key, const std::vector<unsigned char>& iv) 
-     {
+    /// @brief Send AES key and initial vector to this class.
+    /// @param key Byte array of AES key.
+    /// @param iv Byte array of AES initial vector.
+    void fnAesSetNewKeyIV(const std::vector<unsigned char>& key, const std::vector<unsigned char>& iv) 
+    {
         if (key.size() != 32 || iv.size() != 16)
             throw std::runtime_error("Invalid AES key or IV size.");
 
@@ -187,12 +221,19 @@ public:
     #pragma endregion
     #pragma region RSA
 
+    /// @brief RSA encryption.
+    /// @param szPlain Plain text.
+    /// @return Byte array of cipher.
     std::vector<unsigned char> fnvuRSAEncrypt(std::string& szPlain)
     {
         std::vector<unsigned char> vuPlain(szPlain.begin(), szPlain.end());
         return fnvuRSAEncrypt(vuPlain.data(), vuPlain.size());
     }
 
+    /// @brief AES encryption.
+    /// @param ucPlain Byte array of plain text.
+    /// @param nLength Length of plain.
+    /// @return byte array of cipher.
     std::vector<unsigned char> fnvuRSAEncrypt(const unsigned char* ucPlain, size_t nLength) 
     {
         if (!m_rsaPublic)
@@ -206,6 +247,10 @@ public:
         return cipher;
     }
 
+    /// @brief RSA decryption.
+    /// @param ucCipher Byte array of cipher.
+    /// @param nLength Length of cipher
+    /// @return Byte array of plain.
     std::vector<unsigned char> fnvuRSADecrypt(const unsigned char* ucCipher, size_t nLength)
     {
         if (!m_rsaPrivate)

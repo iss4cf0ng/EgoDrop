@@ -1,3 +1,8 @@
+/*
+Name: EgoDrop virtual shell.
+Author: ISSAC
+*/
+
 #include <iostream>
 #include <cstring>
 #include <thread>

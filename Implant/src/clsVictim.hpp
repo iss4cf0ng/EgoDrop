@@ -1,3 +1,11 @@
+/*
+Victim object.
+Author: ISSAC
+Introduction:
+    This class is use for sending C2 response, message to the C2 server or other compromised machines.
+    Here the term "Victim" represents a compromised machine (or agent).
+*/
+
 #pragma once
 
 #include <arpa/inet.h>
