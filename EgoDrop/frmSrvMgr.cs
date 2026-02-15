@@ -21,23 +21,22 @@ namespace EgoDrop
             m_agent = agent;
         }
 
-        private List<string> m_lsLinuxColumns = new List<string>()
-        {
-
-        };
-        private List<string> m_lsWinColumns = new List<string>()
-        {
-
-        };
-
         private struct stLinuxServiceInfo
         {
-
+            public string Name { get; set; }
+            public string Status { get; set; }
+            public string Description { get; set; }
         }
 
         private struct stWinServiceInfo
         {
-
+            public string Name { get; set; }
+            public string DisplayName { get; set; }
+            public uint nProcId { get; set; }
+            public string Status { get; set; }
+            public string ServiceType { get; set; }
+            public string Description { get; set; }
+            public DateTime InstalledDate { get; set; }
         }
 
         private void fnRecv(clsListener listener, clsVictim victim, string szSrcVictimID, List<string> lsMsg)
@@ -92,7 +91,7 @@ namespace EgoDrop
         /// Send continue service command.
         /// </summary>
         /// <param name="szName"></param>
-        private void fnContiService(string szName)
+        private void fnResumeService(string szName)
         {
 
         }
@@ -107,19 +106,19 @@ namespace EgoDrop
 
             if (m_agent.m_bUnixlike)
             {
-                for (int i = 0; i < m_lsLinuxColumns.Count; i++)
-                {
-                    listView1.Columns.Add(m_lsLinuxColumns[i]);
-                    listView1.Columns[i].Width = 200;
-                }
+                //Unix-like
+
             }
             else
             {
-                for (int i = 0; i < m_lsWinColumns.Count; i++)
-                {
-                    listView1.Columns.Add(m_lsWinColumns[i]);
-                    listView1.Columns[i].Width = 200;
-                }
+                //Windows
+                listView1.Columns.Add("Name", 80);
+                listView1.Columns.Add("DisplayName", 100);
+                listView1.Columns.Add("ProcId", 50);
+                listView1.Columns.Add("State", 80);
+                listView1.Columns.Add("ServiceType", 100);
+                listView1.Columns.Add("Description", 150);
+                listView1.Columns.Add("InstalledDate", 120);
             }
 
             m_agent.m_victim.m_listener.evtReceivedMessage += fnRecv;

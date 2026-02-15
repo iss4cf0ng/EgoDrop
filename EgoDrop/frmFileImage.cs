@@ -13,17 +13,24 @@ namespace EgoDrop
 {
     public partial class frmFileImage : Form
     {
-        private clsVictim m_victim { get; set; }
+        private clsAgent m_agent { get; init; }
+        private clsVictim m_victim { get { return m_agent.m_victim; } }
 
+        /// <summary>
+        /// Initial image size: 200px
+        /// </summary>
         private ImageList m_ImageList = new ImageList() { ImageSize = new Size(200, 200) };
 
-        public frmFileImage(clsVictim victim)
+        public frmFileImage(clsAgent agent)
         {
             InitializeComponent();
 
-            m_victim = victim;
+            m_agent = agent;
         }
 
+        /// <summary>
+        /// Image's information and Image object data.
+        /// </summary>
         private struct stImageInfo
         {
             public string szFileName => szFilePath.Split('/').Last();
@@ -37,6 +44,9 @@ namespace EgoDrop
             }
         }
 
+        /// <summary>
+        /// Get controls from a tab.
+        /// </summary>
         private struct stControl
         {
             public ToolStrip ts;
@@ -53,6 +63,11 @@ namespace EgoDrop
             }
         }
 
+        /// <summary>
+        /// Conver image byte array to Image object.
+        /// </summary>
+        /// <param name="abBuffer"></param>
+        /// <returns></returns>
         private Image fnConvertBufferToImage(byte[] abBuffer)
         {
             using (MemoryStream ms = new MemoryStream(abBuffer))
@@ -64,6 +79,13 @@ namespace EgoDrop
 
         private stImageInfo fnGetStructFromTag(ListViewItem item) => (stImageInfo)item.Tag;
 
+        /// <summary>
+        /// Agent's message handler.
+        /// </summary>
+        /// <param name="listener"></param>
+        /// <param name="victim"></param>
+        /// <param name="szSrcVictimID"></param>
+        /// <param name="lsMsg"></param>
         void fnRecv(clsListener listener, clsVictim victim, string szSrcVictimID, List<string> lsMsg)
         {
             if (!clsTools.fnbSameVictim(victim, m_victim))
@@ -101,6 +123,10 @@ namespace EgoDrop
             }));
         }
 
+        /// <summary>
+        /// Send read images request.
+        /// </summary>
+        /// <param name="lsFilePath"></param>
         public void fnSendImageRequest(List<string> lsFilePath)
         {
             Task.Run(() =>
@@ -120,6 +146,10 @@ namespace EgoDrop
             });
         }
 
+        /// <summary>
+        /// Display image in new tab.
+        /// </summary>
+        /// <param name="st"></param>
         void fnShowImage(stImageInfo st)
         {
             TabPage page = new TabPage();
@@ -200,6 +230,62 @@ namespace EgoDrop
                     }
                 }
             };
+
+            tabControl1.DrawMode = TabDrawMode.OwnerDrawFixed;
+            tabControl1.Padding = new Point(18, 4);
+            tabControl1.ItemSize = new Size(0, 24);
+            tabControl1.DrawItem += (s, e) =>
+            {
+                TabPage tab = tabControl1.TabPages[e.Index];
+                Rectangle rect = tabControl1.GetTabRect(e.Index);
+
+                TextRenderer.DrawText(
+                    e.Graphics,
+                    tab.Text,
+                    tab.Font,
+                    rect,
+                    tab.ForeColor,
+                    TextFormatFlags.Left | TextFormatFlags.VerticalCenter
+                );
+
+                if (e.Index == 0)
+                    return;
+
+                Rectangle closeRect = new Rectangle(
+                    rect.Right - 15,
+                    rect.Top + 2,
+                    12,
+                    15
+                );
+
+                e.Graphics.DrawString("x", Font, Brushes.Black, closeRect);
+            };
+            tabControl1.MouseDown += (s, e) =>
+            {
+                TabPage? page = tabControl1.SelectedTab;
+                if (page == null)
+                    return;
+
+                if (tabControl1.SelectedIndex == 0)
+                    return;
+
+                for (int i = 1; i < tabControl1.TabPages.Count; i++)
+                {
+                    Rectangle tabRect = tabControl1.GetTabRect(i);
+                    Rectangle closeRect = new Rectangle(
+                        tabRect.Right - 15,
+                        tabRect.Top + 4,
+                        12,
+                        12
+                    );
+
+                    if (closeRect.Contains(e.Location))
+                    {
+                        tabControl1.TabPages.RemoveAt(i);
+                        break;
+                    }
+                }
+            };
         }
 
         private void frmFileImage_Load(object sender, EventArgs e)
@@ -214,9 +300,11 @@ namespace EgoDrop
 
         private void listView1_DoubleClick(object sender, EventArgs e)
         {
-            ListViewItem item = listView1.SelectedItems.Cast<ListViewItem>().First();
-            if (item == null)
+            List<ListViewItem> items = listView1.SelectedItems.Cast<ListViewItem>().ToList();
+            if (items.Count == 0)
                 return;
+
+            ListViewItem item = items.First();
 
             var st = fnGetStructFromTag(item);
             fnShowImage(st);
@@ -233,7 +321,7 @@ namespace EgoDrop
             {
                 if (e.KeyCode == Keys.W)
                 {
-                    TabPage page = tabControl1.SelectedTab;
+                    TabPage? page = tabControl1.SelectedTab;
                     if (page == null)
                         return;
 
@@ -243,7 +331,7 @@ namespace EgoDrop
                 {
                     if (tabControl1.SelectedIndex > 0)
                     {
-                        TabPage page = tabControl1.SelectedTab;
+                        TabPage? page = tabControl1.SelectedTab;
                         if (page == null)
                             return;
 
