@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
 using System.Drawing;
+using System.Drawing.Imaging;
 using System.Linq;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
@@ -31,7 +32,7 @@ namespace EgoDrop
         /// <summary>
         /// Image's information and Image object data.
         /// </summary>
-        private struct stImageInfo
+        public struct stImageInfo
         {
             public string szFileName => szFilePath.Split('/').Last();
             public string szFilePath { get; set; }
@@ -180,6 +181,9 @@ namespace EgoDrop
             panel.Controls.Add(pb);
             panel.AutoScroll = true;
 
+            panel.BringToFront();
+            panel.Dock = DockStyle.Fill;
+
             ts.Dock = DockStyle.Top;
             tbPath.Dock = DockStyle.Top;
             pb.Dock = DockStyle.Fill;
@@ -195,6 +199,8 @@ namespace EgoDrop
             page.Text = st.szFileName;
             tbPath.Text = st.szFilePath;
             pb.Image = st.img;
+            pb.BringToFront();
+            pb.SizeMode = PictureBoxSizeMode.Zoom;
 
             tabControl1.SelectedTab = page;
 
@@ -212,6 +218,7 @@ namespace EgoDrop
 
             m_ImageList.Images.Clear();
 
+            listView1.View = View.Details;
             listView1.LargeImageList = m_ImageList;
             listView1.MouseWheel += (sender, e) =>
             {
@@ -325,6 +332,9 @@ namespace EgoDrop
                     if (page == null)
                         return;
 
+                    if (tabControl1.SelectedIndex == 0)
+                        return;
+
                     tabControl1.TabPages.Remove(page);
                 }
                 else if (e.KeyCode == Keys.S)
@@ -394,6 +404,140 @@ namespace EgoDrop
             List<stImageInfo> lInfo = listView1.SelectedItems.Cast<ListViewItem>().ToList().Select(x => fnGetStructFromTag(x)).ToList();
             foreach (var info in lInfo)
                 fnShowImage(info);
+        }
+
+        //Save Selected
+        private void toolStripMenuItem3_Click(object sender, EventArgs e)
+        {
+            if (tabControl1.SelectedIndex == 0)
+            {
+                List<stImageInfo> lsImage = listView1.Items.Cast<ListViewItem>().Select(x => fnGetStructFromTag(x)).ToList();
+                if (lsImage.Count == 0)
+                    return;
+
+                if (lsImage.Count == 1)
+                {
+                    SaveFileDialog sfd = new SaveFileDialog();
+                    sfd.Filter = "Image File (*.png)|*.png";
+                    if (sfd.ShowDialog() == DialogResult.OK)
+                    {
+                        try
+                        {
+                            var imgInfo = lsImage.First();
+                            Image img = imgInfo.img;
+                            if (img == null)
+                                return;
+
+                            using (Bitmap bmp = new Bitmap(img))
+                            {
+                                bmp.Save(sfd.FileName, ImageFormat.Png);
+                            }
+
+                            MessageBox.Show("Save image successfully: " + sfd.FileName, "OK", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        }
+                        catch (Exception ex)
+                        {
+                            MessageBox.Show(ex.Message, ex.GetType().Name, MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        }
+                    }
+                }   
+                else
+                {
+                    FolderBrowserDialog fbd = new FolderBrowserDialog();
+                    if (fbd.ShowDialog() == DialogResult.OK)
+                    {
+                        frmFileImageSaveAll f = new frmFileImageSaveAll(lsImage, fbd.SelectedPath);
+                        f.ShowDialog();
+                    }
+                }
+            }
+            else
+            {
+                TabPage? page = tabControl1.SelectedTab;
+                if (page == null)
+                    return;
+
+                var control = new stControl(page);
+                PictureBox pb = control.pb;
+                if (pb == null)
+                    return;
+
+                Image img = pb.Image;
+                if (img == null)
+                    return;
+
+                SaveFileDialog sfd = new SaveFileDialog();
+                sfd.Filter = "All File (*.*)|*.*";
+                if (sfd.ShowDialog() == DialogResult.OK)
+                {
+                    try
+                    {
+                        using (Bitmap bmp = new Bitmap(img))
+                        {
+                            bmp.Save(sfd.FileName, ImageFormat.Png);
+                        }
+
+                        MessageBox.Show("Save image successfully: " + sfd.FileName, "OK", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show(ex.Message, ex.GetType().Name, MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    }
+                }
+            }
+        }
+
+        //Save All
+        private void toolStripMenuItem4_Click(object sender, EventArgs e)
+        {
+            List<stImageInfo> lsImage = listView1.Items.Cast<ListViewItem>().Select(x => fnGetStructFromTag(x)).ToList();
+            if (lsImage.Count == 0)
+                return;
+
+            FolderBrowserDialog fbd = new FolderBrowserDialog();
+            if (fbd.ShowDialog() == DialogResult.OK)
+            {
+                frmFileImageSaveAll f = new frmFileImageSaveAll(lsImage, fbd.SelectedPath);
+                f.ShowDialog();
+            }
+        }
+
+        //Show Selected
+        private void toolStripMenuItem5_Click(object sender, EventArgs e)
+        {
+            listView1.SelectedItems.Cast<ListViewItem>().ToList().ForEach(x => fnShowImage(fnGetStructFromTag(x)));
+        }
+
+        //Show All
+        private void toolStripMenuItem6_Click(object sender, EventArgs e)
+        {
+            listView1.Items.Cast<ListViewItem>().ToList().ForEach(x => fnShowImage(fnGetStructFromTag(x)));
+        }
+
+        //Close Selected
+        private void toolStripMenuItem7_Click(object sender, EventArgs e)
+        {
+            TabPage? page = tabControl1.SelectedTab;
+            if (page == null)
+                return;
+
+            if (tabControl1.SelectedIndex == 0)
+                return;
+
+            tabControl1.TabPages.Remove(page);
+        }
+
+        //Close All
+        private void toolStripMenuItem8_Click(object sender, EventArgs e)
+        {
+            if (tabControl1.TabPages.Count == 1)
+                return;
+
+            for (int i = 0; i < tabControl1.TabPages.Count; i++)
+            {
+                TabPage page = tabControl1.TabPages[i];
+                tabControl1.TabPages.Remove(page);
+            }
         }
     }
 }
