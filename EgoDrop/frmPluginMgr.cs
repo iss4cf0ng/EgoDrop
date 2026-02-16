@@ -148,6 +148,9 @@ namespace EgoDrop
             }));
         }
 
+        /// <summary>
+        /// Display all plugins from the local folder.
+        /// </summary>
         void fnLoadAllPlugin()
         {
             if (!Directory.Exists(m_szPluginDir))
@@ -217,18 +220,6 @@ namespace EgoDrop
         {
             m_agent.m_victim.m_listener.evtReceivedMessage += fnRecv;
 
-            /*
-            m_agent.fnSendCommand(new string[]
-            {
-                "plugin",
-                "load",
-                "test",
-                Convert.ToBase64String(File.ReadAllBytes("test.so")),
-            });
-
-            return;
-            */
-
             fnLoadAllPlugin();
 
             toolStripStatusLabel1.Text = $"Plugin[{listView1.Items.Count}]";
@@ -255,8 +246,6 @@ namespace EgoDrop
             foreach (ListViewItem item in listView1.Items)
             {
                 var info = fnGetPluginInfoFromTag(item);
-                MessageBox.Show(info.Meta.Name);
-                MessageBox.Show(info.szFileName);
                 m_agent.fnSendCommand(new string[]
                 {
                     "plugin",

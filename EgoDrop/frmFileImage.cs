@@ -185,6 +185,7 @@ namespace EgoDrop
             panel.Dock = DockStyle.Fill;
 
             ts.Dock = DockStyle.Top;
+            ts.Font = Font;
             tbPath.Dock = DockStyle.Top;
             pb.Dock = DockStyle.Fill;
 

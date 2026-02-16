@@ -289,7 +289,7 @@
             tabPage7.Location = new Point(4, 4);
             tabPage7.Name = "tabPage7";
             tabPage7.Padding = new Padding(3);
-            tabPage7.Size = new Size(223, 275);
+            tabPage7.Size = new Size(223, 277);
             tabPage7.TabIndex = 1;
             tabPage7.Text = "Listener";
             tabPage7.UseVisualStyleBackColor = true;
@@ -299,7 +299,7 @@
             treeView3.Dock = DockStyle.Fill;
             treeView3.Location = new Point(3, 3);
             treeView3.Name = "treeView3";
-            treeView3.Size = new Size(217, 269);
+            treeView3.Size = new Size(217, 271);
             treeView3.TabIndex = 0;
             // 
             // tabControl2
@@ -324,7 +324,7 @@
             tabPage3.Padding = new Padding(3);
             tabPage3.Size = new Size(752, 273);
             tabPage3.TabIndex = 0;
-            tabPage3.Text = "Targets";
+            tabPage3.Text = "Sessions";
             tabPage3.UseVisualStyleBackColor = true;
             // 
             // listView1
@@ -459,9 +459,9 @@
             tabPage5.Controls.Add(treeView2);
             tabPage5.Location = new Point(4, 4);
             tabPage5.Name = "tabPage5";
-            tabPage5.Size = new Size(731, 275);
+            tabPage5.Size = new Size(752, 273);
             tabPage5.TabIndex = 2;
-            tabPage5.Text = "Sessions";
+            tabPage5.Text = "Hierachy";
             tabPage5.UseVisualStyleBackColor = true;
             // 
             // treeView2
@@ -469,7 +469,7 @@
             treeView2.Dock = DockStyle.Fill;
             treeView2.Location = new Point(0, 0);
             treeView2.Name = "treeView2";
-            treeView2.Size = new Size(731, 275);
+            treeView2.Size = new Size(752, 273);
             treeView2.TabIndex = 0;
             treeView2.AfterSelect += treeView2_AfterSelect;
             // 
@@ -480,7 +480,7 @@
             tabPage4.Location = new Point(4, 4);
             tabPage4.Name = "tabPage4";
             tabPage4.Padding = new Padding(3);
-            tabPage4.Size = new Size(731, 275);
+            tabPage4.Size = new Size(752, 273);
             tabPage4.TabIndex = 1;
             tabPage4.Text = "Topology";
             tabPage4.UseVisualStyleBackColor = true;
@@ -495,7 +495,7 @@
             networkView1.Location = new Point(3, 28);
             networkView1.Name = "networkView1";
             networkView1.NetworkViewTopoLogy = NetworkView.enTopologyLayout.Tree;
-            networkView1.Size = new Size(725, 244);
+            networkView1.Size = new Size(746, 242);
             networkView1.TabIndex = 0;
             networkView1.Zoom = 1F;
             networkView1.MouseDown += networkView1_MouseDown;
@@ -580,7 +580,7 @@
             toolStrip1.Items.AddRange(new ToolStripItem[] { toolStripButton1, toolStripButton2, toolStripSeparator1, toolStripButton3 });
             toolStrip1.Location = new Point(3, 3);
             toolStrip1.Name = "toolStrip1";
-            toolStrip1.Size = new Size(725, 25);
+            toolStrip1.Size = new Size(746, 25);
             toolStrip1.TabIndex = 1;
             toolStrip1.Text = "toolStrip1";
             // 

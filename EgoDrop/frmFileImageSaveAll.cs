@@ -78,7 +78,7 @@ namespace EgoDrop
             else if (toolStripProgressBar1.Value < toolStripProgressBar1.Maximum)
             {
                 MessageBox.Show(
-                    $"Saved [{toolStripProgressBar1.Value}] {(toolStripProgressBar1.Value > 1 ? "images" : "image")} successfully. Error: {toolStripProgressBar1.Maximum - toolStripProgressBar1.Value}"
+                    $"Saved [{toolStripProgressBar1.Value}] {(toolStripProgressBar1.Value > 1 ? "images" : "image")} successfully. Error: {toolStripProgressBar1.Maximum - toolStripProgressBar1.Value}",
                     "Warning",
                     MessageBoxButtons.OK,
                     MessageBoxIcon.Warning
