@@ -35,6 +35,9 @@ This is an experimental RAT(Remote Access Trojan) for Linux platform. C# GUI bas
 - TLS communication.
 - HTTP communication.
 - Chain
+- File Manger
+  - View Image
+  - Read/Write
 - Virtual Terminal
 
 # Screenshot
@@ -50,6 +53,7 @@ This is an experimental RAT(Remote Access Trojan) for Linux platform. C# GUI bas
 <p align="center">
 <img src="https://github.com/iss4cf0ng/EgoDrop/blob/main/screenshot/demo.gif" width=1000>
 </p>
+
 
 
 
