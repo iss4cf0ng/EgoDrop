@@ -2,6 +2,8 @@
 An experimential Linux RAT for learning post-exploitation. \
 Still in development.
 
+Continuously update: [version-0.2](https://github.com/iss4cf0ng/EgoDrop/tree/version-0.2)
+
 <p align="center">
 <img src="https://iss4cf0ng.github.io/images/meme/koyuki_crying.gif" width=300>
 </p>
@@ -54,6 +56,7 @@ This is an experimental RAT(Remote Access Trojan) for Linux platform. C# GUI bas
 <p align="center">
 <img src="https://github.com/iss4cf0ng/EgoDrop/blob/main/screenshot/demo.gif" width=1000>
 </p>
+
 
 
 
