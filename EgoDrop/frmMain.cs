@@ -547,7 +547,8 @@ namespace EgoDrop
                 }
                 else if (lsMsg[0] == "disconnect")
                 {
-                    fnOnVictimDisconnected(ltn, victim, szSrcVictimID);
+                    string szVictimID = lsMsg[1];
+                    fnOnVictimDisconnected(ltn, victim, szVictimID);
                 }
             }));
         }
@@ -603,10 +604,13 @@ namespace EgoDrop
                 treeView2.Nodes.Remove(tNode);
 
                 //Remove from networkview.
-                NetworkNode node = networkView1.FindNodeWithID(szVictimID);
+                NetworkNode? node = networkView1.FindNodeWithID(szVictimID);
+                if (node == null)
+                    return;
+
                 networkView1.RemoveNode(node);
 
-                NetworkNode firewallNode = networkView1.FindNodeWithName($"Firewall@{vic.m_sktClnt.RemoteEndPoint}");
+                NetworkNode? firewallNode = networkView1.FindNodeWithName($"Firewall@{vic.m_sktClnt.RemoteEndPoint}");
                 if (firewallNode == null)
                     return;
 
@@ -620,11 +624,13 @@ namespace EgoDrop
                 if (ltns.Count > 0)
                 {
                     DialogResult dr = MessageBox.Show(
+
                         $"Detected {ltns.Count} {(ltns.Count == 1 ? "proxy" : "proxies")} using the offlined Victim[{szVictimID}] as the endpoint, " +
                         $"{(ltns.Count == 1 ? "this" : "these")} {(ltns.Count == 1 ? "is" : "are")} no longer available, " +
                         $"do you want to remove {(ltns.Count == 1 ? "it" : "them")} ?",
 
                         "Warning",
+
                         MessageBoxButtons.YesNo,
                         MessageBoxIcon.Warning,
                         MessageBoxDefaultButton.Button1 //No
@@ -668,10 +674,6 @@ namespace EgoDrop
         /// <param name="enProtocol"></param>
         public void fnOnAddChain(clsListener listener, clsVictim victim, List<string> lsVictim, string szOS, string szUsername, bool bRoot, string szIPv4, NetworkView.enConnectionType enProtocol)
         {
-            bool fnbIsUnixlike(string szOS)
-            {
-                return !szOS.ToLower().Contains("windows");
-            }
             NetworkView.enMachineStatus fnGetStatusFromOS(string szOS)
             {
                 szOS = szOS.ToLower();

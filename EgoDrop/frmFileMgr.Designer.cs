@@ -32,6 +32,7 @@
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(frmFileMgr));
             menuStrip1 = new MenuStrip();
             toolStripMenuItem1 = new ToolStripMenuItem();
+            toolStripMenuItem22 = new ToolStripMenuItem();
             statusStrip1 = new StatusStrip();
             toolStripStatusLabel1 = new ToolStripStatusLabel();
             tabControl1 = new TabControl();
@@ -100,7 +101,7 @@
             // menuStrip1
             // 
             menuStrip1.Font = new Font("Microsoft JhengHei UI", 11.25F);
-            menuStrip1.Items.AddRange(new ToolStripItem[] { toolStripMenuItem1 });
+            menuStrip1.Items.AddRange(new ToolStripItem[] { toolStripMenuItem1, toolStripMenuItem22 });
             menuStrip1.Location = new Point(0, 0);
             menuStrip1.Name = "menuStrip1";
             menuStrip1.Size = new Size(1032, 27);
@@ -112,6 +113,13 @@
             toolStripMenuItem1.Name = "toolStripMenuItem1";
             toolStripMenuItem1.Size = new Size(45, 23);
             toolStripMenuItem1.Text = "File";
+            // 
+            // toolStripMenuItem22
+            // 
+            toolStripMenuItem22.Name = "toolStripMenuItem22";
+            toolStripMenuItem22.Size = new Size(53, 23);
+            toolStripMenuItem22.Text = "Help";
+            toolStripMenuItem22.Click += toolStripMenuItem22_Click;
             // 
             // statusStrip1
             // 
@@ -218,10 +226,10 @@
             // 
             // tabPage4
             // 
-            tabPage4.Location = new Point(4, 28);
+            tabPage4.Location = new Point(4, 24);
             tabPage4.Name = "tabPage4";
             tabPage4.Padding = new Padding(3);
-            tabPage4.Size = new Size(281, 409);
+            tabPage4.Size = new Size(281, 413);
             tabPage4.TabIndex = 1;
             tabPage4.Text = "ShortCuts";
             tabPage4.UseVisualStyleBackColor = true;
@@ -613,5 +621,6 @@
         private ToolStripButton toolStripButton1;
         private ToolStripMenuItem toolStripMenuItem21;
         private ToolStripButton toolStripButton3;
+        private ToolStripMenuItem toolStripMenuItem22;
     }
 }

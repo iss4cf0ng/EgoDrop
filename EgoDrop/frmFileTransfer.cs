@@ -17,6 +17,8 @@ namespace EgoDrop
         private clsFileHandler.enMode m_enTransfer { get; set; }
 
         private Dictionary<string, clsFileHandler> m_dicHandler = new Dictionary<string, clsFileHandler>();
+        private bool m_bPause = false;
+        private bool m_bStop = false;
 
         public frmFileTransfer(clsAgent agent, List<string> lsFilePath, clsFileHandler.enMode enTransfer)
         {
@@ -59,7 +61,7 @@ namespace EgoDrop
         void fnUpdateProgress(string szFilePath, int nValue)
         {
             Invoke(new Action(() =>
-            {   
+            {
                 ListViewItem item = listView1.FindItemWithText(szFilePath, true, 0);
                 if (item == null)
                     return;
@@ -117,12 +119,27 @@ namespace EgoDrop
                 m_dicHandler[szFilePath] = handler;
             }
 
-            
+
         }
 
         private void frmFileTransfer_Load(object sender, EventArgs e)
         {
             fnSetup();
+        }
+
+        private void toolStripMenuItem1_Click(object sender, EventArgs e)
+        {
+            m_bPause = true;
+        }
+
+        private void toolStripMenuItem2_Click(object sender, EventArgs e)
+        {
+            m_bPause = false;
+        }
+
+        private void toolStripMenuItem3_Click(object sender, EventArgs e)
+        {
+            m_bStop = true;
         }
     }
 }

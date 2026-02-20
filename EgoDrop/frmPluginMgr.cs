@@ -51,7 +51,7 @@ namespace EgoDrop
                             string szAbiVersion = s[2];
                             string szDescription = s[3];
 
-                            ListViewItem item = listView1.FindItemWithText(szName, true, 0);
+                            ListViewItem? item = listView1.FindItemWithText(szName, true, 0);
                             if (item == null)
                             {
                                 DialogResult dr = MessageBox.Show(

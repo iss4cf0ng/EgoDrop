@@ -29,12 +29,12 @@ namespace EgoDrop
         private bool isDraggingNodes = false;
         private Dictionary<NetworkNode, Point> dragStartPositions = new Dictionary<NetworkNode, Point>();
 
-        private NetworkNode selectedNode = null;
-        private NetworkNode selectedNodeForHighlight = null;
+        private NetworkNode? selectedNode = null;
+        private NetworkNode? selectedNodeForHighlight = null;
         private Point dragOffset;
 
         private bool isDraggingConnection = false;
-        private NetworkNode connectionStartNode = null;
+        private NetworkNode? connectionStartNode = null;
         private Point currentMousePos;
 
         private float zoom = 1.0f;
@@ -48,7 +48,7 @@ namespace EgoDrop
         private int virtualWidth = 2000;
         private int virtualHeight = 2000;
 
-        public NetworkNode SelectedNode { get; private set; }
+        public NetworkNode? SelectedNode { get; private set; }
         public List<NetworkNode> SelectNodes { get { return selectedNodes.ToList(); } }
         public ImageList imageList;
 
@@ -1007,9 +1007,12 @@ namespace EgoDrop
             else
             {
                 NetworkNode nodeParent = node.ParentNode;
-                NetworkConnection conn = FindConnection(nodeParent, node);
+                NetworkConnection? conn = FindConnection(nodeParent, node);
                 if (node.ParentNode != null && node.ParentNode.ChildNodes.Contains(node))
                     node.ParentNode.ChildNodes.Remove(node);
+
+                if (conn == null)
+                    return;
 
                 connections.Remove(conn);
 
@@ -1147,7 +1150,7 @@ namespace EgoDrop
         /// </summary>
         /// <param name="szName"></param>
         /// <returns></returns>
-        public NetworkNode FindNodeWithName(string szName)
+        public NetworkNode? FindNodeWithName(string szName)
         {
             foreach (var node in nodes)
                 if (string.Equals(node.szDisplayName, szName))
@@ -1161,7 +1164,7 @@ namespace EgoDrop
         /// </summary>
         /// <param name="szID"></param>
         /// <returns></returns>
-        public NetworkNode FindNodeWithID(string szID)
+        public NetworkNode? FindNodeWithID(string szID)
         {
             foreach (var node in nodes)
             {
@@ -1179,7 +1182,7 @@ namespace EgoDrop
         /// <param name="dstNode">Destination node.</param>
         /// <param name="bDirected">Directed edge.</param>
         /// <returns></returns>
-        public NetworkConnection FindConnection(NetworkNode srcNode, NetworkNode dstNode, bool bDirected = true)
+        public NetworkConnection? FindConnection(NetworkNode srcNode, NetworkNode dstNode, bool bDirected = true)
         {
             foreach (var conn in connections)
             {

