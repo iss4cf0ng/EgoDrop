@@ -1,3 +1,8 @@
+/*
+Name: EgoDrop HTTP C2 listener.
+Author: iss4cf0ng/ISSAC
+*/
+
 #pragma once
 
 #include <iostream>

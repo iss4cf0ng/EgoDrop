@@ -1,3 +1,8 @@
+/*
+Name: EgoDrop process manager.
+Author: iss4cf0ng/ISSAC
+*/
+
 #pragma once
 
 #include <filesystem>

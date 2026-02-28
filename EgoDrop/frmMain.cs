@@ -365,7 +365,9 @@ namespace EgoDrop
                     string szID = lsMsg[4];
                     if (listView1.Items.Count == 0 || listView1.FindItemWithText(szID, true, 0) == null)
                     {
-                        string szIpExt = victim.m_sktClnt.RemoteEndPoint.ToString();
+                        string? szIpExt = victim?.m_sktClnt?.RemoteEndPoint?.ToString();
+                        if (string.IsNullOrEmpty(szIpExt))
+                            return;
 
                         ListViewItem item = new ListViewItem(lsMsg[1]); //Screen (sudo required!).
                         item.SubItems.Add(szID);                        //Victim ID.
@@ -389,7 +391,7 @@ namespace EgoDrop
                     }
                     else
                     {
-                        ListViewItem item = listView1.FindItemWithText(szID);
+                        ListViewItem? item = listView1.FindItemWithText(szID);
                         if (item == null)
                             return;
 
@@ -405,7 +407,7 @@ namespace EgoDrop
 
                         if (nCode == 1)
                         {
-                            NetworkNode node = networkView1.FindNodeWithID(szSrcVictimID);
+                            NetworkNode? node = networkView1.FindNodeWithID(szSrcVictimID);
                             if (node == null)
                             {
                                 clsTools.fnShowErrMsgbox("NetworkNode is null.");
@@ -487,6 +489,9 @@ namespace EgoDrop
                                     break;
                                 case NetworkView.enMachineStatus.Windows_Beacon:
                                     networkView1.fnSetMachineStatus(node, bRoot ? NetworkView.enMachineStatus.Windows_Super : NetworkView.enMachineStatus.Windows_Infected);
+                                    break;
+                                default:
+                                    //Invalid operating system.
                                     break;
                             }
                         }

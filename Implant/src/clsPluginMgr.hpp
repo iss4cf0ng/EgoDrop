@@ -1,3 +1,8 @@
+/*
+Name: EgoDrop Plugin Manager
+Author: ISSAC
+*/
+
 #pragma once
 
 #include <iostream>

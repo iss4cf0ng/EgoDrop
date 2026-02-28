@@ -13,7 +13,7 @@ namespace EgoDrop
     public class clsVictim
     {
         /// <summary>
-        /// Victim config.
+        /// Victim class.
         /// </summary>
         public struct stVictimConfig
         {

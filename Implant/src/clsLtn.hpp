@@ -1,3 +1,11 @@
+/*
+Name: C2 Listener
+Author: iss4cf0ng/ISSAC
+
+Description:
+    This is a parent class for class inheritence.
+*/
+
 #pragma once
 
 #include <iostream>

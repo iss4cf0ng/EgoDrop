@@ -1,5 +1,8 @@
 /*
-todo:
+Name: EgoDrop File Manager
+Author: iss4cf0ng/ISSAC
+
+Todo List:
 - copy
 - move
 - delete

