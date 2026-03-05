@@ -206,7 +206,7 @@ namespace EgoDrop
         {
             if (e.Modifiers == Keys.Control)
             {
-                TabPage page = tabControl1.SelectedTab;
+                TabPage? page = tabControl1.SelectedTab;
                 if (page == null)
                     return;
 
@@ -249,7 +249,7 @@ namespace EgoDrop
 
         private void editor_TextChanged(object sender, EventArgs e)
         {
-            TabPage page = tabControl1.SelectedTab;
+            TabPage? page = tabControl1.SelectedTab;
             if (page == null)
                 return;
 
@@ -259,6 +259,9 @@ namespace EgoDrop
 
         private void tabControl1_DrawItem(object sender, DrawItemEventArgs e)
         {
+            if (e == null || e.Font == null)
+                return;
+
             var tab = tabControl1.TabPages[e.Index];
             var rect = e.Bounds;
 

@@ -62,7 +62,7 @@ namespace EgoDrop
         {
             Invoke(new Action(() =>
             {
-                ListViewItem item = listView1.FindItemWithText(szFilePath, true, 0);
+                ListViewItem? item = listView1.FindItemWithText(szFilePath, true, 0);
                 if (item == null)
                     return;
 
@@ -88,6 +88,9 @@ namespace EgoDrop
             };
             listView1.DrawSubItem += (s, e) =>
             {
+                if (e == null || e.SubItem == null)
+                    return;
+
                 if (e.ColumnIndex == 3)
                 {
                     int nProgress = int.Parse(e.SubItem.Text);
