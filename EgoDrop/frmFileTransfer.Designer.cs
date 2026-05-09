@@ -42,6 +42,7 @@
             columnHeader3 = new ColumnHeader();
             columnHeader4 = new ColumnHeader();
             columnHeader2 = new ColumnHeader();
+            toolStripButton2 = new ToolStripButton();
             toolStrip1.SuspendLayout();
             statusStrip1.SuspendLayout();
             SuspendLayout();
@@ -49,7 +50,7 @@
             // toolStrip1
             // 
             toolStrip1.Font = new Font("Microsoft JhengHei UI", 11.25F, FontStyle.Regular, GraphicsUnit.Point, 136);
-            toolStrip1.Items.AddRange(new ToolStripItem[] { toolStripDropDownButton1, toolStripButton1 });
+            toolStrip1.Items.AddRange(new ToolStripItem[] { toolStripDropDownButton1, toolStripButton2, toolStripButton1 });
             toolStrip1.Location = new Point(0, 0);
             toolStrip1.Name = "toolStrip1";
             toolStrip1.Size = new Size(684, 26);
@@ -69,21 +70,21 @@
             // toolStripMenuItem1
             // 
             toolStripMenuItem1.Name = "toolStripMenuItem1";
-            toolStripMenuItem1.Size = new Size(180, 24);
+            toolStripMenuItem1.Size = new Size(134, 24);
             toolStripMenuItem1.Text = "Pause";
             toolStripMenuItem1.Click += toolStripMenuItem1_Click;
             // 
             // toolStripMenuItem2
             // 
             toolStripMenuItem2.Name = "toolStripMenuItem2";
-            toolStripMenuItem2.Size = new Size(180, 24);
+            toolStripMenuItem2.Size = new Size(134, 24);
             toolStripMenuItem2.Text = "Resume";
             toolStripMenuItem2.Click += toolStripMenuItem2_Click;
             // 
             // toolStripMenuItem3
             // 
             toolStripMenuItem3.Name = "toolStripMenuItem3";
-            toolStripMenuItem3.Size = new Size(180, 24);
+            toolStripMenuItem3.Size = new Size(134, 24);
             toolStripMenuItem3.Text = "Stop";
             toolStripMenuItem3.Click += toolStripMenuItem3_Click;
             // 
@@ -143,6 +144,16 @@
             columnHeader2.Text = "Progress";
             columnHeader2.Width = 150;
             // 
+            // toolStripButton2
+            // 
+            toolStripButton2.DisplayStyle = ToolStripItemDisplayStyle.Text;
+            toolStripButton2.Image = (Image)resources.GetObject("toolStripButton2.Image");
+            toolStripButton2.ImageTransparentColor = Color.Magenta;
+            toolStripButton2.Name = "toolStripButton2";
+            toolStripButton2.Size = new Size(58, 23);
+            toolStripButton2.Text = "Folder";
+            toolStripButton2.Click += toolStripButton2_Click;
+            // 
             // frmFileTransfer
             // 
             AutoScaleDimensions = new SizeF(9F, 19F);
@@ -179,5 +190,6 @@
         private ToolStripMenuItem toolStripMenuItem3;
         private ToolStripButton toolStripButton1;
         private ToolStripStatusLabel toolStripStatusLabel1;
+        private ToolStripButton toolStripButton2;
     }
 }

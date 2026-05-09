@@ -66,7 +66,7 @@ namespace EgoDrop
                             return;
                         }
 
-                        TabPage page = fnFindTabWithPath(szFilePath);
+                        TabPage? page = fnFindTabWithPath(szFilePath);
                         if (page == null)
                             return;
 
@@ -114,7 +114,7 @@ namespace EgoDrop
         /// </summary>
         /// <param name="szFilePath">File path.</param>
         /// <returns></returns>
-        private TabPage fnFindTabWithPath(string szFilePath)
+        private TabPage? fnFindTabWithPath(string szFilePath)
         {
             foreach (TabPage page in tabControl1.TabPages)
             {
@@ -122,7 +122,7 @@ namespace EgoDrop
                 if (string.Equals(st.szFilePath, szFilePath))
                     return page;
             }
-
+            
             return null;
         }
 
@@ -212,7 +212,15 @@ namespace EgoDrop
 
                 if (e.KeyCode == Keys.W)
                 {
+                    int nIdx = tabControl1.SelectedIndex;
+                    int nNewIdx = 0;
+                    if (nIdx == tabControl1.TabPages.Count - 1)
+                        nNewIdx = nIdx - 1;
+                    else
+                        nNewIdx = nIdx + 1;
 
+                    tabControl1.SelectedIndex = nNewIdx;
+                    tabControl1.TabPages.Remove(page);
                 }
                 else if (e.KeyCode == Keys.S) //Save file.
                 {
@@ -265,6 +273,17 @@ namespace EgoDrop
             var tab = tabControl1.TabPages[e.Index];
             var rect = e.Bounds;
 
+            Color backColor = tab.BackColor;
+            if ((e.State & DrawItemState.Selected) == DrawItemState.Selected)
+            {
+                BackColor = Color.LightBlue;
+            }
+
+            using (Brush backgroundBrush = new SolidBrush(backColor))
+            {
+                e.Graphics.FillRectangle(backgroundBrush, rect);
+            }
+
             TextRenderer.DrawText(
                 e.Graphics,
                 tab.Text,
@@ -275,7 +294,7 @@ namespace EgoDrop
             );
 
             Rectangle closeRect = new Rectangle(
-                rect.Right - 15,
+                rect.Right - 20,
                 rect.Top + (rect.Height - 12) / 2,
                 12,
                 12

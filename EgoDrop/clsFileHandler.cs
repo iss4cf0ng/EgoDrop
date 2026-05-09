@@ -94,6 +94,11 @@ namespace EgoDrop
             return nOffset + m_nFileChunkSize >= m_nFileSize;
         }
 
+        public void fnClose()
+        {
+            m_fileStream.Close();
+        }
+
         /// <summary>
         /// Write file chunk buffer.
         /// </summary>
@@ -102,6 +107,7 @@ namespace EgoDrop
         public void fnWrite(int nOffset, byte[] abBuffer)
         {
             m_fileStream.Write(abBuffer, nOffset, abBuffer.Length);
+            m_nIdx++;
         }
     }
 

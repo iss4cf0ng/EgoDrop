@@ -18,6 +18,8 @@ namespace EgoDrop
         public string m_szUriName { get; init; }     //Victim URI name.
         public bool m_bUnixlike { get; init; }       //Is Unix-like.
 
+        public string m_szVictimDir { get; set; } = ""; // Victim portfolio
+
         public List<uint> m_lnPort = new List<uint>();
 
         /// <summary>
