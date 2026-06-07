@@ -1,6 +1,18 @@
 # EgoDrop
-An experimential Linux Remote Access Tool \
+
+![status](https://img.shields.io/badge/status-development-orange)
+![C#](https://img.shields.io/badge/language-C%23-green)
+![language](https://img.shields.io/badge/language-Python-blue)
+![license](https://img.shields.io/badge/license-MIT-green)
+
+An experimential Linux RAT for learning post-exploitation. \
 Still in development.
+
+Continuously update.
+
+<p align="center">
+<img src="https://iss4cf0ng.github.io/images/meme/koyuki_crying.gif" width=300>
+</p>
 
 # Introduction
 This is an experimental RAT(Remote Access Trojan) for Linux platform. C# GUI based server and C++ based payload.
@@ -17,16 +29,23 @@ This is an experimental RAT(Remote Access Trojan) for Linux platform. C# GUI bas
 - Virtual terminal based on xterm (Capable to do ssh).
 - VPN.
 
+# Todo List
+
+- File Manager
+  - Upload
+  - Download
+- Service Manager
+- Process Manager
+- Simple Plugins Manager
+
 # Done
 - RSA + AES TCP communication.
 - TLS communication.
 - HTTP communication.
 - Chain
+- File Manger
+  - View Image
+  - Read/Write
+- Virtual Terminal
+- Proxy
 
-# Screenshot
-## Topology
-![Topology](https://github.com/iss4cf0ng/EgoDrop/blob/main/screenshot/topology.png)
-
-## Terminal(Virtual terminal, but is capable to use ssh or vim.)
-
-![Terminal](https://github.com/iss4cf0ng/EgoDrop/blob/main/screenshot/terminal.png)
