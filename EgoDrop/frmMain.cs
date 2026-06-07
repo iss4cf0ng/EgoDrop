@@ -920,7 +920,7 @@ namespace EgoDrop
 
             treeView2.ImageList = smallImageList;
 
-            networkView1.Zoom = 1.0f;
+            networkView1.Zoom = 1.0f; // zoom size
 
             toolStripButton1.Checked = true;
             toolStripButton2.Checked = false;
